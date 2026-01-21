@@ -1,25 +1,13 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 
 // Импорт экранов
+import Onboarding from './components/Onboarding'
+import AddCarForm from './components/AddCarForm'
 import Dashboard from './components/Dashboard'
 import IssuesScreen from './components/IssuesScreen'
 import JournalScreen from './components/JournalScreen'
 import AssistantScreen from './components/AssistantScreen'
-
-// Общие данные автомобиля (потом можно вынести в контекст)
-export const carData = {
-  brand: 'Hyundai',
-  model: 'Solaris',
-  generation: 'I (RB)',
-  year: 2015,
-  engine: '1.6 (123 л.с.)',
-  engineCode: 'G4FC',
-  transmission: '6-АКПП',
-  mileage: 87000,
-  mileageConfidence: 'high',
-  mileageLastUpdated: '2025-01-12',
-}
 
 // Цветовая схема
 export const colors = {
@@ -50,7 +38,7 @@ const BottomNav = () => {
   const location = useLocation()
   
   const navItems = [
-    { path: '/', icon: '🏠', label: 'Главная' },
+    { path: '/dashboard', icon: '🏠', label: 'Главная' },
     { path: '/issues', icon: '⚠️', label: 'Болячки' },
     { path: '/journal', icon: '📋', label: 'Журнал' },
     { path: '/assistant', icon: '💬', label: 'Ассистент' },
@@ -75,16 +63,78 @@ const BottomNav = () => {
   )
 }
 
+// Проверяем, показывать ли нижнюю навигацию
+const shouldShowNav = (pathname) => {
+  const noNavRoutes = ['/', '/add-car']
+  return !noNavRoutes.includes(pathname)
+}
+
 export default function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  
+  // Проверяем, прошёл ли пользователь онбординг
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
+    return localStorage.getItem('onboardingCompleted') === 'true'
+  })
+  
+  // Проверяем, добавлен ли автомобиль
+  const [hasCar, setHasCar] = useState(() => {
+    return localStorage.getItem('userCar') !== null
+  })
+
+  // Обработчик завершения онбординга
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('onboardingCompleted', 'true')
+    setHasCompletedOnboarding(true)
+    navigate('/add-car')
+  }
+
+  // Обработчик добавления автомобиля
+  const handleCarAdded = (carData) => {
+    localStorage.setItem('userCar', JSON.stringify(carData))
+    setHasCar(true)
+    navigate('/dashboard')
+  }
+
+  // Редирект при первом запуске
+  useEffect(() => {
+    if (location.pathname === '/') {
+      if (!hasCompletedOnboarding) {
+        // Остаёмся на онбординге
+      } else if (!hasCar) {
+        navigate('/add-car')
+      } else {
+        navigate('/dashboard')
+      }
+    }
+  }, [location.pathname, hasCompletedOnboarding, hasCar, navigate])
+
+  const showNav = shouldShowNav(location.pathname)
+
   return (
     <div style={styles.app}>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        {/* Онбординг */}
+        <Route 
+          path="/" 
+          element={<Onboarding onComplete={handleOnboardingComplete} />} 
+        />
+        
+        {/* Добавление авто */}
+        <Route 
+          path="/add-car" 
+          element={<AddCarForm onComplete={handleCarAdded} />} 
+        />
+        
+        {/* Основные экраны */}
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/issues" element={<IssuesScreen />} />
         <Route path="/journal" element={<JournalScreen />} />
         <Route path="/assistant" element={<AssistantScreen />} />
       </Routes>
-      <BottomNav />
+      
+      {showNav && <BottomNav />}
     </div>
   )
 }
