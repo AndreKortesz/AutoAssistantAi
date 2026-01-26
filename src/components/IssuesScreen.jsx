@@ -1,843 +1,443 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 
-// AutoAssistantAi — Экран болячек v3
-// Упрощённые карточки с быстрыми метриками и одной кнопкой "Подробнее"
+const IssuesScreen = ({ car, onNavigateToDetail }) => {
+  const [expandedSections, setExpandedSections] = useState({ current: true, upcoming: false, past: false });
+  const [expandedIssue, setExpandedIssue] = useState('issue-1');
+  const [vinValue, setVinValue] = useState('');
+  const [showVinModal, setShowVinModal] = useState(false);
+  const [showTip, setShowTip] = useState(false);
+  const [vinResult, setVinResult] = useState(null);
+  const [vinHidden, setVinHidden] = useState(false);
 
-const colors = {
-  background: '#F7F8FA',
-  cardBg: '#FFFFFF',
-  border: '#E2E8F0',
-  
-  primary: '#1F4FD8',
-  primaryLight: 'rgba(31, 79, 216, 0.08)',
-  
-  success: '#2E9E6F',
-  successLight: 'rgba(46, 158, 111, 0.08)',
-  successBorder: 'rgba(46, 158, 111, 0.2)',
-  
-  warning: '#D97706',
-  warningLight: 'rgba(217, 119, 6, 0.08)',
-  warningBorder: 'rgba(217, 119, 6, 0.2)',
-  
-  critical: '#DC2626',
-  criticalLight: 'rgba(220, 38, 38, 0.08)',
-  criticalBorder: 'rgba(220, 38, 38, 0.2)',
-  
-  textPrimary: '#1E293B',
-  textSecondary: '#64748B',
-  textTertiary: '#94A3B8',
-};
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
-// Данные автомобиля
-const carData = {
-  brand: 'Hyundai',
-  model: 'Solaris',
-  year: 2015,
-  engine: '1.6 (123 л.с.)',
-  engineCode: 'G4FC',
-  transmission: '6-АКПП',
-  mileage: 87000,
-  mileageConfidence: 'high',
-};
+  const toggleIssue = (issueId) => {
+    setExpandedIssue(expandedIssue === issueId ? null : issueId);
+  };
 
-// Болячки из базы данных (для Solaris)
-const issuesDatabase = [
-  {
-    id: "solaris_steering_rack",
-    name: "Стук рулевой рейки",
-    category: "Ходовая",
-    mileageStart: 25000,
-    mileageEnd: 60000,
-    probability: 45,
-    severity: "medium",
-    shortDesc: "Стук при вращении руля из-за износа пластиковых втулок.",
-    description: "Конструктивный недостаток — большой зазор между упором и стопором. Пластиковые втулки быстро изнашиваются.",
-    symptoms: ["Стук при вращении руля", "Люфт в рулевом"],
-    solution: "Установка ремкомплекта рейки.",
-    costMin: 3000,
-    costMax: 15000,
-    timeHours: "1-2",
-    diyDifficulty: "medium", // easy | medium | hard
-  },
-  {
-    id: "solaris_wheel_bearings",
-    name: "Износ ступичных подшипников",
-    category: "Ходовая",
-    mileageStart: 15000,
-    mileageEnd: 70000,
-    probability: 35,
-    severity: "medium",
-    shortDesc: "Гул при движении, усиливается в поворотах.",
-    description: "Передние ступичные подшипники изнашиваются раньше срока.",
-    symptoms: ["Гул при движении", "Гул усиливается в поворотах"],
-    solution: "Замена подшипников. Рекомендуют SKF вместо оригинала.",
-    costMin: 2500,
-    costMax: 8000,
-    timeHours: "1-2",
-    diyDifficulty: "medium",
-  },
-  {
-    id: "solaris_gearbox_bearing",
-    name: "Подшипник первичного вала КПП",
-    category: "Коробка",
-    mileageStart: 60000,
-    mileageEnd: 120000,
-    probability: 25,
-    severity: "high",
-    shortDesc: "Скрежет при переключении передач.",
-    description: "Скрежет при переключении передач. Подшипник первичного вала изнашивается.",
-    symptoms: ["Скрежет при переключении", "Шум на нейтрали"],
-    solution: "Замена подшипника, в запущенных случаях — замена корпуса КПП.",
-    costMin: 15000,
-    costMax: 45000,
-    timeHours: "3-5",
-    diyDifficulty: "hard",
-  },
-  {
-    id: "solaris_clutch_seal",
-    name: "Сальник первичного вала КПП",
-    category: "Коробка",
-    mileageStart: 80000,
-    mileageEnd: 150000,
-    probability: 30,
-    severity: "medium",
-    shortDesc: "Течь сальника, масляные подтеки под КПП.",
-    description: "Течь сальника замасливает маховик и диск сцепления.",
-    symptoms: ["Масляные подтеки под КПП", "Пробуксовка сцепления"],
-    solution: "Замена сальника и диска сцепления при необходимости.",
-    costMin: 8000,
-    costMax: 25000,
-    timeHours: "2-4",
-    diyDifficulty: "hard",
-  },
-  {
-    id: "solaris_paint",
-    name: "Слабое ЛКП",
-    category: "Кузов",
-    mileageStart: 30000,
-    mileageEnd: 100000,
-    probability: 50,
-    severity: "low",
-    shortDesc: "Тонкое покрытие, сколы появляются быстро.",
-    description: "Тонкое лакокрасочное покрытие. Сколы появляются быстро.",
-    symptoms: ["Сколы на капоте", "Ржавчина в местах сколов"],
-    solution: "Антикоррозийная обработка, подкраска сколов.",
-    costMin: 2000,
-    costMax: 15000,
-    timeHours: "1-3",
-    diyDifficulty: "easy",
-  },
-  {
-    id: "solaris_rear_suspension",
-    name: "Мягкая задняя подвеска",
-    category: "Ходовая",
-    mileageStart: 40000,
-    mileageEnd: 80000,
-    probability: 40,
-    severity: "low",
-    shortDesc: "Раскачка кормы, пробои на неровностях.",
-    description: "Задние стойки и пружины слишком мягкие, машина раскачивается.",
-    symptoms: ["Раскачка кормы", "Пробои подвески"],
-    solution: "Замена на усиленные амортизаторы и пружины.",
-    costMin: 8000,
-    costMax: 20000,
-    timeHours: "2-3",
-    diyDifficulty: "medium",
-  },
-  {
-    id: "solaris_timing_chain",
-    name: "Растяжение цепи ГРМ",
-    category: "Двигатель",
-    mileageStart: 120000,
-    mileageEnd: 180000,
-    probability: 60,
-    severity: "critical",
-    shortDesc: "Дизельный звук на холодную, ошибка по фазам.",
-    description: "Цепь ГРМ на моторах Gamma растягивается и требует замены.",
-    symptoms: ["Дизельный звук на холодную", "Ошибка по фазам"],
-    solution: "Замена цепи, натяжителя, успокоителей.",
-    costMin: 15000,
-    costMax: 35000,
-    timeHours: "4-6",
-    diyDifficulty: "hard",
-    urgentAttention: true, // Требует срочного внимания
-  },
-  {
-    id: "solaris_stabilizer_links",
-    name: "Стойки стабилизатора",
-    category: "Ходовая",
-    mileageStart: 50000,
-    mileageEnd: 90000,
-    probability: 70,
-    severity: "low",
-    shortDesc: "Стук на мелких неровностях.",
-    description: "Расходник, изнашивается быстрее на плохих дорогах.",
-    symptoms: ["Стук на мелких неровностях", "Стук при повороте руля стоя"],
-    solution: "Замена стоек стабилизатора. Недорогой ремонт.",
-    costMin: 2000,
-    costMax: 5000,
-    timeHours: "0.5-1",
-    diyDifficulty: "easy",
-  },
-];
+  const handleVinCheck = () => {
+    if (vinValue.length >= 10) {
+      setShowVinModal(true);
+    }
+  };
 
-// Группировка болячек по актуальности
-const categorizeIssues = (issues, currentMileage) => {
-  const SOON_THRESHOLD = 15000;
-  
-  const active = [];
-  const soon = [];
-  const passed = [];
-  const future = [];
-  
-  issues.forEach(issue => {
-    if (currentMileage >= issue.mileageStart && currentMileage <= issue.mileageEnd) {
-      active.push(issue);
-    } else if (currentMileage < issue.mileageStart && (issue.mileageStart - currentMileage) <= SOON_THRESHOLD) {
-      soon.push(issue);
-    } else if (currentMileage > issue.mileageEnd) {
-      passed.push(issue);
+  const handleOriginSelect = (origin) => {
+    setVinResult(origin);
+    setShowVinModal(false);
+    setVinHidden(true);
+  };
+
+  const handleDontKnow = () => {
+    if (!showTip) {
+      setShowTip(true);
     } else {
-      future.push(issue);
+      setVinResult('imported');
+      setShowVinModal(false);
+      setVinHidden(true);
     }
-  });
-  
-  const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-  const sortBySeverity = (a, b) => severityOrder[a.severity] - severityOrder[b.severity];
-  
-  return {
-    active: active.sort(sortBySeverity),
-    soon: soon.sort(sortBySeverity),
-    passed: passed.sort(sortBySeverity),
-    future: future.sort((a, b) => a.mileageStart - b.mileageStart),
   };
-};
 
-// Прогресс-бар пробега
-const MileageProgress = ({ current, start, end }) => {
-  const rangeStart = Math.max(0, start - 10000);
-  const rangeEnd = end + 10000;
-  const range = rangeEnd - rangeStart;
-  
-  const startPercent = ((start - rangeStart) / range) * 100;
-  const endPercent = ((end - rangeStart) / range) * 100;
-  const currentPercent = Math.min(100, Math.max(0, ((current - rangeStart) / range) * 100));
-  
-  const isInRange = current >= start && current <= end;
-  const isPassed = current > end;
-  
-  return (
-    <div style={styles.progressContainer}>
-      <div style={styles.progressBar}>
-        <div style={{
-          ...styles.progressZone,
-          left: `${startPercent}%`,
-          width: `${endPercent - startPercent}%`,
-          background: isPassed ? colors.successLight : colors.criticalLight,
-        }} />
-        <div style={{
-          ...styles.progressMarker,
-          left: `${currentPercent}%`,
-          background: isInRange ? colors.critical : isPassed ? colors.success : colors.primary,
-        }} />
-      </div>
-      <div style={styles.progressLabels}>
-        <span style={styles.progressLabel}>{(start / 1000).toFixed(0)}K</span>
-        <span style={{
-          ...styles.progressCurrent,
-          color: isInRange ? colors.critical : colors.textPrimary,
-        }}>
-          ← вы тут
-        </span>
-        <span style={styles.progressLabel}>{(end / 1000).toFixed(0)}K</span>
-      </div>
-    </div>
-  );
-};
-
-// Конфиг сложности DIY
-const difficultyConfig = {
-  easy: { label: 'Просто', icon: '🟢' },
-  medium: { label: 'Средне', icon: '🟡' },
-  hard: { label: 'Сложно', icon: '🔴' },
-};
-
-// Карточка болячки (упрощённая)
-const IssueCard = ({ issue, currentMileage, onNavigateToDetail }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const severityConfig = {
-    critical: { color: colors.critical, bg: colors.criticalLight, border: colors.criticalBorder, label: 'Критично' },
-    high: { color: colors.warning, bg: colors.warningLight, border: colors.warningBorder, label: 'Важно' },
-    medium: { color: colors.primary, bg: colors.primaryLight, border: colors.primary, label: 'Средне' },
-    low: { color: colors.success, bg: colors.successLight, border: colors.successBorder, label: 'Низкий' },
+  const styles = {
+    container: { background: '#F7F8FA', minHeight: '100vh', paddingBottom: '100px' },
+    header: { padding: '16px 20px', background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' },
+    headerTitle: { fontSize: '18px', fontWeight: '700', color: '#1E293B', margin: 0 },
+    headerSubtitle: { fontSize: '14px', color: '#64748B', marginTop: '4px' },
+    intro: { display: 'flex', gap: '12px', padding: '14px 16px', margin: '12px', background: 'rgba(31, 79, 216, 0.08)', borderRadius: '12px' },
+    introIcon: { fontSize: '18px' },
+    introText: { fontSize: '13px', color: '#64748B', lineHeight: '1.5' },
+    summary: { display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '16px', margin: '0 12px 12px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' },
+    summaryItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' },
+    summaryValue: { fontSize: '24px', fontWeight: '700', color: '#1E293B' },
+    summaryLabel: { fontSize: '11px', color: '#94A3B8' },
+    summaryDivider: { width: '1px', height: '32px', background: '#E2E8F0' },
+    sections: { padding: '0 12px' },
+    section: { marginBottom: '16px' },
+    sectionWrapper: (type) => ({
+      background: '#FFFFFF', borderRadius: '16px', overflow: 'hidden',
+      border: `1px solid ${type === 'critical' ? 'rgba(220, 38, 38, 0.3)' : type === 'warning' ? 'rgba(217, 119, 6, 0.3)' : type === 'success' ? 'rgba(46, 158, 111, 0.3)' : '#E2E8F0'}`
+    }),
+    sectionHeader: (type) => ({
+      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', border: 'none', cursor: 'pointer',
+      background: type === 'critical' ? 'rgba(220, 38, 38, 0.08)' : type === 'warning' ? 'rgba(217, 119, 6, 0.08)' : type === 'success' ? 'rgba(46, 158, 111, 0.08)' : '#F7F8FA'
+    }),
+    sectionHeaderLeft: { display: 'flex', alignItems: 'center', gap: '10px' },
+    sectionDot: (type) => ({
+      width: '10px', height: '10px', borderRadius: '50%',
+      background: type === 'critical' ? '#DC2626' : type === 'warning' ? '#D97706' : type === 'success' ? '#2E9E6F' : '#94A3B8'
+    }),
+    sectionTitle: { fontSize: '15px', fontWeight: '600', color: '#1E293B' },
+    sectionCount: (type) => ({
+      fontSize: '12px', fontWeight: '600', padding: '3px 10px', borderRadius: '10px', color: 'white',
+      background: type === 'critical' ? '#DC2626' : type === 'warning' ? '#D97706' : type === 'success' ? '#2E9E6F' : '#94A3B8'
+    }),
+    sectionToggle: (open) => ({ fontSize: '10px', color: '#94A3B8', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }),
+    sectionContent: (open) => ({ display: open ? 'block' : 'none', padding: '12px', background: '#F7F8FA' }),
+    issueCard: (expanded) => ({
+      background: '#FFFFFF', borderRadius: '12px', marginBottom: '10px', overflow: 'hidden',
+      border: `1px solid ${expanded ? '#1F4FD8' : '#E2E8F0'}`,
+      boxShadow: expanded ? '0 2px 8px rgba(31, 79, 216, 0.15)' : '0 1px 3px rgba(0,0,0,0.04)'
+    }),
+    issueHeader: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' },
+    issueHeaderLeft: { display: 'flex', alignItems: 'center', gap: '12px', flex: 1 },
+    severityDot: (severity) => ({
+      width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
+      background: severity === 'critical' ? '#DC2626' : severity === 'high' ? '#D97706' : severity === 'medium' ? '#1F4FD8' : '#2E9E6F'
+    }),
+    issueHeaderInfo: { display: 'flex', flexDirection: 'column', gap: '2px' },
+    issueName: { fontSize: '15px', fontWeight: '600', color: '#1E293B' },
+    issueMeta: { fontSize: '12px', color: '#94A3B8' },
+    statusIcons: { display: 'flex', gap: '4px', marginRight: '8px' },
+    statusIcon: { width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', background: 'rgba(31, 79, 216, 0.08)', borderRadius: '6px' },
+    issueToggle: (open) => ({ fontSize: '10px', color: '#94A3B8', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }),
+    issueBody: (open) => ({ display: open ? 'block' : 'none', padding: '16px', background: 'linear-gradient(to bottom, #FAFBFC, #FFFFFF)', borderTop: '1px solid #E2E8F0' }),
+    defectStatus: { marginBottom: '16px', padding: '14px', background: 'rgba(31, 79, 216, 0.08)', borderRadius: '12px', border: '1px solid rgba(31, 79, 216, 0.15)' },
+    defectBlock: { marginBottom: '14px' },
+    defectBlockTitle: { fontSize: '12px', fontWeight: '600', color: '#1F4FD8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' },
+    defectItem: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#FFFFFF', borderRadius: '8px', marginBottom: '6px' },
+    defectFlag: { fontSize: '18px' },
+    defectInfo: { flex: 1 },
+    defectCountry: { fontSize: '13px', fontWeight: '600', color: '#1E293B' },
+    defectResult: { fontSize: '12px', color: '#64748B' },
+    defectBadge: (type) => ({ fontSize: '11px', fontWeight: '600', padding: '3px 8px', borderRadius: '6px', background: type === 'won' ? 'rgba(46, 158, 111, 0.08)' : 'rgba(217, 119, 6, 0.08)', color: type === 'won' ? '#2E9E6F' : '#D97706' }),
+    recallCode: { fontSize: '12px', color: '#64748B', fontFamily: 'monospace' },
+    recallStatus: { fontSize: '14px' },
+    progressContainer: { marginBottom: '14px' },
+    progressBar: { position: 'relative', height: '8px', background: '#E2E8F0', borderRadius: '4px', marginBottom: '6px' },
+    progressZone: (left, width) => ({ position: 'absolute', top: 0, left: `${left}%`, width: `${width}%`, height: '100%', borderRadius: '4px', background: 'rgba(220, 38, 38, 0.2)' }),
+    progressMarker: (left) => ({ position: 'absolute', top: '-3px', left: `${left}%`, width: '4px', height: '14px', borderRadius: '2px', background: '#DC2626' }),
+    progressLabels: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' },
+    progressLabel: { fontSize: '10px', color: '#94A3B8' },
+    progressCurrent: (left) => ({ position: 'absolute', left: `${left}%`, fontSize: '10px', fontWeight: '500', color: '#DC2626', whiteSpace: 'nowrap', transform: 'translateX(-50%)' }),
+    issueDescription: { fontSize: '13px', color: '#64748B', lineHeight: '1.5', margin: '0 0 14px' },
+    quickMetrics: { display: 'flex', gap: '10px', marginBottom: '14px', flexWrap: 'wrap' },
+    metricItem: { display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: '#F7F8FA', borderRadius: '8px', border: '1px solid #E2E8F0' },
+    metricIcon: { fontSize: '14px' },
+    metricValue: { fontSize: '13px', fontWeight: '600', color: '#1E293B' },
+    detailButton: { width: '100%', padding: '14px', background: '#1F4FD8', color: '#FFFFFF', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+    vinSection: { marginTop: '20px', display: vinHidden ? 'none' : 'block' },
+    vinCard: { background: '#FFFFFF', borderRadius: '16px', padding: '24px', border: '2px dashed #1F4FD8', textAlign: 'center' },
+    vinIconBig: { fontSize: '48px', marginBottom: '12px' },
+    vinTitleBig: { fontSize: '18px', fontWeight: '700', color: '#1E293B', marginBottom: '8px' },
+    vinDesc: { fontSize: '14px', color: '#64748B', lineHeight: '1.5', marginBottom: '20px' },
+    vinBenefits: { textAlign: 'left', marginBottom: '20px' },
+    vinBenefit: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', fontSize: '14px', color: '#1E293B' },
+    vinCheck: { width: '20px', height: '20px', background: '#2E9E6F', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', flexShrink: 0 },
+    vinInputSection: { display: 'flex', gap: '8px', marginBottom: '12px' },
+    vinInputField: { flex: 1, padding: '14px', border: '2px solid #E2E8F0', borderRadius: '10px', fontSize: '14px', fontFamily: 'monospace', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '1px' },
+    vinCheckButton: { padding: '14px 20px', background: '#1F4FD8', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
+    vinNote: { fontSize: '12px', color: '#94A3B8', lineHeight: '1.5', marginBottom: '8px' },
+    vinSkip: { fontSize: '13px', color: '#64748B', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none' },
+    modalOverlay: { display: showVinModal ? 'flex' : 'none', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, alignItems: 'flex-end', justifyContent: 'center' },
+    modalContent: { background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '24px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto' },
+    modalHandle: { width: '40px', height: '4px', background: '#E2E8F0', borderRadius: '2px', margin: '0 auto 16px' },
+    modalSuccessIcon: { fontSize: '48px', textAlign: 'center', marginBottom: '8px' },
+    modalTitle: { fontSize: '20px', fontWeight: '700', textAlign: 'center', marginBottom: '20px' },
+    modalCarInfo: { background: '#F7F8FA', borderRadius: '12px', padding: '16px', marginBottom: '20px' },
+    modalCarRow: { display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #E2E8F0' },
+    modalLabel: { fontSize: '14px', color: '#64748B' },
+    modalValue: { fontSize: '14px', fontWeight: '600', color: '#1E293B' },
+    modalDivider: { height: '1px', background: '#E2E8F0', margin: '20px 0' },
+    modalQuestion: { marginBottom: '16px' },
+    modalQuestionTitle: { fontSize: '16px', fontWeight: '700', marginBottom: '16px', textAlign: 'center' },
+    originOptions: { display: 'flex', flexDirection: 'column', gap: '12px' },
+    originOption: { display: 'flex', alignItems: 'center', gap: '14px', padding: '16px', background: '#F7F8FA', borderRadius: '12px', cursor: 'pointer', border: '2px solid transparent', transition: 'all 0.2s' },
+    originIcon: { fontSize: '28px' },
+    originTextStrong: { display: 'block', fontSize: '15px', fontWeight: '600', marginBottom: '2px' },
+    originTextSpan: { fontSize: '13px', color: '#64748B' },
+    tipBox: { display: showTip ? 'block' : 'none', background: '#FEF3C7', borderRadius: '12px', padding: '16px', marginTop: '16px' },
+    tipBoxTitle: { fontSize: '14px', fontWeight: '700', marginBottom: '8px' },
+    tipBoxList: { margin: 0, paddingLeft: '20px' },
+    tipBoxItem: { fontSize: '13px', color: '#1E293B', marginBottom: '6px', lineHeight: '1.4' },
+    modalSkip: { display: 'block', textAlign: 'center', marginTop: '16px', fontSize: '14px', color: '#64748B', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', width: '100%' },
+    personalizedSection: { display: vinResult ? 'block' : 'none', marginTop: '20px' },
+    resultCard: { background: '#FFFFFF', borderRadius: '16px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' },
+    resultHeader: (type) => ({ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px', background: type === 'warning' ? '#FEF3C7' : type === 'info' ? 'rgba(31, 79, 216, 0.08)' : type === 'success' ? 'rgba(46, 158, 111, 0.1)' : '#F7F8FA' }),
+    resultIcon: { fontSize: '20px' },
+    resultTitle: { fontSize: '15px', fontWeight: '700', margin: 0 },
+    resultBody: { padding: '16px' },
+    resultText: { fontSize: '14px', color: '#1E293B', lineHeight: '1.5', marginBottom: '8px' },
+    rightsList: { margin: '16px 0' },
+    rightsItem: { display: 'flex', gap: '12px', marginBottom: '12px' },
+    rightsNum: { width: '24px', height: '24px', background: '#1F4FD8', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700', flexShrink: 0 },
+    rightsItemText: { fontSize: '14px', lineHeight: '1.4', margin: 0 },
+    resultBtn: { width: '100%', padding: '14px', background: '#1F4FD8', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
+    resultBtnSecondary: { width: '100%', padding: '14px', background: 'rgba(31, 79, 216, 0.08)', color: '#1F4FD8', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
+    importLinks: { marginTop: '12px' },
+    importLink: { display: 'block', padding: '12px', background: '#F7F8FA', borderRadius: '8px', fontSize: '14px', color: '#1F4FD8', textDecoration: 'none', marginBottom: '8px' },
+    partVinItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#F7F8FA', borderRadius: '8px', marginTop: '12px' },
+    partName: { fontSize: '14px', fontWeight: '500' },
+    partNumber: { fontSize: '14px', fontFamily: 'monospace', color: '#1F4FD8', fontWeight: '600' },
   };
-  
-  const severity = severityConfig[issue.severity];
-  const difficulty = difficultyConfig[issue.diyDifficulty];
-  
-  const formatCost = (min, max) => {
-    if (max >= 1000) {
-      return `${Math.round(min/1000)}-${Math.round(max/1000)}K ₽`;
-    }
-    return `${min.toLocaleString('ru-RU')} – ${max.toLocaleString('ru-RU')} ₽`;
+
+  const issues = {
+    current: [
+      { id: 'issue-1', name: 'Подшипник первичного вала КПП', meta: 'Коробка • 25% владельцев', severity: 'high', hasLawsuits: true, hasRecalls: true },
+      { id: 'issue-2', name: 'Сальник первичного вала КПП', meta: 'Коробка • 30% владельцев', severity: 'medium' },
+      { id: 'issue-3', name: 'Слабое ЛКП', meta: 'Кузов • 50% владельцев', severity: 'low' },
+      { id: 'issue-4', name: 'Стойки стабилизатора', meta: 'Подвеска • 40% владельцев', severity: 'low' },
+    ],
+    upcoming: [{ id: 'issue-5', name: 'Растяжение цепи ГРМ', meta: 'Двигатель • 20% владельцев', severity: 'critical', hasLawsuits: true, hasRecalls: true }],
+    past: [
+      { id: 'issue-6', name: 'Стук рулевой рейки', meta: 'Рулевое • 35% владельцев', severity: 'medium', hasRecalls: true },
+      { id: 'issue-7', name: 'Подшипники ступиц', meta: 'Подвеска • 30% владельцев', severity: 'low' },
+    ],
   };
-  
-  return (
-    <div style={styles.issueCard}>
-      {/* Header - всегда видим */}
-      <button 
-        style={styles.issueHeader}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+
+  const renderIssueCard = (issue) => (
+    <div key={issue.id} style={styles.issueCard(expandedIssue === issue.id)}>
+      <button style={styles.issueHeader} onClick={() => toggleIssue(issue.id)}>
         <div style={styles.issueHeaderLeft}>
-          <div style={{
-            ...styles.severityDot,
-            background: severity.color,
-          }} />
+          <div style={styles.severityDot(issue.severity)} />
           <div style={styles.issueHeaderInfo}>
             <span style={styles.issueName}>{issue.name}</span>
-            <span style={styles.issueMeta}>
-              {issue.category} • {issue.probability}% владельцев
-            </span>
+            <span style={styles.issueMeta}>{issue.meta}</span>
           </div>
         </div>
-        <span style={{
-          ...styles.issueToggle,
-          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-        }}>▼</span>
-      </button>
-      
-      {/* Expanded body */}
-      {isExpanded && (
-        <div style={styles.issueBody}>
-          {/* Шкала пробега */}
-          <MileageProgress 
-            current={currentMileage}
-            start={issue.mileageStart}
-            end={issue.mileageEnd}
-          />
-          
-          {/* Краткое описание */}
-          <p style={styles.issueDescription}>{issue.shortDesc || issue.description}</p>
-          
-          {/* Быстрые метрики */}
-          <div style={styles.quickMetrics}>
-            <div style={styles.metricItem}>
-              <span style={styles.metricIcon}>⏱</span>
-              <span style={styles.metricValue}>{issue.timeHours} ч</span>
-            </div>
-            <div style={styles.metricItem}>
-              <span style={styles.metricIcon}>💰</span>
-              <span style={styles.metricValue}>{formatCost(issue.costMin, issue.costMax)}</span>
-            </div>
-            <div style={styles.metricItem}>
-              <span style={styles.metricIcon}>{difficulty.icon}</span>
-              <span style={styles.metricValue}>{difficulty.label}</span>
-            </div>
+        {(issue.hasLawsuits || issue.hasRecalls) && (
+          <div style={styles.statusIcons}>
+            {issue.hasLawsuits && <div style={styles.statusIcon}>⚖️</div>}
+            {issue.hasRecalls && <div style={styles.statusIcon}>📋</div>}
           </div>
-          
-          {/* Срочное внимание (вместо "Нельзя ехать") */}
-          {issue.urgentAttention && (
-            <div style={styles.urgentBox}>
-              <span style={styles.urgentIcon}>⚠️</span>
-              <span style={styles.urgentText}>Требует срочного внимания</span>
-            </div>
-          )}
-          
-          {/* Одна главная кнопка */}
-          <button 
-            style={styles.detailButton}
-            onClick={() => onNavigateToDetail(issue.id)}
-          >
-            Подробнее и решения →
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Секция с болячками
-const IssueSection = ({ title, issues, currentMileage, color, isOpen, onToggle, onNavigateToDetail }) => {
-  if (issues.length === 0) return null;
-  
-  return (
-    <div style={styles.section}>
-      <button 
-        style={{
-          ...styles.sectionHeader,
-          borderColor: color,
-          background: `${color}08`,
-        }}
-        onClick={onToggle}
-      >
-        <div style={styles.sectionHeaderLeft}>
-          <div style={{ ...styles.sectionDot, background: color }} />
-          <span style={styles.sectionTitle}>{title}</span>
-          <span style={{
-            ...styles.sectionCount,
-            background: `${color}15`,
-            color: color,
-          }}>{issues.length}</span>
-        </div>
-        <span style={{
-          ...styles.sectionToggle,
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-        }}>▼</span>
+        )}
+        <span style={styles.issueToggle(expandedIssue === issue.id)}>▼</span>
       </button>
-      
-      {isOpen && (
-        <div style={styles.sectionContent}>
-          {issues.map(issue => (
-            <IssueCard 
-              key={issue.id}
-              issue={issue}
-              currentMileage={currentMileage}
-              onNavigateToDetail={onNavigateToDetail}
-            />
-          ))}
+      <div style={styles.issueBody(expandedIssue === issue.id)}>
+        {issue.hasLawsuits && (
+          <div style={styles.defectStatus}>
+            <div style={styles.defectBlock}>
+              <div style={styles.defectBlockTitle}>⚖️ Коллективные иски</div>
+              <div style={styles.defectItem}>
+                <span style={styles.defectFlag}>🇺🇸</span>
+                <div style={styles.defectInfo}>
+                  <div style={styles.defectCountry}>США (2018)</div>
+                  <div style={styles.defectResult}>Расширение гарантии до 150k миль</div>
+                </div>
+                <span style={styles.defectBadge('won')}>✓ Выигран</span>
+              </div>
+            </div>
+            {issue.hasRecalls && (
+              <div style={{ ...styles.defectBlock, marginBottom: 0 }}>
+                <div style={styles.defectBlockTitle}>📋 Отзывные кампании</div>
+                <div style={styles.defectItem}>
+                  <span style={styles.defectFlag}>🇺🇸</span>
+                  <div style={styles.defectInfo}><div style={styles.defectCountry}>США</div></div>
+                  <span style={styles.recallCode}>19V-287 (2019)</span>
+                  <span style={styles.recallStatus}>✅</span>
+                </div>
+                <div style={styles.defectItem}>
+                  <span style={styles.defectFlag}>🇷🇺</span>
+                  <div style={styles.defectInfo}><div style={styles.defectCountry}>Россия</div></div>
+                  <span style={styles.recallCode}>не проводилась</span>
+                  <span style={styles.recallStatus}>❌</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        <div style={styles.progressContainer}>
+          <div style={styles.progressBar}>
+            <div style={styles.progressZone(25, 50)} />
+            <div style={styles.progressMarker(45)} />
+          </div>
+          <div style={styles.progressLabels}>
+            <span style={styles.progressLabel}>60K</span>
+            <span style={styles.progressCurrent(45)}>~87K</span>
+            <span style={styles.progressLabel}>120K</span>
+          </div>
         </div>
-      )}
+        <p style={styles.issueDescription}>Скрежет при переключении передач. Подшипник первичного вала изнашивается.</p>
+        <div style={styles.quickMetrics}>
+          <div style={styles.metricItem}><span style={styles.metricIcon}>⏱</span><span style={styles.metricValue}>3-5 ч</span></div>
+          <div style={styles.metricItem}><span style={styles.metricIcon}>💰</span><span style={styles.metricValue}>15-45K ₽</span></div>
+          <div style={styles.metricItem}><span style={styles.metricIcon}>🔴</span><span style={styles.metricValue}>Сложно</span></div>
+        </div>
+        <button style={styles.detailButton} onClick={() => onNavigateToDetail && onNavigateToDetail(issue.id)}>Подробнее и решения →</button>
+      </div>
     </div>
   );
-};
 
-export default function IssuesScreen() {
-  const navigate = useNavigate();
-  const [openSections, setOpenSections] = useState({
-    active: true,
-    soon: true,
-    passed: false,
-    future: false,
-  });
-  
-  const categorizedIssues = useMemo(() => 
-    categorizeIssues(issuesDatabase, carData.mileage),
-    [carData.mileage]
-  );
-  
-  const toggleSection = (section) => {
-    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-  
-  const handleNavigateToDetail = (issueId) => {
-    navigate(`/issues/${issueId}`);
-  };
-  
-  const totalActive = categorizedIssues.active.length + categorizedIssues.soon.length;
-  
   return (
     <div style={styles.container}>
-      {/* Header */}
       <div style={styles.header}>
-        <div style={styles.headerInfo}>
-          <h1 style={styles.headerTitle}>Болячки {carData.brand} {carData.model}</h1>
-          <p style={styles.headerSubtitle}>
-            {carData.engine} {carData.transmission} • ~{(carData.mileage / 1000).toFixed(0)} тыс. км
-          </p>
-        </div>
+        <h1 style={styles.headerTitle}>Болячки {car?.brand || 'Hyundai'} {car?.model || 'Solaris'}</h1>
+        <p style={styles.headerSubtitle}>{car?.engine || '1.6 (123 л.с.)'} {car?.transmission || '6-АКПП'} • ~{car?.mileage || '87'} тыс. км</p>
       </div>
-      
-      {/* Intro */}
+
       <div style={styles.intro}>
         <span style={styles.introIcon}>💡</span>
-        <span style={styles.introText}>
-          Показываем болячки, актуальные для вашего пробега. Не все проблемы случатся — это статистика по модели.
-        </span>
+        <span style={styles.introText}>Показываем болячки, актуальные для вашего пробега. Не все проблемы случатся — это статистика по модели.</span>
       </div>
-      
-      {/* Summary */}
+
       <div style={styles.summary}>
-        <div style={styles.summaryItem}>
-          <span style={styles.summaryValue}>{totalActive}</span>
-          <span style={styles.summaryLabel}>актуально сейчас</span>
-        </div>
+        <div style={styles.summaryItem}><span style={styles.summaryValue}>4</span><span style={styles.summaryLabel}>актуально сейчас</span></div>
         <div style={styles.summaryDivider} />
-        <div style={styles.summaryItem}>
-          <span style={styles.summaryValue}>{categorizedIssues.future.length}</span>
-          <span style={styles.summaryLabel}>в будущем</span>
-        </div>
+        <div style={styles.summaryItem}><span style={styles.summaryValue}>1</span><span style={styles.summaryLabel}>в будущем</span></div>
         <div style={styles.summaryDivider} />
-        <div style={styles.summaryItem}>
-          <span style={styles.summaryValue}>{categorizedIssues.passed.length}</span>
-          <span style={styles.summaryLabel}>уже прошли</span>
-        </div>
+        <div style={styles.summaryItem}><span style={styles.summaryValue}>2</span><span style={styles.summaryLabel}>уже прошли</span></div>
       </div>
-      
-      {/* Sections */}
+
       <div style={styles.sections}>
-        <IssueSection
-          title="Актуально сейчас"
-          issues={categorizedIssues.active}
-          currentMileage={carData.mileage}
-          color={colors.critical}
-          isOpen={openSections.active}
-          onToggle={() => toggleSection('active')}
-          onNavigateToDetail={handleNavigateToDetail}
-        />
-        
-        <IssueSection
-          title="Скоро станет актуальным"
-          issues={categorizedIssues.soon}
-          currentMileage={carData.mileage}
-          color={colors.warning}
-          isOpen={openSections.soon}
-          onToggle={() => toggleSection('soon')}
-          onNavigateToDetail={handleNavigateToDetail}
-        />
-        
-        <IssueSection
-          title="Уже прошли по пробегу"
-          issues={categorizedIssues.passed}
-          currentMileage={carData.mileage}
-          color={colors.success}
-          isOpen={openSections.passed}
-          onToggle={() => toggleSection('passed')}
-          onNavigateToDetail={handleNavigateToDetail}
-        />
-        
-        <IssueSection
-          title="В будущем"
-          issues={categorizedIssues.future}
-          currentMileage={carData.mileage}
-          color={colors.textTertiary}
-          isOpen={openSections.future}
-          onToggle={() => toggleSection('future')}
-          onNavigateToDetail={handleNavigateToDetail}
-        />
+        <div style={styles.section}>
+          <div style={styles.sectionWrapper('critical')}>
+            <button style={styles.sectionHeader('critical')} onClick={() => toggleSection('current')}>
+              <div style={styles.sectionHeaderLeft}>
+                <div style={styles.sectionDot('critical')} />
+                <span style={styles.sectionTitle}>Актуально сейчас</span>
+                <span style={styles.sectionCount('critical')}>4</span>
+              </div>
+              <span style={styles.sectionToggle(expandedSections.current)}>▼</span>
+            </button>
+            <div style={styles.sectionContent(expandedSections.current)}>{issues.current.map(renderIssueCard)}</div>
+          </div>
+        </div>
+
+        <div style={styles.section}>
+          <div style={styles.sectionWrapper('warning')}>
+            <button style={styles.sectionHeader('warning')} onClick={() => toggleSection('upcoming')}>
+              <div style={styles.sectionHeaderLeft}>
+                <div style={styles.sectionDot('warning')} />
+                <span style={styles.sectionTitle}>Скоро может проявиться</span>
+                <span style={styles.sectionCount('warning')}>1</span>
+              </div>
+              <span style={styles.sectionToggle(expandedSections.upcoming)}>▼</span>
+            </button>
+            <div style={styles.sectionContent(expandedSections.upcoming)}>{issues.upcoming.map(renderIssueCard)}</div>
+          </div>
+        </div>
+
+        <div style={styles.section}>
+          <div style={styles.sectionWrapper('success')}>
+            <button style={styles.sectionHeader('success')} onClick={() => toggleSection('past')}>
+              <div style={styles.sectionHeaderLeft}>
+                <div style={styles.sectionDot('success')} />
+                <span style={styles.sectionTitle}>Уже прошли (проверьте)</span>
+                <span style={styles.sectionCount('success')}>2</span>
+              </div>
+              <span style={styles.sectionToggle(expandedSections.past)}>▼</span>
+            </button>
+            <div style={styles.sectionContent(expandedSections.past)}>{issues.past.map(renderIssueCard)}</div>
+          </div>
+        </div>
+
+        {/* VIN Section */}
+        <div style={styles.vinSection}>
+          <div style={styles.vinCard}>
+            <div style={styles.vinIconBig}>🔍</div>
+            <h3 style={styles.vinTitleBig}>Уточнить данные по VIN</h3>
+            <p style={styles.vinDesc}>Введите VIN-номер, чтобы получить информацию именно для вашего автомобиля:</p>
+            <div style={styles.vinBenefits}>
+              <div style={styles.vinBenefit}><span style={styles.vinCheck}>✓</span> Проверить отзывные кампании по вашему VIN</div>
+              <div style={styles.vinBenefit}><span style={styles.vinCheck}>✓</span> Точный подбор запчастей под вашу комплектацию</div>
+              <div style={styles.vinBenefit}><span style={styles.vinCheck}>✓</span> Скачать шаблон претензии (если применимо)</div>
+              <div style={styles.vinBenefit}><span style={styles.vinCheck}>✓</span> Узнать ваши права по ЗоЗПП</div>
+            </div>
+            <div style={styles.vinInputSection}>
+              <input type="text" style={styles.vinInputField} placeholder="Например: WAUZZZ8X1DA012345" maxLength={17} value={vinValue} onChange={(e) => setVinValue(e.target.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''))} />
+              <button style={styles.vinCheckButton} onClick={handleVinCheck}>Проверить</button>
+            </div>
+            <p style={styles.vinNote}>Это необязательно — приложение работает и без VIN. Но с ним информация будет точнее.</p>
+            <button style={styles.vinSkip} onClick={() => setVinHidden(true)}>Пропустить</button>
+          </div>
+        </div>
+
+        {/* VIN Modal */}
+        <div style={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && setShowVinModal(false)}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalHandle} />
+            <div style={styles.modalSuccessIcon}>✅</div>
+            <h3 style={styles.modalTitle}>VIN распознан</h3>
+            <div style={styles.modalCarInfo}>
+              <div style={styles.modalCarRow}><span style={styles.modalLabel}>Модель</span><span style={styles.modalValue}>Hyundai Solaris</span></div>
+              <div style={styles.modalCarRow}><span style={styles.modalLabel}>Дата производства</span><span style={styles.modalValue}>Июнь 2015</span></div>
+              <div style={{ ...styles.modalCarRow, borderBottom: 'none' }}><span style={styles.modalLabel}>Страна сборки</span><span style={styles.modalValue}>Россия 🇷🇺</span></div>
+            </div>
+            <div style={styles.modalDivider} />
+            <div style={styles.modalQuestion}>
+              <h4 style={styles.modalQuestionTitle}>Как автомобиль попал в Россию?</h4>
+              <div style={styles.originOptions}>
+                <div style={styles.originOption} onClick={() => handleOriginSelect('official')}>
+                  <div style={styles.originIcon}>🏢</div>
+                  <div><strong style={styles.originTextStrong}>Официально продан в России</strong><span style={styles.originTextSpan}>Первый владелец купил у официального дилера</span></div>
+                </div>
+                <div style={styles.originOption} onClick={() => handleOriginSelect('imported')}>
+                  <div style={styles.originIcon}>✈️</div>
+                  <div><strong style={styles.originTextStrong}>Ввезён из-за рубежа</strong><span style={styles.originTextSpan}>Европа, США, Корея, ОАЭ и др.</span></div>
+                </div>
+              </div>
+            </div>
+            <div style={styles.tipBox}>
+              <h4 style={styles.tipBoxTitle}>💡 Как узнать?</h4>
+              <ul style={styles.tipBoxList}>
+                <li style={styles.tipBoxItem}>ПТС: посмотрите графу «Страна вывоза» или первого собственника</li>
+                <li style={styles.tipBoxItem}>Если первый владелец — юрлицо типа «Хёндэ Центр...» — скорее всего официальный</li>
+                <li style={styles.tipBoxItem}>Если физлицо или «ИП Иванов» — вероятно привезён</li>
+              </ul>
+            </div>
+            <button style={styles.modalSkip} onClick={handleDontKnow}>{showTip ? 'Всё равно не знаю' : 'Не знаю / Пропустить'}</button>
+          </div>
+        </div>
+
+        {/* Official Results */}
+        {vinResult === 'official' && (
+          <div style={styles.personalizedSection}>
+            <div style={styles.resultCard}>
+              <div style={styles.resultHeader('warning')}><span style={styles.resultIcon}>⚠️</span><h4 style={styles.resultTitle}>Ваш автомобиль в зоне риска</h4></div>
+              <div style={styles.resultBody}>
+                <p style={styles.resultText}>Дата выпуска: <strong>июнь 2015</strong> — до исправления дефекта рулевой рейки.</p>
+                <p style={styles.resultText}>Отзывная кампания <strong>HR-2017-042</strong> может быть применима к вашему VIN. Уточните у дилера.</p>
+              </div>
+            </div>
+            <div style={styles.resultCard}>
+              <div style={styles.resultHeader('info')}><span style={styles.resultIcon}>⚖️</span><h4 style={styles.resultTitle}>Ваши права</h4></div>
+              <div style={styles.resultBody}>
+                <p style={styles.resultText}>Автомобиль куплен у официального дилера — вы можете:</p>
+                <div style={styles.rightsList}>
+                  <div style={styles.rightsItem}><span style={styles.rightsNum}>1</span><p style={styles.rightsItemText}>Требовать бесплатный ремонт по отзывной кампании (даже после окончания гарантии)</p></div>
+                  <div style={styles.rightsItem}><span style={styles.rightsNum}>2</span><p style={styles.rightsItemText}>При отказе — претензия по ЗоЗПП ст. 18, 19 (существенный недостаток)</p></div>
+                </div>
+                <button style={styles.resultBtn}>📄 Скачать шаблон претензии</button>
+                <button style={styles.resultBtnSecondary}>📖 Подробнее о ваших правах</button>
+              </div>
+            </div>
+            <div style={styles.resultCard}>
+              <div style={styles.resultHeader('success')}><span style={styles.resultIcon}>🔩</span><h4 style={styles.resultTitle}>Запчасти под ваш VIN</h4></div>
+              <div style={styles.resultBody}>
+                <p style={styles.resultText}>Артикулы подобраны точно под вашу комплектацию:</p>
+                <div style={styles.partVinItem}><span style={styles.partName}>Ремкомплект рулевой рейки</span><span style={styles.partNumber}>57700-1R000</span></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Imported Results */}
+        {vinResult === 'imported' && (
+          <div style={styles.personalizedSection}>
+            <div style={styles.resultCard}>
+              <div style={styles.resultHeader('neutral')}><span style={styles.resultIcon}>🌍</span><h4 style={styles.resultTitle}>Импортный автомобиль</h4></div>
+              <div style={styles.resultBody}>
+                <p style={styles.resultText}>Автомобили, ввезённые из-за рубежа, <strong>не участвуют</strong> в российских отзывных кампаниях.</p>
+                <p style={styles.resultText}>Но вы можете проверить отзывные в стране происхождения:</p>
+                <div style={styles.importLinks}>
+                  <a href="#" style={styles.importLink}>🇰🇷 Проверить в Корее</a>
+                  <a href="#" style={styles.importLink}>🇺🇸 Проверить в США (NHTSA)</a>
+                  <a href="#" style={styles.importLink}>🇪🇺 Проверить в Европе</a>
+                </div>
+              </div>
+            </div>
+            <div style={styles.resultCard}>
+              <div style={styles.resultHeader('success')}><span style={styles.resultIcon}>🔩</span><h4 style={styles.resultTitle}>Запчасти под ваш VIN</h4></div>
+              <div style={styles.resultBody}>
+                <p style={styles.resultText}>Артикулы подобраны точно под вашу комплектацию:</p>
+                <div style={styles.partVinItem}><span style={styles.partName}>Ремкомплект рулевой рейки</span><span style={styles.partNumber}>57700-1R000</span></div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      
-      {/* Spacer for bottom nav */}
-      <div style={{ height: '100px' }} />
     </div>
   );
-}
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    background: colors.background,
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
-  },
-  
-  // Header
-  header: {
-    padding: '16px 20px',
-    background: colors.cardBg,
-    borderBottom: `1px solid ${colors.border}`,
-  },
-  
-  headerInfo: {},
-  
-  headerTitle: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: colors.textPrimary,
-    margin: 0,
-  },
-  
-  headerSubtitle: {
-    fontSize: '14px',
-    color: colors.textSecondary,
-    margin: '4px 0 0',
-  },
-  
-  // Intro
-  intro: {
-    display: 'flex',
-    gap: '12px',
-    padding: '14px 16px',
-    margin: '12px',
-    background: colors.primaryLight,
-    borderRadius: '12px',
-  },
-  
-  introIcon: {
-    fontSize: '18px',
-  },
-  
-  introText: {
-    fontSize: '13px',
-    color: colors.textSecondary,
-    lineHeight: 1.5,
-  },
-  
-  // Summary
-  summary: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    padding: '16px',
-    margin: '0 12px 12px',
-    background: colors.cardBg,
-    borderRadius: '12px',
-    border: `1px solid ${colors.border}`,
-  },
-  
-  summaryItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '2px',
-  },
-  
-  summaryValue: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  
-  summaryLabel: {
-    fontSize: '11px',
-    color: colors.textTertiary,
-  },
-  
-  summaryDivider: {
-    width: '1px',
-    height: '32px',
-    background: colors.border,
-  },
-  
-  // Sections
-  sections: {
-    padding: '0 12px',
-  },
-  
-  section: {
-    marginBottom: '12px',
-  },
-  
-  sectionHeader: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px 14px',
-    background: colors.cardBg,
-    border: `1px solid`,
-    borderRadius: '12px',
-    cursor: 'pointer',
-  },
-  
-  sectionHeaderLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  
-  sectionDot: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-  },
-  
-  sectionTitle: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  
-  sectionCount: {
-    fontSize: '12px',
-    fontWeight: '600',
-    padding: '2px 8px',
-    borderRadius: '10px',
-  },
-  
-  sectionToggle: {
-    fontSize: '10px',
-    color: colors.textTertiary,
-    transition: 'transform 0.2s ease',
-  },
-  
-  sectionContent: {
-    marginTop: '8px',
-  },
-  
-  // Issue Card
-  issueCard: {
-    background: colors.cardBg,
-    borderRadius: '12px',
-    border: `1px solid ${colors.border}`,
-    marginBottom: '8px',
-    overflow: 'hidden',
-  },
-  
-  issueHeader: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '14px',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-  },
-  
-  issueHeaderLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  
-  severityDot: {
-    width: '10px',
-    height: '10px',
-    borderRadius: '50%',
-    flexShrink: 0,
-  },
-  
-  issueHeaderInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  
-  issueName: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  
-  issueMeta: {
-    fontSize: '12px',
-    color: colors.textTertiary,
-  },
-  
-  issueToggle: {
-    fontSize: '10px',
-    color: colors.textTertiary,
-    transition: 'transform 0.2s ease',
-  },
-  
-  issueBody: {
-    padding: '0 14px 14px',
-    borderTop: `1px solid ${colors.border}`,
-  },
-  
-  // Progress
-  progressContainer: {
-    marginTop: '14px',
-    marginBottom: '14px',
-  },
-  
-  progressBar: {
-    position: 'relative',
-    height: '8px',
-    background: colors.border,
-    borderRadius: '4px',
-    marginBottom: '6px',
-  },
-  
-  progressZone: {
-    position: 'absolute',
-    top: 0,
-    height: '100%',
-    borderRadius: '4px',
-  },
-  
-  progressMarker: {
-    position: 'absolute',
-    top: '-3px',
-    width: '4px',
-    height: '14px',
-    borderRadius: '2px',
-    marginLeft: '-2px',
-  },
-  
-  progressLabels: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  
-  progressLabel: {
-    fontSize: '10px',
-    color: colors.textTertiary,
-  },
-  
-  progressCurrent: {
-    fontSize: '11px',
-    fontWeight: '500',
-  },
-  
-  issueDescription: {
-    fontSize: '13px',
-    color: colors.textSecondary,
-    lineHeight: 1.5,
-    margin: '0 0 14px',
-  },
-  
-  // Quick Metrics
-  quickMetrics: {
-    display: 'flex',
-    gap: '12px',
-    marginBottom: '14px',
-  },
-  
-  metricItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '8px 12px',
-    background: colors.background,
-    borderRadius: '8px',
-  },
-  
-  metricIcon: {
-    fontSize: '14px',
-  },
-  
-  metricValue: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  
-  // Urgent Box (вместо "Нельзя ехать")
-  urgentBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 12px',
-    background: colors.warningLight,
-    borderRadius: '8px',
-    marginBottom: '14px',
-  },
-  
-  urgentIcon: {
-    fontSize: '16px',
-  },
-  
-  urgentText: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: colors.warning,
-  },
-  
-  // Detail Button
-  detailButton: {
-    width: '100%',
-    padding: '14px',
-    background: colors.primary,
-    color: '#FFFFFF',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
 };
 
-// Global styles
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = `
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    button:active { opacity: 0.8; }
-  `;
-  document.head.appendChild(styleSheet);
-}
+export default IssuesScreen;
