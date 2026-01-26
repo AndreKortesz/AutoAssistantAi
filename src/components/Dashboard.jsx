@@ -273,7 +273,7 @@ export default function Dashboard() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <img src="/logo-aaa.svg" alt="AAA" style={styles.headerLogo} />
+        <img src="/logo-aaa.png" alt="AAA" style={styles.headerLogo} />
         <div style={styles.headerCenter}>
           <div style={styles.carName}>{carData.brand} {carData.model}</div>
           <div style={styles.carDetails}>{carData.engine} • {carData.transmission}</div>
@@ -494,6 +494,25 @@ export default function Dashboard() {
         <button style={styles.addButton}>+ Добавить запись</button>
       </div>
 
+      {/* Bottom Navigation */}
+      <div style={styles.bottomNav}>
+        <button style={{ ...styles.navItem, ...styles.navItemActive }}>
+          <span style={styles.navIcon}>🏠</span>
+          <span style={styles.navLabel}>Главная</span>
+        </button>
+        <button style={styles.navItem}>
+          <span style={styles.navIcon}>⚠️</span>
+          <span style={styles.navLabel}>Болячки</span>
+        </button>
+        <button style={styles.navItem}>
+          <span style={styles.navIcon}>📋</span>
+          <span style={styles.navLabel}>Журнал</span>
+        </button>
+        <button style={styles.navItem}>
+          <span style={styles.navIcon}>💬</span>
+          <span style={styles.navLabel}>Ассистент</span>
+        </button>
+      </div>
     </div>
   );
 }

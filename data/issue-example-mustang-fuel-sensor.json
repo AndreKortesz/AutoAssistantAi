@@ -1,0 +1,240 @@
+{
+  "id": "mustang_6g_ecoboost_fuel_sensor",
+  "version": "1.0.0",
+  "created_at": "2025-01-21",
+  "updated_at": "2025-01-21",
+
+  "car": {
+    "brand": "Ford",
+    "model": "Mustang",
+    "generation": "6G (S550)",
+    "year_start": 2015,
+    "year_end": 2023,
+    "engine": {
+      "code": "2.3L EcoBoost",
+      "displacement": 2.3,
+      "power_hp": 310,
+      "fuel": "бензин",
+      "turbo": true
+    },
+    "transmission": null,
+    "body_type": "Купе",
+    "market": "USA",
+    "facelift": "любой"
+  },
+
+  "issue": {
+    "title": "Датчик топлива старой ревизии (перед ТНВД)",
+    "title_short": "Датчик топлива",
+    "system": "fuel",
+    "subsystem": "fuel_pressure_sensor",
+    "severity": "critical",
+    "severity_reason": "Может привести к нехватке топлива при надуве и критическому отказу двигателя",
+    "can_drive": false,
+    "symptoms": [
+      {
+        "description": "Плавающие обороты холостого хода",
+        "conditions": "на прогретом двигателе"
+      },
+      {
+        "description": "Потеря мощности",
+        "conditions": "при разгоне под нагрузкой"
+      },
+      {
+        "description": "Двигатель глохнет",
+        "conditions": "спонтанно"
+      }
+    ],
+    "obd_codes": [
+      {"code": "P008A", "description": "Low Pressure Fuel System Pressure - Too Low"},
+      {"code": "P0148", "description": "Fuel Delivery Error"},
+      {"code": "P018C", "description": "Fuel Pressure Sensor Range/Performance"},
+      {"code": "P018D", "description": "Fuel Pressure Sensor Circuit"}
+    ],
+    "cause": {
+      "primary": "Датчик топлива старого образца отправляет ложные данные в ECU без запуска Check Engine. Это приводит к нехватке топлива при надуве.",
+      "secondary": [
+        "Брак первых партий датчиков",
+        "Конструктивный дефект ревизии 1"
+      ],
+      "not_cause": [
+        "Топливный насос (ТНВД)",
+        "Форсунки",
+        "Топливный фильтр"
+      ],
+      "root_cause_type": "конструктивный_дефект"
+    }
+  },
+
+  "mileage": {
+    "typical_start_km": 0,
+    "typical_end_km": null,
+    "peak_km": 40000,
+    "early_cases_km": 15000,
+    "frequency_percent": 35,
+    "age_related": false,
+    "age_years": null
+  },
+
+  "solutions": [
+    {
+      "type": "correct",
+      "title": "Замена датчика на ревизию 2",
+      "description": "Заменить датчик топлива на обновлённую версию BU5Z-9F972-B. Датчик находится перед ТНВД.",
+      "diy_possible": true,
+      "diy_difficulty": "easy",
+      "diy_time_hours": 0.5,
+      "diy_tools": [
+        "Ключ на 24",
+        "Ключ на 12",
+        "Ветошь"
+      ],
+      "diy_warning": "Подстелите ветошь под датчик — польётся топливо. ВАЖНО: Если старый датчик не выкручивается легко — НЕ пытайтесь силой! Есть риск повредить резьбу или выломать датчик. В этом случае меняйте топливную магистраль целиком (FR3Z-9J280-A).",
+      "service_time_hours": 0.3,
+      "labor_cost": {
+        "min": 500,
+        "max": 1500,
+        "currency": "RUB"
+      },
+      "effectiveness": "permanent",
+      "side_effects": []
+    },
+    {
+      "type": "preventive",
+      "title": "Превентивная замена при покупке",
+      "description": "Проверять и менять всем EcoBoost обязательно, даже если нет симптомов. Ложные данные могут поступать без ошибок на приборке.",
+      "diy_possible": true,
+      "diy_difficulty": "easy",
+      "diy_time_hours": 0.5,
+      "diy_tools": ["Ключ на 24", "Ключ на 12"],
+      "diy_warning": null,
+      "service_time_hours": 0.3,
+      "labor_cost": {
+        "min": 500,
+        "max": 1500,
+        "currency": "RUB"
+      },
+      "effectiveness": "permanent",
+      "side_effects": []
+    }
+  ],
+
+  "parts": [
+    {
+      "name": "Датчик давления топлива",
+      "part_number": "BU5Z-9F972-B",
+      "part_number_actual": "BU5A-9F972-CA",
+      "revision": "rev.2",
+      "manufacturer": "Ford/Motorcraft",
+      "alternatives": [],
+      "do_not_buy": [
+        {
+          "part_number": "BU5Z-9F972-A",
+          "manufacturer": "Ford",
+          "reason": "Старая ревизия с дефектом — именно её и нужно менять"
+        }
+      ],
+      "price": {
+        "min": 4500,
+        "max": 6000,
+        "currency": "RUB",
+        "as_of_date": "2025-01"
+      },
+      "price_usd": 55,
+      "quantity": 1,
+      "where_to_buy": [
+        "Официальный дилер Ford",
+        "tascaparts.com (USA, через VPN)",
+        "Exist.ru",
+        "Autodoc.ru"
+      ]
+    }
+  ],
+
+  "related_parts": [
+    {
+      "name": "Топливная магистраль в сборе",
+      "part_number": "FR3Z-9J280-A",
+      "reason": "Если датчик прикипел и не выкручивается — менять магистраль целиком с новым датчиком"
+    }
+  ],
+
+  "relations": {
+    "causes": [
+      "mustang_6g_ecoboost_engine_failure",
+      "mustang_6g_ecoboost_turbo_damage"
+    ],
+    "caused_by": [],
+    "often_confused_with": [
+      "mustang_6g_ecoboost_fuel_pump",
+      "mustang_6g_ecoboost_injectors"
+    ],
+    "fix_together": [
+      "mustang_6g_ecoboost_oil_separator",
+      "mustang_6g_ecoboost_pcm_update",
+      "mustang_6g_ecoboost_purge_valve"
+    ],
+    "fix_order": 1
+  },
+
+  "prevention": {
+    "possible": true,
+    "actions": [
+      {
+        "description": "Заменить датчик превентивно сразу после покупки б/у автомобиля",
+        "interval_km": null,
+        "interval_months": null
+      },
+      {
+        "description": "Проверить версию датчика (последняя буква партномера = версия ревизии)",
+        "interval_km": null,
+        "interval_months": null
+      }
+    ],
+    "recommendation": "Проверять и менять ВСЕМ EcoBoost обязательно! Датчик недорогой (~$55), а последствия катастрофические. Прежде чем появятся ошибки — можно уже основательно ушатать двигатель."
+  },
+
+  "diagnostic": {
+    "method": "obd_scan",
+    "instruction": "1. Подключить OBD-сканер\n2. Проверить наличие ошибок P008A, P0148, P018C, P018D\n3. ВАЖНО: ошибки могут НЕ появляться, пока двигатель уже повреждён!\n4. Лучший метод — превентивная замена",
+    "visual_check": "Посмотреть последнюю букву партномера на датчике. Если не 'B' или 'CA' — старая ревизия.",
+    "tools_needed": ["OBD-II сканер", "Фонарик"]
+  },
+
+  "owner_reports": [
+    {
+      "mileage_km": 45000,
+      "year": 2016,
+      "date": "2023-05-15",
+      "comment": "Менял сам, заняло 30 минут. Проблема с плавающими оборотами ушла полностью.",
+      "solution_worked": true,
+      "source": "drive2.ru"
+    },
+    {
+      "mileage_km": 32000,
+      "year": 2017,
+      "date": "2024-02-10",
+      "comment": "Поменял превентивно при покупке. Старый датчик был rev.A",
+      "solution_worked": true,
+      "source": "mustang-club.ru"
+    }
+  ],
+
+  "sources": [
+    {
+      "type": "drive2",
+      "url": "https://www.drive2.ru/l/553952925722871354/",
+      "author": "MUSTANG CLAN",
+      "author_type": "experienced_owner",
+      "confidence": "high",
+      "date": "2020-02-29"
+    }
+  ],
+
+  "meta": {
+    "data_quality": "gold",
+    "completeness_percent": 98,
+    "needs_review": false,
+    "tags": ["критично", "проверить_сразу", "diy", "превентивно"]
+  }
+}

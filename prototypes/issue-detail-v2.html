@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoAssistantAi — Детальная болячка v2</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --background: #F7F8FA;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --primary: #1F4FD8;
+      --primary-light: rgba(31, 79, 216, 0.08);
+      --success: #2E9E6F;
+      --success-light: rgba(46, 158, 111, 0.08);
+      --warning: #D97706;
+      --warning-light: rgba(217, 119, 6, 0.08);
+      --critical: #DC2626;
+      --critical-light: rgba(220, 38, 38, 0.08);
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-tertiary: #94A3B8;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      line-height: 1.5;
+      max-width: 420px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .back-button {
+      background: none;
+      border: none;
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    
+    .more-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 20px;
+      background: var(--card-bg);
+      margin-bottom: 8px;
+    }
+    
+    .hero-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .severity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .severity-critical {
+      color: var(--critical);
+      background: var(--critical-light);
+    }
+    
+    .severity-high {
+      color: var(--warning);
+      background: var(--warning-light);
+    }
+    
+    /* Смягчённый бейдж критичности */
+    .severity-softener {
+      font-size: 12px;
+      color: var(--success);
+      font-weight: 500;
+    }
+    
+
+    .system-tag {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    
+    .car-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    
+    /* Статистика — 2 колонки */
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .stat-card {
+      padding: 14px;
+      background: var(--background);
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Распространённость */
+    .frequency-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    
+    .frequency-hint {
+      display: block;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+    
+    /* Recommendation Box (мягкий, не пугающий) */
+    .recommendation-box {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      margin-bottom: 8px;
+    }
+    
+    .recommendation-icon {
+      font-size: 20px;
+    }
+    
+    .recommendation-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .recommendation-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+    
+    .recommendation-conditions {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      padding-left: 16px;
+    }
+    
+    .recommendation-conditions li {
+      margin-bottom: 2px;
+    }
+    
+    /* Consequences Box */
+    .consequences-box {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--critical-light);
+      border-left: 4px solid var(--critical);
+      margin-bottom: 8px;
+    }
+    
+    .consequences-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--critical);
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .consequences-text {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    /* Section */
+    .section {
+      background: var(--card-bg);
+      margin-bottom: 8px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 16px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+    }
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .chevron {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s ease;
+    }
+    
+    .chevron.open {
+      transform: rotate(180deg);
+    }
+    
+    .section-content {
+      padding: 0 20px 20px;
+      display: none;
+    }
+    
+    .section-content.open {
+      display: block;
+    }
+    
+    /* Symptoms */
+    .symptom-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .symptom-bullet {
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    .symptom-condition {
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+    
+    /* OBD Codes */
+    .codes-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .code-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 8px;
+    }
+    
+    .code-value {
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--critical);
+      background: var(--critical-light);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    
+    .code-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    /* Cause */
+    .cause-text {
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    
+    .not-cause-box {
+      padding: 12px;
+      background: var(--critical-light);
+      border-radius: 8px;
+    }
+    
+    .not-cause-title {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--critical);
+      margin-bottom: 8px;
+    }
+    
+    .chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    
+    .chip-error {
+      background: var(--critical-light);
+      color: var(--critical);
+    }
+    
+    .chip-success {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    
+    .chip-default {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    
+    /* Solution Tabs */
+    .solution-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .solution-tab {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--card-bg);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    
+    .solution-tab.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    
+    .solution-tab-hint {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    
+    .solution-tab.active .solution-tab-hint {
+      color: var(--primary);
+    }
+    
+    /* Solution Content */
+    .solution-content {
+      display: none;
+    }
+    
+    .solution-content.active {
+      display: block;
+    }
+    
+    .solution-card {
+      padding: 16px;
+      background: var(--success-light);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .solution-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .solution-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .solution-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    
+    .solution-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .solution-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    /* Tools list */
+    .tools-list {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 8px;
+    }
+    
+    .tools-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .tools-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .tool-chip {
+      padding: 4px 10px;
+      background: var(--card-bg);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    
+    .diy-warning {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background: var(--warning-light);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    
+    .diy-warning-text {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    /* Parts */
+    .part-card {
+      padding: 16px;
+      background: var(--background);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .part-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .part-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    
+    .part-revision {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--success);
+      background: var(--success-light);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    
+    .part-number {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .part-number-label {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+    
+    .part-number-value {
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .copy-button {
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px;
+    }
+    
+    .part-manufacturer {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .part-price {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    
+    .price-range {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    
+    .price-usd {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Dual CTA Buttons */
+    .cta-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .cta-button {
+      flex: 1;
+      padding: 14px 12px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+    }
+    
+    .cta-primary {
+      color: #FFFFFF;
+      background: var(--primary);
+      border: none;
+    }
+    
+    .cta-secondary {
+      color: var(--primary);
+      background: var(--card-bg);
+      border: 2px solid var(--primary);
+    }
+    
+    /* Progress Checklist */
+    .checklist {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--background);
+      border-radius: 12px;
+    }
+    
+    .checklist-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .checklist-item:last-child {
+      border-bottom: none;
+    }
+    
+    .checklist-checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .checklist-checkbox.checked {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+    
+    .checklist-label {
+      flex: 1;
+      font-size: 14px;
+    }
+    
+    .checklist-label.checked {
+      color: var(--text-tertiary);
+      text-decoration: line-through;
+    }
+    
+    /* Owner Reviews */
+    .review-card {
+      padding: 14px;
+      background: var(--background);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .review-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .review-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .review-status {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--success);
+    }
+    
+    .review-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+    
+    /* Related */
+    .fix-together-hint {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    
+    .related-issue {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    
+    .related-title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .related-arrow {
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Journal Button */
+    .journal-button {
+      width: 100%;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 2px dashed var(--primary);
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    
+    /* Footer Sources */
+    .footer-sources {
+      padding: 16px 20px;
+      background: var(--background);
+      margin-top: 8px;
+    }
+    
+    .footer-sources-title {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+    
+    .footer-sources-text {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Bottom padding */
+    .bottom-space {
+      height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <button class="back-button">← Назад</button>
+    <button class="more-button">⋮</button>
+  </div>
+  
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-top">
+      <span class="severity-badge severity-critical">
+        🔴 Критично
+        <span class="severity-softener">· легко исправить</span>
+      </span>
+
+    </div>
+    <h1 class="title">Неисправность датчика давления топлива</h1>
+    <p class="car-info">Ford Mustang 6G (S550) • 2.3L EcoBoost • 2015–2023</p>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <span class="stat-value">30 – 50 тыс. км</span>
+        <span class="stat-label">обычно проявляется</span>
+      </div>
+      <div class="stat-card">
+        <span class="frequency-badge">⚡ Часто встречается</span>
+        <span class="frequency-hint">по анализу 47 отзывов владельцев</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recommendation (мягкий, не пугающий) -->
+  <div class="recommendation-box">
+    <span class="recommendation-icon">💡</span>
+    <div>
+      <span class="recommendation-title">Рекомендуем проверить</span>
+      <span class="recommendation-text">На ранних ревизиях датчик может передавать некорректные данные ещё до появления ошибок. Рекомендуется профилактическая проверка или замена на обновлённую версию.</span>
+      <ul class="recommendation-conditions">
+        <li>Особенно актуально при частых трассовых поездках</li>
+        <li>При активном стиле вождения</li>
+        <li>Если уже были ошибки по топливной системе</li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Consequences -->
+  <div class="consequences-box">
+    <span class="recommendation-icon">⚠️</span>
+    <div>
+      <span class="consequences-title">Если не устранить</span>
+      <span class="consequences-text">Некорректные показания датчика могут привести к обеднению смеси под нагрузкой. В худшем случае — повреждение поршневой группы или турбины.</span>
+    </div>
+  </div>
+  
+  <!-- Симптомы -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🔍 Симптомы</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <div class="symptom-row">
+        <span class="symptom-bullet">•</span>
+        <span><strong>Нестабильные обороты холостого хода</strong><span class="symptom-condition"> — на прогретом двигателе</span></span>
+      </div>
+      <div class="symptom-row">
+        <span class="symptom-bullet">•</span>
+        <span><strong>Заметное снижение тяги</strong><span class="symptom-condition"> — при интенсивном разгоне</span></span>
+      </div>
+      <div class="symptom-row">
+        <span class="symptom-bullet">•</span>
+        <span><strong>Двигатель может заглохнуть</strong><span class="symptom-condition"> — без видимых причин</span></span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Коды ошибок -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">📟 Коды ошибок OBD</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <div class="codes-grid">
+        <div class="code-card">
+          <span class="code-value">P008A</span>
+          <span class="code-desc">Низкое давление в топливной системе</span>
+        </div>
+        <div class="code-card">
+          <span class="code-value">P0148</span>
+          <span class="code-desc">Ошибка подачи топлива</span>
+        </div>
+        <div class="code-card">
+          <span class="code-value">P018C</span>
+          <span class="code-desc">Показания датчика вне допустимого диапазона</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Причина -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🎯 Причина</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <p class="cause-text">Датчики первых ревизий имеют конструктивную особенность, из-за которой могут передавать в блок управления заниженные значения давления. Блок управления не всегда фиксирует это как ошибку, но корректирует подачу топлива, что приводит к обеднению смеси под нагрузкой.</p>
+      
+      <div class="not-cause-box">
+        <span class="not-cause-title">❌ Часто путают с:</span>
+        <div>
+          <span class="chip chip-error">Топливный насос</span>
+          <span class="chip chip-error">Форсунки</span>
+          <span class="chip chip-error">Топливный фильтр</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Решение с табами -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">✅ Решение</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      
+      <!-- Табы: Сервис / DIY -->
+      <div class="solution-tabs">
+        <button class="solution-tab active" onclick="switchTab('service')">
+          🔧 В сервисе
+          <span class="solution-tab-hint">рекомендуем</span>
+        </button>
+        <button class="solution-tab" onclick="switchTab('diy')">
+          🛠 Своими руками
+          <span class="solution-tab-hint">для опытных</span>
+        </button>
+      </div>
+      
+      <!-- Контент: Сервис -->
+      <div id="tab-service" class="solution-content active">
+        <div class="solution-card">
+          <div class="solution-header">
+            <span class="solution-title">Замена датчика на актуальную ревизию</span>
+          </div>
+          <p class="solution-desc">Мастер заменит датчик давления топлива на версию с исправленной конструкцией. Работа занимает около 20–30 минут.</p>
+          
+          <div class="solution-meta">
+            <div class="solution-meta-item">
+              <span>⏱</span>
+              <span>20–30 минут работы</span>
+            </div>
+            <div class="solution-meta-item">
+              <span>💰</span>
+              <span>500 – 1 500 ₽ за работу</span>
+            </div>
+            <div class="solution-meta-item">
+              <span>📍</span>
+              <span>Любой сервис с опытом работы с Ford</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Контент: DIY -->
+      <div id="tab-diy" class="solution-content">
+        <div class="solution-card">
+          <div class="solution-header">
+            <span class="solution-title">Самостоятельная замена</span>
+            <span class="chip chip-success">👍 Несложно</span>
+          </div>
+          <p class="solution-desc">Датчик расположен в доступном месте перед ТНВД. Замена не требует специального оборудования.</p>
+          
+          <div class="solution-meta">
+            <div class="solution-meta-item">
+              <span>⏱</span>
+              <span>30–40 минут</span>
+            </div>
+            <div class="solution-meta-item">
+              <span>📊</span>
+              <span>Сложность: 2 из 5</span>
+            </div>
+          </div>
+          
+          <div class="tools-list">
+            <div class="tools-title">🔧 Понадобятся:</div>
+            <div class="tools-items">
+              <span class="tool-chip">Ключ на 24</span>
+              <span class="tool-chip">Ключ на 12</span>
+              <span class="tool-chip">Ветошь</span>
+              <span class="tool-chip">Ёмкость для топлива</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="diy-warning">
+          <span>⚠️</span>
+          <span class="diy-warning-text">Если датчик прикипел и не поддаётся — не прилагайте чрезмерных усилий. Есть риск повредить резьбу. В этом случае лучше заменить топливную магистраль в сборе.</span>
+        </div>
+      </div>
+      
+      <!-- Чеклист прогресса -->
+      <div class="checklist">
+        <div class="checklist-title">📋 Ваш прогресс</div>
+        <div class="checklist-item" onclick="toggleCheck(this)">
+          <div class="checklist-checkbox"></div>
+          <span class="checklist-label">Купить запчасть</span>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this)">
+          <div class="checklist-checkbox"></div>
+          <span class="checklist-label">Заменить датчик</span>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this)">
+          <div class="checklist-checkbox"></div>
+          <span class="checklist-label">Проверить — ошибок нет</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Запчасти -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🔩 Запчасти</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <div class="part-card">
+        <div class="part-header">
+          <span class="part-name">Датчик давления топлива</span>
+          <span class="part-revision">rev.2</span>
+        </div>
+        <div class="part-number">
+          <span class="part-number-label">Артикул:</span>
+          <span class="part-number-value">BU5Z-9F972-B</span>
+          <button class="copy-button" onclick="copyToClipboard('BU5Z-9F972-B')">📋</button>
+        </div>
+        <div class="part-manufacturer">Ford / Motorcraft (оригинал)</div>
+        <div class="part-price">
+          <span class="price-range">4 500 – 6 000 ₽</span>
+          <span class="price-usd">(~$55 в США)</span>
+        </div>
+      </div>
+      
+      <!-- Dual CTA -->
+      <div class="cta-buttons">
+        <button class="cta-button cta-primary">🛒 Купить запчасть</button>
+        <button class="cta-button cta-secondary">📍 Найти сервис</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Отзывы владельцев -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">💬 Отзывы владельцев</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <div class="review-card">
+        <div class="review-header">
+          <span class="review-meta">Mustang 2016 • 45 000 км</span>
+          <span class="review-status">✓ Проблема решена</span>
+        </div>
+        <p class="review-text">Заменил сам за полчаса. Обороты перестали плавать, машина поехала совсем по-другому. Жалею, что не сделал раньше.</p>
+      </div>
+      
+      <div class="review-card">
+        <div class="review-header">
+          <span class="review-meta">Mustang 2017 • 32 000 км</span>
+          <span class="review-status">✓ Профилактика</span>
+        </div>
+        <p class="review-text">Поменял при покупке б/у, хотя симптомов не было. На старом датчике была первая ревизия — правильно сделал, что не стал ждать.</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Заменить заодно -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🔗 Проверить заодно</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-content">
+      <p class="fix-together-hint">Эти узлы часто требуют внимания на том же пробеге:</p>
+      
+      <div class="related-issue">
+        <span class="severity-badge severity-critical">🔴</span>
+        <span class="related-title">Маслоотделитель картерных газов</span>
+        <span class="related-arrow">→</span>
+      </div>
+      <div class="related-issue">
+        <span class="severity-badge severity-critical">🔴</span>
+        <span class="related-title">Версия прошивки блока управления</span>
+        <span class="related-arrow">→</span>
+      </div>
+      <div class="related-issue">
+        <span class="severity-badge severity-high">🟠</span>
+        <span class="related-title">Клапан продувки адсорбера</span>
+        <span class="related-arrow">→</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Кнопка добавления в журнал -->
+  <div style="padding: 0 20px;">
+    <button class="journal-button">📝 Добавить в журнал обслуживания</button>
+  </div>
+  
+  <!-- Footer: источники (минималистично) -->
+  <div class="footer-sources">
+    <div class="footer-sources-title">Источники информации</div>
+    <div class="footer-sources-text">Данные собраны на основе анализа 47 отзывов владельцев, технических бюллетеней и рекомендаций профильных сообществ. Последнее обновление: январь 2025.</div>
+  </div>
+  
+  <div class="bottom-space"></div>
+  
+  <script>
+    function toggleSection(button) {
+      const chevron = button.querySelector('.chevron');
+      const content = button.nextElementSibling;
+      
+      chevron.classList.toggle('open');
+      content.classList.toggle('open');
+    }
+    
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      // Можно добавить toast уведомление
+      alert('Скопировано: ' + text);
+    }
+    
+    function switchTab(tab) {
+      // Переключение табов
+      document.querySelectorAll('.solution-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.solution-content').forEach(c => c.classList.remove('active'));
+      
+      if (tab === 'service') {
+        document.querySelectorAll('.solution-tab')[0].classList.add('active');
+        document.getElementById('tab-service').classList.add('active');
+      } else {
+        document.querySelectorAll('.solution-tab')[1].classList.add('active');
+        document.getElementById('tab-diy').classList.add('active');
+      }
+    }
+    
+    function toggleCheck(item) {
+      const checkbox = item.querySelector('.checklist-checkbox');
+      const label = item.querySelector('.checklist-label');
+      
+      checkbox.classList.toggle('checked');
+      label.classList.toggle('checked');
+      
+      if (checkbox.classList.contains('checked')) {
+        checkbox.innerHTML = '✓';
+      } else {
+        checkbox.innerHTML = '';
+      }
+    }
+  </script>
+</body>
+</html>

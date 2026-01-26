@@ -1,0 +1,641 @@
+{
+  "description": "Марки автомобилей, популярные в России",
+  "count": 127,
+  "marks": [
+    {
+      "id": "ACURA",
+      "name": "Acura",
+      "cyrillic_name": "Акура"
+    },
+    {
+      "id": "ALFA_ROMEO",
+      "name": "Alfa Romeo",
+      "cyrillic_name": "Альфа Ромео"
+    },
+    {
+      "id": "ASTON_MARTIN",
+      "name": "Aston Martin",
+      "cyrillic_name": "Астон Мартин"
+    },
+    {
+      "id": "AUDI",
+      "name": "Audi",
+      "cyrillic_name": "Ауди"
+    },
+    {
+      "id": "AURUS",
+      "name": "Aurus",
+      "cyrillic_name": "Аурус"
+    },
+    {
+      "id": "AVATR",
+      "name": "Avatr",
+      "cyrillic_name": "Аватр"
+    },
+    {
+      "id": "BAIC",
+      "name": "BAIC",
+      "cyrillic_name": "БАИК"
+    },
+    {
+      "id": "BMW",
+      "name": "BMW",
+      "cyrillic_name": "БМВ"
+    },
+    {
+      "id": "BYD",
+      "name": "BYD",
+      "cyrillic_name": "БИД"
+    },
+    {
+      "id": "BELGEE",
+      "name": "Belgee",
+      "cyrillic_name": "Белджи"
+    },
+    {
+      "id": "BENTLEY",
+      "name": "Bentley",
+      "cyrillic_name": "Бентли"
+    },
+    {
+      "id": "BESTUNE",
+      "name": "Bestune",
+      "cyrillic_name": "Бестюн"
+    },
+    {
+      "id": "BRILLIANCE",
+      "name": "Brilliance",
+      "cyrillic_name": "Бриллианс"
+    },
+    {
+      "id": "BUGATTI",
+      "name": "Bugatti",
+      "cyrillic_name": "Бугатти"
+    },
+    {
+      "id": "BUICK",
+      "name": "Buick",
+      "cyrillic_name": "Бьюик"
+    },
+    {
+      "id": "CADILLAC",
+      "name": "Cadillac",
+      "cyrillic_name": "Кадиллак"
+    },
+    {
+      "id": "CHANGAN",
+      "name": "Changan",
+      "cyrillic_name": "Чанган"
+    },
+    {
+      "id": "CHERY",
+      "name": "Chery",
+      "cyrillic_name": "Чери"
+    },
+    {
+      "id": "CHEVROLET",
+      "name": "Chevrolet",
+      "cyrillic_name": "Шевроле"
+    },
+    {
+      "id": "CHRYSLER",
+      "name": "Chrysler",
+      "cyrillic_name": "Крайслер"
+    },
+    {
+      "id": "CITROEN",
+      "name": "Citroen",
+      "cyrillic_name": "Ситроен"
+    },
+    {
+      "id": "CUPRA",
+      "name": "Cupra",
+      "cyrillic_name": "Купра"
+    },
+    {
+      "id": "DS",
+      "name": "DS",
+      "cyrillic_name": "ДС"
+    },
+    {
+      "id": "DAEWOO",
+      "name": "Daewoo",
+      "cyrillic_name": "Дэу"
+    },
+    {
+      "id": "DAIHATSU",
+      "name": "Daihatsu",
+      "cyrillic_name": "Дайхатсу"
+    },
+    {
+      "id": "DATSUN",
+      "name": "Datsun",
+      "cyrillic_name": "Датсун"
+    },
+    {
+      "id": "DENZA",
+      "name": "Denza",
+      "cyrillic_name": "Денза"
+    },
+    {
+      "id": "DODGE",
+      "name": "Dodge",
+      "cyrillic_name": "Додж"
+    },
+    {
+      "id": "DONGFENG",
+      "name": "Dongfeng",
+      "cyrillic_name": "ДонгФенг"
+    },
+    {
+      "id": "EVOLUTE",
+      "name": "Evolute",
+      "cyrillic_name": "Эволют"
+    },
+    {
+      "id": "CHERYEXEED",
+      "name": "Exeed",
+      "cyrillic_name": "Эксид"
+    },
+    {
+      "id": "FAW",
+      "name": "FAW",
+      "cyrillic_name": "ФАВ"
+    },
+    {
+      "id": "FERRARI",
+      "name": "Ferrari",
+      "cyrillic_name": "Феррари"
+    },
+    {
+      "id": "FIAT",
+      "name": "Fiat",
+      "cyrillic_name": "Фиат"
+    },
+    {
+      "id": "FORD",
+      "name": "Ford",
+      "cyrillic_name": "Форд"
+    },
+    {
+      "id": "FORTHING",
+      "name": "Forthing",
+      "cyrillic_name": "Форфинг"
+    },
+    {
+      "id": "FOTON",
+      "name": "Foton",
+      "cyrillic_name": "Фотон"
+    },
+    {
+      "id": "GAC",
+      "name": "GAC",
+      "cyrillic_name": "ГАК"
+    },
+    {
+      "id": "AION",
+      "name": "GAC Aion",
+      "cyrillic_name": "ГАК Аион"
+    },
+    {
+      "id": "TRUMPCHI",
+      "name": "GAC Trumpchi",
+      "cyrillic_name": "Трампчи"
+    },
+    {
+      "id": "GMC",
+      "name": "GMC",
+      "cyrillic_name": "Джи-Эм-Си"
+    },
+    {
+      "id": "GEELY",
+      "name": "Geely",
+      "cyrillic_name": "Джили"
+    },
+    {
+      "id": "GENESIS",
+      "name": "Genesis",
+      "cyrillic_name": "Генезис"
+    },
+    {
+      "id": "GREAT_WALL",
+      "name": "Great Wall",
+      "cyrillic_name": "Грейт Вол"
+    },
+    {
+      "id": "HAVAL",
+      "name": "Haval",
+      "cyrillic_name": "Хавэйл"
+    },
+    {
+      "id": "HONDA",
+      "name": "Honda",
+      "cyrillic_name": "Хонда"
+    },
+    {
+      "id": "HONGQI",
+      "name": "Hongqi",
+      "cyrillic_name": "Хончи"
+    },
+    {
+      "id": "HUMMER",
+      "name": "Hummer",
+      "cyrillic_name": "Хаммер"
+    },
+    {
+      "id": "HYUNDAI",
+      "name": "Hyundai",
+      "cyrillic_name": "Хендэ"
+    },
+    {
+      "id": "INFINITI",
+      "name": "Infiniti",
+      "cyrillic_name": "Инфинити"
+    },
+    {
+      "id": "ISUZU",
+      "name": "Isuzu",
+      "cyrillic_name": "Исузу"
+    },
+    {
+      "id": "JAC",
+      "name": "JAC",
+      "cyrillic_name": "Джак"
+    },
+    {
+      "id": "JETOUR",
+      "name": "JETOUR",
+      "cyrillic_name": "Джетур"
+    },
+    {
+      "id": "JAECOO",
+      "name": "Jaecoo",
+      "cyrillic_name": "Джейку"
+    },
+    {
+      "id": "JAGUAR",
+      "name": "Jaguar",
+      "cyrillic_name": "Ягуар"
+    },
+    {
+      "id": "JEEP",
+      "name": "Jeep",
+      "cyrillic_name": "Джип"
+    },
+    {
+      "id": "KGM",
+      "name": "KGM",
+      "cyrillic_name": "Кей-Джи-Эм"
+    },
+    {
+      "id": "KAIYI",
+      "name": "Kaiyi",
+      "cyrillic_name": "Каи"
+    },
+    {
+      "id": "KIA",
+      "name": "Kia",
+      "cyrillic_name": "Киа"
+    },
+    {
+      "id": "VAZ",
+      "name": "Lada (ВАЗ)",
+      "cyrillic_name": "Лада"
+    },
+    {
+      "id": "LAMBORGHINI",
+      "name": "Lamborghini",
+      "cyrillic_name": "Ламборгини"
+    },
+    {
+      "id": "LANCIA",
+      "name": "Lancia",
+      "cyrillic_name": "Лянча"
+    },
+    {
+      "id": "LAND_ROVER",
+      "name": "Land Rover",
+      "cyrillic_name": "Ленд Ровер"
+    },
+    {
+      "id": "LEAPMOTOR",
+      "name": "Leapmotor",
+      "cyrillic_name": "Липмотор"
+    },
+    {
+      "id": "LEXUS",
+      "name": "Lexus",
+      "cyrillic_name": "Лексус"
+    },
+    {
+      "id": "LIXIANG",
+      "name": "Li Auto (Lixiang)",
+      "cyrillic_name": "Ли Авто"
+    },
+    {
+      "id": "LIFAN",
+      "name": "Lifan",
+      "cyrillic_name": "Лифан"
+    },
+    {
+      "id": "LINCOLN",
+      "name": "Lincoln",
+      "cyrillic_name": "Линкольн"
+    },
+    {
+      "id": "LIVAN",
+      "name": "Livan",
+      "cyrillic_name": "Ливан"
+    },
+    {
+      "id": "LOTUS",
+      "name": "Lotus",
+      "cyrillic_name": "Лотус"
+    },
+    {
+      "id": "LUCID",
+      "name": "Lucid",
+      "cyrillic_name": "Люсид"
+    },
+    {
+      "id": "LYNK_CO",
+      "name": "Lynk & Co",
+      "cyrillic_name": "Линк и ко"
+    },
+    {
+      "id": "MG",
+      "name": "MG",
+      "cyrillic_name": "Эм-Джи"
+    },
+    {
+      "id": "MASERATI",
+      "name": "Maserati",
+      "cyrillic_name": "Мазерати"
+    },
+    {
+      "id": "MAXUS",
+      "name": "Maxus",
+      "cyrillic_name": "Максус"
+    },
+    {
+      "id": "MAYBACH",
+      "name": "Maybach",
+      "cyrillic_name": "Майбах"
+    },
+    {
+      "id": "MAZDA",
+      "name": "Mazda",
+      "cyrillic_name": "Мазда"
+    },
+    {
+      "id": "MCLAREN",
+      "name": "McLaren",
+      "cyrillic_name": "МакЛарен"
+    },
+    {
+      "id": "MERCEDES",
+      "name": "Mercedes-Benz",
+      "cyrillic_name": "Мерседес-Бенц"
+    },
+    {
+      "id": "MERCURY",
+      "name": "Mercury",
+      "cyrillic_name": "Меркури"
+    },
+    {
+      "id": "MINI",
+      "name": "Mini",
+      "cyrillic_name": "Мини"
+    },
+    {
+      "id": "MITSUBISHI",
+      "name": "Mitsubishi",
+      "cyrillic_name": "Митсубиси"
+    },
+    {
+      "id": "NIO",
+      "name": "Nio",
+      "cyrillic_name": "Нио"
+    },
+    {
+      "id": "NISSAN",
+      "name": "Nissan",
+      "cyrillic_name": "Ниссан"
+    },
+    {
+      "id": "OLDSMOBILE",
+      "name": "Oldsmobile",
+      "cyrillic_name": "Олдсмобиль"
+    },
+    {
+      "id": "OMODA",
+      "name": "Omoda",
+      "cyrillic_name": "Омода"
+    },
+    {
+      "id": "OPEL",
+      "name": "Opel",
+      "cyrillic_name": "Опель"
+    },
+    {
+      "id": "ORA",
+      "name": "Ora",
+      "cyrillic_name": "Ора"
+    },
+    {
+      "id": "PEUGEOT",
+      "name": "Peugeot",
+      "cyrillic_name": "Пежо"
+    },
+    {
+      "id": "PLYMOUTH",
+      "name": "Plymouth",
+      "cyrillic_name": "Плимут"
+    },
+    {
+      "id": "POLESTAR",
+      "name": "Polestar",
+      "cyrillic_name": "Полестар"
+    },
+    {
+      "id": "PONTIAC",
+      "name": "Pontiac",
+      "cyrillic_name": "Понтиак"
+    },
+    {
+      "id": "PORSCHE",
+      "name": "Porsche",
+      "cyrillic_name": "Порше"
+    },
+    {
+      "id": "RAM",
+      "name": "Ram",
+      "cyrillic_name": "Рам"
+    },
+    {
+      "id": "RAVON",
+      "name": "Ravon",
+      "cyrillic_name": "Равон"
+    },
+    {
+      "id": "RENAULT",
+      "name": "Renault",
+      "cyrillic_name": "Рено"
+    },
+    {
+      "id": "RIVIAN",
+      "name": "Rivian",
+      "cyrillic_name": "Ривиан"
+    },
+    {
+      "id": "ROLLS_ROYCE",
+      "name": "Rolls-Royce",
+      "cyrillic_name": "Роллс-Ройс"
+    },
+    {
+      "id": "ROVER",
+      "name": "Rover",
+      "cyrillic_name": "Ровер"
+    },
+    {
+      "id": "SEAT",
+      "name": "SEAT",
+      "cyrillic_name": "Сеат"
+    },
+    {
+      "id": "SAAB",
+      "name": "Saab",
+      "cyrillic_name": "Сааб"
+    },
+    {
+      "id": "SATURN",
+      "name": "Saturn",
+      "cyrillic_name": "Сатурн"
+    },
+    {
+      "id": "SKODA",
+      "name": "Skoda",
+      "cyrillic_name": "Шкода"
+    },
+    {
+      "id": "SKYWELL",
+      "name": "Skywell",
+      "cyrillic_name": "Скайвэлл"
+    },
+    {
+      "id": "SMART",
+      "name": "Smart",
+      "cyrillic_name": "Смарт"
+    },
+    {
+      "id": "SOLARIS",
+      "name": "Solaris",
+      "cyrillic_name": "Солярис"
+    },
+    {
+      "id": "SSANG_YONG",
+      "name": "SsangYong",
+      "cyrillic_name": "Ссанъён"
+    },
+    {
+      "id": "SUBARU",
+      "name": "Subaru",
+      "cyrillic_name": "Субару"
+    },
+    {
+      "id": "SUZUKI",
+      "name": "Suzuki",
+      "cyrillic_name": "Сузуки"
+    },
+    {
+      "id": "TANK",
+      "name": "Tank",
+      "cyrillic_name": "Танк"
+    },
+    {
+      "id": "TESLA",
+      "name": "Tesla",
+      "cyrillic_name": "Тесла"
+    },
+    {
+      "id": "TOYOTA",
+      "name": "Toyota",
+      "cyrillic_name": "Тойота"
+    },
+    {
+      "id": "VOLGA",
+      "name": "Volga",
+      "cyrillic_name": "Волга"
+    },
+    {
+      "id": "VOLKSWAGEN",
+      "name": "Volkswagen",
+      "cyrillic_name": "Фольксваген"
+    },
+    {
+      "id": "VOLVO",
+      "name": "Volvo",
+      "cyrillic_name": "Вольво"
+    },
+    {
+      "id": "VOYAH",
+      "name": "Voyah",
+      "cyrillic_name": "Воя"
+    },
+    {
+      "id": "WEY",
+      "name": "Wey",
+      "cyrillic_name": "Вей"
+    },
+    {
+      "id": "XCITE",
+      "name": "Xcite",
+      "cyrillic_name": "Иксайт"
+    },
+    {
+      "id": "XPENG",
+      "name": "Xpeng",
+      "cyrillic_name": "Икспенг"
+    },
+    {
+      "id": "ZX",
+      "name": "ZX",
+      "cyrillic_name": "ЗХ"
+    },
+    {
+      "id": "ZEEKR",
+      "name": "Zeekr",
+      "cyrillic_name": "Зикр"
+    },
+    {
+      "id": "GAZ",
+      "name": "ГАЗ",
+      "cyrillic_name": "ГАЗ"
+    },
+    {
+      "id": "ZAZ",
+      "name": "ЗАЗ",
+      "cyrillic_name": "ЗАЗ"
+    },
+    {
+      "id": "IG",
+      "name": "Иж",
+      "cyrillic_name": "ИЖ"
+    },
+    {
+      "id": "MOSCVICH",
+      "name": "Москвич",
+      "cyrillic_name": "Москвич"
+    },
+    {
+      "id": "TAGAZ",
+      "name": "ТагАЗ",
+      "cyrillic_name": "ТагАЗ"
+    },
+    {
+      "id": "UAZ",
+      "name": "УАЗ",
+      "cyrillic_name": "УАЗ"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import Onboarding from './components/Onboarding'
 import AddCarForm from './components/AddCarForm'
 import Dashboard from './components/Dashboard'
 import IssuesScreen from './components/IssuesScreen'
+import IssueDetailScreen from './components/IssueDetailScreen'
 import JournalScreen from './components/JournalScreen'
 import AssistantScreen from './components/AssistantScreen'
 
@@ -66,6 +67,8 @@ const BottomNav = () => {
 // Проверяем, показывать ли нижнюю навигацию
 const shouldShowNav = (pathname) => {
   const noNavRoutes = ['/', '/add-car']
+  // Скрываем навигацию на детальной странице болячки
+  if (pathname.startsWith('/issues/')) return false
   return !noNavRoutes.includes(pathname)
 }
 
@@ -130,6 +133,7 @@ export default function App() {
         {/* Основные экраны */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/issues" element={<IssuesScreen />} />
+        <Route path="/issues/:issueId" element={<IssueDetailScreen />} />
         <Route path="/journal" element={<JournalScreen />} />
         <Route path="/assistant" element={<AssistantScreen />} />
       </Routes>

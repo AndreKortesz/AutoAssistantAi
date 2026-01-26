@@ -1,0 +1,656 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "autoassistant-issue-gold-standard-v1",
+  "title": "AutoAssistantAi — Gold Standard болячки",
+  "description": "Эталонная схема описания болячки автомобиля. Основана на структуре мышления опытного владельца.",
+  
+  "type": "object",
+  "required": ["id", "car", "issue", "solutions"],
+  
+  "properties": {
+    
+    "id": {
+      "type": "string",
+      "description": "Уникальный ID болячки",
+      "example": "mustang_6g_ecoboost_fuel_sensor"
+    },
+    
+    "version": {
+      "type": "string",
+      "description": "Версия записи для отслеживания обновлений",
+      "example": "1.0.0"
+    },
+    
+    "created_at": {
+      "type": "string",
+      "format": "date",
+      "example": "2025-01-21"
+    },
+    
+    "updated_at": {
+      "type": "string", 
+      "format": "date",
+      "example": "2025-01-21"
+    },
+
+    "car": {
+      "type": "object",
+      "description": "КОНТЕКСТ — какой автомобиль затронут",
+      "required": ["brand", "model", "generation"],
+      "properties": {
+        "brand": {
+          "type": "string",
+          "example": "Ford"
+        },
+        "model": {
+          "type": "string",
+          "example": "Mustang"
+        },
+        "generation": {
+          "type": "string",
+          "description": "Поколение с внутренним кодом",
+          "example": "6G (S550)"
+        },
+        "year_start": {
+          "type": "integer",
+          "example": 2015
+        },
+        "year_end": {
+          "type": ["integer", "null"],
+          "description": "null = актуально по сей день",
+          "example": 2023
+        },
+        "engine": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "example": "2.3L EcoBoost"
+            },
+            "displacement": {
+              "type": "number",
+              "example": 2.3
+            },
+            "power_hp": {
+              "type": "integer",
+              "example": 310
+            },
+            "fuel": {
+              "type": "string",
+              "enum": ["бензин", "дизель", "гибрид", "электро"],
+              "example": "бензин"
+            },
+            "turbo": {
+              "type": "boolean",
+              "example": true
+            }
+          }
+        },
+        "transmission": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "example": "10R80"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["МКПП", "АКПП", "Робот", "Вариатор"],
+              "example": "АКПП"
+            },
+            "gears": {
+              "type": "integer",
+              "example": 10
+            }
+          }
+        },
+        "body_type": {
+          "type": "string",
+          "enum": ["Седан", "Хэтчбек", "Универсал", "Кроссовер", "Внедорожник", "Купе", "Кабриолет"],
+          "example": "Купе"
+        },
+        "market": {
+          "type": "string",
+          "description": "Рынок сбыта (влияет на комплектацию)",
+          "enum": ["USA", "EU", "RU", "Asia"],
+          "example": "USA"
+        },
+        "facelift": {
+          "type": "string",
+          "description": "Дорест/Рест если важно",
+          "enum": ["дорест", "рест", "любой"],
+          "example": "дорест"
+        }
+      }
+    },
+
+    "issue": {
+      "type": "object",
+      "description": "СИМПТОМ + ПРИЧИНА — что сломалось и почему",
+      "required": ["title", "system", "severity"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Краткое название болячки",
+          "example": "Датчик топлива старой ревизии"
+        },
+        "title_short": {
+          "type": "string",
+          "description": "Для UI — максимум 30 символов",
+          "example": "Датчик топлива"
+        },
+        "system": {
+          "type": "string",
+          "description": "Основная система автомобиля",
+          "enum": ["engine", "transmission", "suspension", "brakes", "body", "electrical", "cooling", "fuel", "exhaust", "interior"],
+          "example": "fuel"
+        },
+        "subsystem": {
+          "type": "string",
+          "description": "Подсистема для детализации",
+          "example": "fuel_pressure"
+        },
+        "severity": {
+          "type": "string",
+          "description": "Критичность проблемы",
+          "enum": ["critical", "high", "medium", "low"],
+          "example": "critical"
+        },
+        "severity_reason": {
+          "type": "string",
+          "description": "Почему такая критичность",
+          "example": "Может привести к критическому отказу двигателя"
+        },
+        "can_drive": {
+          "type": "boolean",
+          "description": "Можно ли ездить с этой проблемой",
+          "example": false
+        },
+        "symptoms": {
+          "type": "array",
+          "description": "Как проявляется — что видит/слышит/чувствует владелец",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "example": "Плавающие обороты холостого хода"
+              },
+              "conditions": {
+                "type": "string",
+                "description": "При каких условиях проявляется",
+                "example": "на прогретом двигателе"
+              }
+            }
+          },
+          "example": [
+            {"description": "Плавающие обороты", "conditions": "на холостом ходу"},
+            {"description": "Потеря мощности", "conditions": "при разгоне"}
+          ]
+        },
+        "obd_codes": {
+          "type": "array",
+          "description": "Коды ошибок OBD-II",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "P008A"
+              },
+              "description": {
+                "type": "string",
+                "example": "Low Pressure Fuel System Pressure - Too Low"
+              }
+            }
+          },
+          "example": [
+            {"code": "P008A", "description": "Давление в топливной системе слишком низкое"},
+            {"code": "P0148", "description": "Ошибка подачи топлива"},
+            {"code": "P018C", "description": "Диапазон/производительность датчика давления топлива"}
+          ]
+        },
+        "cause": {
+          "type": "object",
+          "description": "ПРИЧИНА — почему это происходит",
+          "properties": {
+            "primary": {
+              "type": "string",
+              "description": "Основная причина",
+              "example": "Датчик топлива старого образца отправляет ложные данные в ECU"
+            },
+            "secondary": {
+              "type": "array",
+              "description": "Альтернативные/сопутствующие причины",
+              "items": {"type": "string"},
+              "example": ["Окисление контактов", "Брак партии"]
+            },
+            "not_cause": {
+              "type": "array",
+              "description": "Что НЕ является причиной (частые ошибки диагностики)",
+              "items": {"type": "string"},
+              "example": ["Топливный насос", "Форсунки"]
+            },
+            "root_cause_type": {
+              "type": "string",
+              "enum": ["конструктивный_дефект", "износ", "эксплуатация", "внешние_факторы", "брак_партии"],
+              "example": "конструктивный_дефект"
+            }
+          }
+        }
+      }
+    },
+
+    "mileage": {
+      "type": "object",
+      "description": "ПРОБЕГ — когда проявляется",
+      "properties": {
+        "typical_start_km": {
+          "type": "integer",
+          "description": "Обычно начинается с этого пробега",
+          "example": 0
+        },
+        "typical_end_km": {
+          "type": ["integer", "null"],
+          "description": "До какого пробега актуально (null = всегда)",
+          "example": null
+        },
+        "peak_km": {
+          "type": "integer",
+          "description": "Пик проявления — на каком пробеге чаще всего",
+          "example": 40000
+        },
+        "early_cases_km": {
+          "type": "integer",
+          "description": "Самые ранние известные случаи",
+          "example": 15000
+        },
+        "frequency_percent": {
+          "type": "integer",
+          "description": "% владельцев, столкнувшихся с проблемой",
+          "minimum": 0,
+          "maximum": 100,
+          "example": 35
+        },
+        "age_related": {
+          "type": "boolean",
+          "description": "Зависит ли от возраста (а не только от пробега)",
+          "example": false
+        },
+        "age_years": {
+          "type": "integer",
+          "description": "Если age_related=true, через сколько лет проявляется",
+          "example": null
+        }
+      }
+    },
+
+    "solutions": {
+      "type": "array",
+      "description": "РЕШЕНИЯ — как исправить",
+      "items": {
+        "type": "object",
+        "required": ["type", "title"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["correct", "temporary", "wrong", "preventive"],
+            "description": "correct=правильное, temporary=временное, wrong=неправильное (НЕ делать!), preventive=профилактика",
+            "example": "correct"
+          },
+          "title": {
+            "type": "string",
+            "example": "Замена датчика на ревизию 2"
+          },
+          "description": {
+            "type": "string",
+            "example": "Заменить датчик топлива на обновлённую версию BU5Z-9F972-B"
+          },
+          "diy_possible": {
+            "type": "boolean",
+            "description": "Можно ли сделать самому",
+            "example": true
+          },
+          "diy_difficulty": {
+            "type": "string",
+            "enum": ["easy", "medium", "hard", "professional"],
+            "example": "easy"
+          },
+          "diy_time_hours": {
+            "type": "number",
+            "description": "Время на самостоятельную замену",
+            "example": 0.5
+          },
+          "diy_tools": {
+            "type": "array",
+            "description": "Какие инструменты нужны",
+            "items": {"type": "string"},
+            "example": ["Ключ на 24", "Ключ на 12", "Ветошь"]
+          },
+          "diy_warning": {
+            "type": "string",
+            "description": "Важное предупреждение при самостоятельной замене",
+            "example": "Подстелите ветошь — польётся топливо. Если не выкручивается — не ломайте, меняйте магистраль целиком."
+          },
+          "service_time_hours": {
+            "type": "number",
+            "description": "Время работы в сервисе (нормо-часы)",
+            "example": 0.3
+          },
+          "labor_cost": {
+            "type": "object",
+            "properties": {
+              "min": {"type": "integer", "example": 500},
+              "max": {"type": "integer", "example": 1500},
+              "currency": {"type": "string", "example": "RUB"}
+            }
+          },
+          "effectiveness": {
+            "type": "string",
+            "enum": ["permanent", "long_term", "short_term"],
+            "description": "Насколько хватает решения",
+            "example": "permanent"
+          },
+          "side_effects": {
+            "type": "array",
+            "description": "Побочные эффекты решения",
+            "items": {"type": "string"},
+            "example": []
+          }
+        }
+      }
+    },
+
+    "parts": {
+      "type": "array",
+      "description": "ЗАПЧАСТИ — что покупать",
+      "items": {
+        "type": "object",
+        "required": ["name", "part_number"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Датчик давления топлива"
+          },
+          "part_number": {
+            "type": "string",
+            "description": "Основной артикул (рекомендуемый)",
+            "example": "BU5Z-9F972-B"
+          },
+          "part_number_actual": {
+            "type": "string",
+            "description": "Что реально написано на детали (может отличаться от упаковки)",
+            "example": "BU5A-9F972-CA"
+          },
+          "revision": {
+            "type": "string",
+            "description": "Номер ревизии",
+            "example": "rev.2"
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "OEM производитель",
+            "example": "Ford/Motorcraft"
+          },
+          "alternatives": {
+            "type": "array",
+            "description": "Альтернативные артикулы (аналоги)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "part_number": {"type": "string"},
+                "manufacturer": {"type": "string"},
+                "quality": {
+                  "type": "string",
+                  "enum": ["oem", "oem_supplier", "aftermarket_good", "aftermarket_bad", "unknown"]
+                },
+                "notes": {"type": "string"}
+              }
+            },
+            "example": []
+          },
+          "do_not_buy": {
+            "type": "array",
+            "description": "Что НЕ покупать — плохие аналоги",
+            "items": {
+              "type": "object",
+              "properties": {
+                "part_number": {"type": "string"},
+                "manufacturer": {"type": "string"},
+                "reason": {"type": "string"}
+              }
+            },
+            "example": []
+          },
+          "price": {
+            "type": "object",
+            "properties": {
+              "min": {"type": "integer"},
+              "max": {"type": "integer"},
+              "currency": {"type": "string", "default": "RUB"},
+              "as_of_date": {"type": "string", "format": "date"}
+            },
+            "example": {"min": 4500, "max": 6000, "currency": "RUB", "as_of_date": "2025-01"}
+          },
+          "price_usd": {
+            "type": "integer",
+            "description": "Цена в США (для сравнения)",
+            "example": 55
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Сколько штук нужно",
+            "default": 1,
+            "example": 1
+          },
+          "where_to_buy": {
+            "type": "array",
+            "description": "Где лучше покупать",
+            "items": {"type": "string"},
+            "example": ["Официальный дилер", "Exist.ru", "tascaparts.com (USA, через VPN)"]
+          }
+        }
+      }
+    },
+
+    "related_parts": {
+      "type": "array",
+      "description": "Сопутствующие запчасти — что заменить заодно",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "part_number": {"type": "string"},
+          "reason": {"type": "string", "description": "Почему стоит заменить заодно"}
+        }
+      },
+      "example": [
+        {"name": "Топливная магистраль", "part_number": "FR3Z-9J280-A", "reason": "Если датчик не выкручивается — менять вместе"}
+      ]
+    },
+
+    "relations": {
+      "type": "object",
+      "description": "Связи с другими болячками",
+      "properties": {
+        "causes": {
+          "type": "array",
+          "description": "Какие проблемы ВЫЗЫВАЕТ эта болячка, если не устранить",
+          "items": {"type": "string"},
+          "example": ["mustang_6g_ecoboost_engine_failure"]
+        },
+        "caused_by": {
+          "type": "array",
+          "description": "Чем ВЫЗВАНА эта болячка",
+          "items": {"type": "string"},
+          "example": []
+        },
+        "often_confused_with": {
+          "type": "array",
+          "description": "С чем часто путают при диагностике",
+          "items": {"type": "string"},
+          "example": ["mustang_6g_ecoboost_fuel_pump"]
+        },
+        "fix_together": {
+          "type": "array",
+          "description": "Что логично исправить вместе",
+          "items": {"type": "string"},
+          "example": ["mustang_6g_ecoboost_oil_separator", "mustang_6g_ecoboost_pcm_update"]
+        },
+        "fix_order": {
+          "type": "integer",
+          "description": "Порядок исправления (если есть зависимость). Меньше = раньше",
+          "example": 1
+        }
+      }
+    },
+
+    "prevention": {
+      "type": "object",
+      "description": "Профилактика — как избежать проблемы",
+      "properties": {
+        "possible": {
+          "type": "boolean",
+          "example": true
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"},
+              "interval_km": {"type": "integer"},
+              "interval_months": {"type": "integer"}
+            }
+          },
+          "example": [
+            {"description": "Заменить датчик превентивно при покупке б/у", "interval_km": null, "interval_months": null}
+          ]
+        },
+        "recommendation": {
+          "type": "string",
+          "example": "Проверять и менять всем EcoBoost обязательно! Купите заранее и положите в багажник."
+        }
+      }
+    },
+
+    "diagnostic": {
+      "type": "object",
+      "description": "Как диагностировать самостоятельно",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["visual", "obd_scan", "sound", "smell", "test_drive", "measurement", "professional_only"],
+          "example": "obd_scan"
+        },
+        "instruction": {
+          "type": "string",
+          "description": "Пошаговая инструкция диагностики",
+          "example": "Подключить OBD-сканер, проверить наличие ошибок P008A, P0148, P018C, P018D"
+        },
+        "visual_check": {
+          "type": "string",
+          "description": "Что можно увидеть глазами",
+          "example": null
+        },
+        "tools_needed": {
+          "type": "array",
+          "items": {"type": "string"},
+          "example": ["OBD-сканер"]
+        }
+      }
+    },
+
+    "owner_reports": {
+      "type": "array",
+      "description": "Отзывы реальных владельцев — подтверждение",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mileage_km": {"type": "integer"},
+          "year": {"type": "integer"},
+          "date": {"type": "string", "format": "date"},
+          "comment": {"type": "string"},
+          "solution_worked": {"type": "boolean"},
+          "source": {"type": "string"}
+        }
+      },
+      "example": [
+        {
+          "mileage_km": 45000,
+          "year": 2016,
+          "date": "2023-05",
+          "comment": "Менял сам, заняло 30 минут. Проблема ушла полностью.",
+          "solution_worked": true,
+          "source": "drive2.ru"
+        }
+      ]
+    },
+
+    "sources": {
+      "type": "array",
+      "description": "Источники информации",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["drive2", "forum", "youtube", "official_recall", "service_bulletin", "expert", "owner_direct"],
+            "example": "drive2"
+          },
+          "url": {"type": "string"},
+          "author": {"type": "string"},
+          "author_type": {
+            "type": "string",
+            "enum": ["experienced_owner", "mechanic", "dealer", "random_user"],
+            "example": "experienced_owner"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Насколько доверяем источнику",
+            "example": "high"
+          },
+          "date": {"type": "string", "format": "date"}
+        }
+      },
+      "example": [
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/553952925722871354/",
+          "author": "MUSTANG CLAN",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2020-02"
+        }
+      ]
+    },
+
+    "meta": {
+      "type": "object",
+      "description": "Мета-информация для системы",
+      "properties": {
+        "data_quality": {
+          "type": "string",
+          "enum": ["gold", "verified", "unverified", "draft"],
+          "description": "gold=эталон, verified=проверено, unverified=не проверено, draft=черновик",
+          "example": "gold"
+        },
+        "completeness_percent": {
+          "type": "integer",
+          "description": "Насколько заполнена запись (0-100)",
+          "example": 95
+        },
+        "needs_review": {
+          "type": "boolean",
+          "example": false
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "example": ["критично", "проверить_сразу", "diy"]
+        }
+      }
+    }
+  }
+}

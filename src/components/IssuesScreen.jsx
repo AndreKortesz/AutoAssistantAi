@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // AutoAssistantAi — Экран болячек
 // Группировка по актуальности относительно текущего пробега
@@ -64,6 +65,16 @@ const issuesDatabase = [
     costMax: 15000,
     canDrive: true,
     ignoreRisk: "Ускоренный износ рейки, дорогой ремонт",
+    // Статус дефекта (опционально)
+    defectStatus: {
+      classActions: [
+        { country: "🇰🇷", name: "Корея", year: 2017, status: "won", result: "Бесплатная замена" },
+      ],
+      recalls: [
+        { country: "🇰🇷", name: "Корея", code: "HR-2017-042", year: 2017 },
+        { country: "🇷🇺", name: "Россия", code: null },
+      ],
+    },
   },
   {
     id: "solaris_wheel_bearings",
@@ -96,6 +107,16 @@ const issuesDatabase = [
     costMax: 45000,
     canDrive: true,
     ignoreRisk: "Разрушение КПП, ремонт до 100 000 ₽",
+    defectStatus: {
+      classActions: [
+        { country: "🇺🇸", name: "США", year: 2018, status: "won", result: "Расширение гарантии до 150k миль" },
+        { country: "🇦🇺", name: "Австралия", year: 2019, status: "settlement", result: "Компенсация AUD $800–1,500" },
+      ],
+      recalls: [
+        { country: "🇺🇸", name: "США", code: "19V-287", year: 2019 },
+        { country: "🇷🇺", name: "Россия", code: null },
+      ],
+    },
   },
   {
     id: "solaris_clutch_seal",
@@ -160,6 +181,14 @@ const issuesDatabase = [
     costMax: 35000,
     canDrive: false,
     ignoreRisk: "Перескок цепи, загиб клапанов — ремонт 80-150 тыс.",
+    defectStatus: {
+      classActions: [],
+      recalls: [
+        { country: "🇰🇷", name: "Корея", code: "2015-HMC-017", year: 2015 },
+        { country: "🇺🇸", name: "США", code: "17V-089", year: 2017 },
+        { country: "🇷🇺", name: "Россия", code: null },
+      ],
+    },
   },
   {
     id: "solaris_stabilizer_links",
@@ -257,8 +286,173 @@ const MileageProgress = ({ current, start, end }) => {
   );
 };
 
+// Проверка наличия исков/отзывных
+const hasClassActions = (issue) => issue.defectStatus?.classActions?.length > 0;
+const hasRecalls = (issue) => issue.defectStatus?.recalls?.some(r => r.code !== null);
+
+// Блок статуса дефекта (иски и отзывные)
+const DefectStatusBlock = ({ defectStatus }) => {
+  if (!defectStatus) return null;
+  
+  const { classActions = [], recalls = [] } = defectStatus;
+  const hasActions = classActions.length > 0;
+  const hasValidRecalls = recalls.some(r => r.code !== null);
+  
+  if (!hasActions && !hasValidRecalls) return null;
+  
+  const statusStyles = {
+    won: { bg: colors.successLight, color: colors.success, label: '✓ Выигран' },
+    settlement: { bg: colors.warningLight, color: colors.warning, label: '🤝 Соглашение' },
+    lost: { bg: colors.criticalLight, color: colors.critical, label: '✗ Проигран' },
+  };
+  
+  return (
+    <div style={defectStatusStyles.container}>
+      {/* Коллективные иски */}
+      {hasActions && (
+        <div style={defectStatusStyles.block}>
+          <div style={defectStatusStyles.blockHeader}>
+            <span style={defectStatusStyles.blockIcon}>⚖️</span>
+            <span style={defectStatusStyles.blockTitle}>Коллективные иски</span>
+          </div>
+          {classActions.map((action, i) => (
+            <div key={i} style={defectStatusStyles.item}>
+              <div style={defectStatusStyles.itemLeft}>
+                <span style={defectStatusStyles.flag}>{action.country}</span>
+                <div style={defectStatusStyles.itemInfo}>
+                  <div style={defectStatusStyles.itemName}>{action.name} ({action.year})</div>
+                  <div style={defectStatusStyles.itemResult}>{action.result}</div>
+                </div>
+              </div>
+              <span style={{
+                ...defectStatusStyles.statusBadge,
+                background: statusStyles[action.status].bg,
+                color: statusStyles[action.status].color,
+              }}>
+                {statusStyles[action.status].label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Отзывные кампании */}
+      {hasValidRecalls && (
+        <div style={defectStatusStyles.block}>
+          <div style={defectStatusStyles.blockHeader}>
+            <span style={defectStatusStyles.blockIcon}>📋</span>
+            <span style={defectStatusStyles.blockTitle}>Отзывные кампании</span>
+          </div>
+          {recalls.map((recall, i) => (
+            <div key={i} style={defectStatusStyles.recallItem}>
+              <span style={defectStatusStyles.flag}>{recall.country}</span>
+              <span style={defectStatusStyles.recallName}>{recall.name}</span>
+              <span style={defectStatusStyles.recallCode}>
+                {recall.code ? `${recall.code} (${recall.year})` : 'не проводилась'}
+              </span>
+              <span style={defectStatusStyles.recallStatus}>
+                {recall.code ? '✅' : '❌'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Стили для блока статуса дефекта
+const defectStatusStyles = {
+  container: {
+    marginBottom: '14px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  block: {
+    background: colors.primaryLight,
+    borderRadius: '10px',
+    padding: '12px',
+  },
+  blockHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    marginBottom: '10px',
+  },
+  blockIcon: {
+    fontSize: '14px',
+  },
+  blockTitle: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    textTransform: 'uppercase',
+    letterSpacing: '0.3px',
+  },
+  item: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '8px 10px',
+    background: colors.cardBg,
+    borderRadius: '8px',
+    marginBottom: '6px',
+  },
+  itemLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  flag: {
+    fontSize: '18px',
+  },
+  itemInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+  },
+  itemName: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  itemResult: {
+    fontSize: '11px',
+    color: colors.textSecondary,
+  },
+  statusBadge: {
+    fontSize: '10px',
+    fontWeight: '600',
+    padding: '4px 8px',
+    borderRadius: '6px',
+  },
+  recallItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 10px',
+    background: colors.cardBg,
+    borderRadius: '8px',
+    marginBottom: '4px',
+  },
+  recallName: {
+    fontSize: '13px',
+    fontWeight: '500',
+    color: colors.textPrimary,
+    flex: 1,
+  },
+  recallCode: {
+    fontSize: '11px',
+    color: colors.textSecondary,
+  },
+  recallStatus: {
+    fontSize: '14px',
+  },
+};
+
 // Карточка болячки
-const IssueCard = ({ issue, currentMileage, status }) => {
+const IssueCard = ({ issue, currentMileage, status, onNavigateToDetail }) => {
   const [expanded, setExpanded] = useState(false);
   
   const severityConfig = {
@@ -284,6 +478,17 @@ const IssueCard = ({ issue, currentMileage, status }) => {
           </div>
         </div>
         <div style={styles.issueHeaderRight}>
+          {/* Иконки статуса */}
+          {(hasClassActions(issue) || hasRecalls(issue)) && (
+            <div style={styles.statusIcons}>
+              {hasClassActions(issue) && (
+                <span style={styles.statusIcon} title="Есть выигранные иски">⚖️</span>
+              )}
+              {hasRecalls(issue) && (
+                <span style={styles.statusIcon} title="Есть отзывные кампании">📋</span>
+              )}
+            </div>
+          )}
           <span style={{
             ...styles.issueToggle,
             transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -293,6 +498,9 @@ const IssueCard = ({ issue, currentMileage, status }) => {
       
       {expanded && (
         <div style={styles.issueBody}>
+          {/* Блок статуса дефекта (иски, отзывные) */}
+          <DefectStatusBlock defectStatus={issue.defectStatus} />
+          
           {/* Прогресс-бар пробега */}
           {status !== 'passed' && (
             <MileageProgress 
@@ -338,6 +546,42 @@ const IssueCard = ({ issue, currentMileage, status }) => {
               <span style={styles.ignoreRiskText}>{issue.ignoreRisk}</span>
             </div>
           )}
+          
+          {/* Кнопки действий */}
+          <div style={styles.actionButtons}>
+            <button 
+              style={styles.actionButtonPrimary}
+              onClick={() => onNavigateToDetail(issue.id)}
+            >
+              <span>Подробнее →</span>
+            </button>
+            <div style={styles.actionButtonsRow}>
+              <button style={styles.actionButtonSecondary}>
+                <span style={styles.actionButtonIcon}>🔧</span>
+                <span>В сервис</span>
+              </button>
+              <button style={styles.actionButtonSecondary}>
+                <span style={styles.actionButtonIcon}>🛒</span>
+                <span>Запчасти</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* VIN промпт — показываем только если есть defectStatus */}
+          {issue.defectStatus && (
+            <div style={styles.vinPrompt}>
+              <div style={styles.vinPromptHeader}>
+                <span style={styles.vinPromptIcon}>💡</span>
+                <span style={styles.vinPromptTitle}>Хотите узнать больше?</span>
+              </div>
+              <p style={styles.vinPromptText}>
+                Введите VIN — проверим, попадает ли ваше авто под отзывную кампанию и какие у вас права.
+              </p>
+              <button style={styles.vinPromptButton}>
+                Ввести VIN
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -345,7 +589,7 @@ const IssueCard = ({ issue, currentMileage, status }) => {
 };
 
 // Секция с болячками
-const IssueSection = ({ title, hint, issues, currentMileage, status, color, defaultOpen = false }) => {
+const IssueSection = ({ title, hint, issues, currentMileage, status, color, defaultOpen = false, onNavigateToDetail }) => {
   const [open, setOpen] = useState(defaultOpen);
   
   if (issues.length === 0) return null;
@@ -380,6 +624,7 @@ const IssueSection = ({ title, hint, issues, currentMileage, status, color, defa
               issue={issue} 
               currentMileage={currentMileage}
               status={status}
+              onNavigateToDetail={onNavigateToDetail}
             />
           ))}
         </div>
@@ -389,10 +634,16 @@ const IssueSection = ({ title, hint, issues, currentMileage, status, color, defa
 };
 
 export default function IssuesScreen() {
+  const navigate = useNavigate();
+  
   const categorized = useMemo(() => 
     categorizeIssues(issuesDatabase, carData.mileage),
     [carData.mileage]
   );
+
+  const handleNavigateToDetail = (issueId) => {
+    navigate(`/issues/${issueId}`);
+  };
 
   return (
     <div style={styles.container}>
@@ -416,6 +667,18 @@ export default function IssuesScreen() {
           </div>
         </div>
 
+        {/* Легенда иконок */}
+        <div style={styles.legend}>
+          <div style={styles.legendItem}>
+            <span style={styles.legendIcon}>⚖️</span>
+            <span style={styles.legendText}>Коллективные иски</span>
+          </div>
+          <div style={styles.legendItem}>
+            <span style={styles.legendIcon}>📋</span>
+            <span style={styles.legendText}>Отзывные кампании</span>
+          </div>
+        </div>
+
         {/* Актуально сейчас */}
         <IssueSection
           title="Актуально сейчас"
@@ -425,6 +688,7 @@ export default function IssuesScreen() {
           status="active"
           color={colors.critical}
           defaultOpen={true}
+          onNavigateToDetail={handleNavigateToDetail}
         />
 
         {/* Скоро */}
@@ -436,6 +700,7 @@ export default function IssuesScreen() {
           status="soon"
           color={colors.warning}
           defaultOpen={categorized.active.length === 0}
+          onNavigateToDetail={handleNavigateToDetail}
         />
 
         {/* Пройдено */}
@@ -446,6 +711,7 @@ export default function IssuesScreen() {
           currentMileage={carData.mileage}
           status="passed"
           color={colors.success}
+          onNavigateToDetail={handleNavigateToDetail}
         />
 
         {/* Все болячки */}
@@ -457,6 +723,7 @@ export default function IssuesScreen() {
             currentMileage={carData.mileage}
             status="future"
             color={colors.textTertiary}
+            onNavigateToDetail={handleNavigateToDetail}
           />
         )}
       </div>
@@ -543,6 +810,31 @@ const styles = {
     fontSize: '13px',
     color: colors.textSecondary,
     lineHeight: 1.5,
+  },
+
+  legend: {
+    display: 'flex',
+    gap: '16px',
+    padding: '10px 14px',
+    background: colors.cardBg,
+    borderRadius: '10px',
+    marginBottom: '16px',
+    border: `1px solid ${colors.border}`,
+  },
+
+  legendItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+
+  legendIcon: {
+    fontSize: '14px',
+  },
+
+  legendText: {
+    fontSize: '12px',
+    color: colors.textSecondary,
   },
 
   // Sections
@@ -660,6 +952,22 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
+  },
+
+  statusIcons: {
+    display: 'flex',
+    gap: '4px',
+  },
+
+  statusIcon: {
+    width: '26px',
+    height: '26px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '14px',
+    background: colors.primaryLight,
+    borderRadius: '6px',
   },
 
   issueToggle: {
@@ -812,6 +1120,100 @@ const styles = {
     fontSize: '12px',
     color: colors.textPrimary,
     lineHeight: 1.4,
+  },
+
+  // Action Buttons
+  actionButtons: {
+    marginTop: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+
+  actionButtonPrimary: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    width: '100%',
+    padding: '14px',
+    background: colors.primary,
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+
+  actionButtonsRow: {
+    display: 'flex',
+    gap: '8px',
+  },
+
+  actionButtonSecondary: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    padding: '12px 10px',
+    background: colors.primaryLight,
+    color: colors.primary,
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+
+  actionButtonIcon: {
+    fontSize: '16px',
+  },
+
+  // VIN Prompt
+  vinPrompt: {
+    marginTop: '16px',
+    padding: '16px',
+    background: `linear-gradient(135deg, ${colors.primaryLight} 0%, rgba(31, 79, 216, 0.12) 100%)`,
+    borderRadius: '12px',
+    border: `1px dashed ${colors.primary}`,
+  },
+
+  vinPromptHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '8px',
+  },
+
+  vinPromptIcon: {
+    fontSize: '18px',
+  },
+
+  vinPromptTitle: {
+    fontSize: '14px',
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+
+  vinPromptText: {
+    fontSize: '13px',
+    color: colors.textSecondary,
+    lineHeight: 1.5,
+    margin: '0 0 12px',
+  },
+
+  vinPromptButton: {
+    width: '100%',
+    padding: '12px',
+    background: colors.primary,
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
   },
 
   // Bottom Navigation
