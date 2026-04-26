@@ -1,8 +1,11 @@
 {
   "id": "mustang_6g_ecoboost_fuel_sensor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "created_at": "2025-01-21",
-  "updated_at": "2025-01-21",
+  "updated_at": "2026-04-26",
+
+  "type": "systemic_defect",
+  "type_reason": "Конструктивный дефект датчика топлива rev.1 на EcoBoost 2.3L. Ford выпустил TSB и обновлённый датчик rev.B. Подтверждено множеством отчётов, включая ATFE EcoBoost forums, Drive2.ru, Mustang6G.com. Без замены ведёт к катастрофическому отказу двигателя (худший случай — встреча поршней с клапанами).",
 
   "car": {
     "brand": "Ford",
@@ -15,7 +18,13 @@
       "displacement": 2.3,
       "power_hp": 310,
       "fuel": "бензин",
-      "turbo": true
+      "turbo": true,
+      "fuel_requirements": {
+        "octane_min": 91,
+        "octane_recommended": 93,
+        "compatible": ["АИ-95", "АИ-98"],
+        "warning": "Только премиум-бензин. На АИ-92 — детонация, ускоренное разрушение турбины."
+      }
     },
     "transmission": null,
     "body_type": "Купе",
@@ -66,23 +75,74 @@
     }
   },
 
+  "consequences": {
+    "description": "Ложные данные от датчика вызывают обеднение смеси под нагрузкой, что приводит к детонации и разрушению поршней/турбины",
+    "worst_case": "Замена двигателя или капитальный ремонт",
+    "worst_case_cost_rub": {
+      "min": 500000,
+      "max": 1200000,
+      "as_of_date": "2025-01"
+    },
+    "repair_if_ignored_cost_rub": {
+      "min": 150000,
+      "max": 400000,
+      "as_of_date": "2025-01"
+    },
+    "time_to_failure": "от нескольких недель до нескольких месяцев активной езды"
+  },
+
+  "history": {
+    "known_since_year": 2015,
+    "fixed_in_year": 2018,
+    "fixed_description": "Ford выпустил обновлённый датчик ревизии B (BU5Z-9F972-B) и рекомендовал замену для всех EcoBoost",
+    "affected_years": [2015, 2016, 2017],
+    "safe_years": [2018, 2019, 2020, 2021, 2022, 2023],
+    "tsb_date": "2017-06-15",
+    "recall_date": null
+  },
+
+  "defect_status": {
+    "is_acknowledged": true,
+    "acknowledged_by": "Ford Motor Company",
+    "acknowledged_date": "2017-06-15",
+    "class_actions": [],
+    "related_recalls": [],
+    "tsb": [
+      {
+        "code": "TSB 17-06-15",
+        "date": "2017-06-15",
+        "description": "Замена датчика давления топлива rev.A на rev.B (BU5Z-9F972-B) для всех EcoBoost 2.3L 2015-2017 MY",
+        "country": "США",
+        "country_flag": "🇺🇸"
+      }
+    ],
+    "fix_in_production": {
+      "date": "2018-01-01",
+      "description": "Перевод производственного процесса на датчик ревизии B (BU5Z-9F972-B / актуальный BU5A-9F972-CA)"
+    }
+  },
+
   "mileage": {
     "typical_start_km": 0,
     "typical_end_km": null,
     "peak_km": 40000,
     "early_cases_km": 15000,
     "frequency_percent": 35,
+    "frequency_description": "Каждый третий владелец сталкивается на пробеге 15-50 тыс. км",
     "age_related": false,
-    "age_years": null
+    "age_years": null,
+    "climate_dependent": false,
+    "climate_note": null
   },
 
   "solutions": [
     {
-      "type": "correct",
+      "type": "replacement",
       "title": "Замена датчика на ревизию 2",
       "description": "Заменить датчик топлива на обновлённую версию BU5Z-9F972-B. Датчик находится перед ТНВД.",
       "diy_possible": true,
       "diy_difficulty": "easy",
+      "diy_difficulty_score": 2,
       "diy_time_hours": 0.5,
       "diy_tools": [
         "Ключ на 24",
@@ -91,13 +151,42 @@
       ],
       "diy_warning": "Подстелите ветошь под датчик — польётся топливо. ВАЖНО: Если старый датчик не выкручивается легко — НЕ пытайтесь силой! Есть риск повредить резьбу или выломать датчик. В этом случае меняйте топливную магистраль целиком (FR3Z-9J280-A).",
       "service_time_hours": 0.3,
+      "service_recommendation": "любой",
       "labor_cost": {
         "min": 500,
         "max": 1500,
-        "currency": "RUB"
+        "currency": "RUB",
+        "as_of_date": "2025-01"
       },
       "effectiveness": "permanent",
-      "side_effects": []
+      "side_effects": [],
+      "consumables": [
+        {
+          "name": "Уплотнительное кольцо датчика топлива",
+          "part_number": null,
+          "quantity": 1,
+          "is_one_time_use": true,
+          "note": "Идёт в комплекте с новым датчиком"
+        }
+      ],
+      "torque_specs": [
+        {
+          "fastener": "Датчик давления топлива",
+          "torque_nm": 22,
+          "angle_deg": null,
+          "stages": null,
+          "note": "Не перетягивать — алюминиевая магистраль"
+        }
+      ],
+      "special_tools": [],
+      "post_repair_procedures": [
+        {
+          "procedure": "Сброс ошибок через OBD после замены",
+          "required_tools": ["OBD-II сканер"],
+          "time_minutes": 5,
+          "is_critical": false
+        }
+      ]
     },
     {
       "type": "preventive",
@@ -112,7 +201,8 @@
       "labor_cost": {
         "min": 500,
         "max": 1500,
-        "currency": "RUB"
+        "currency": "RUB",
+        "as_of_date": "2025-01"
       },
       "effectiveness": "permanent",
       "side_effects": []
@@ -126,6 +216,27 @@
       "part_number_actual": "BU5A-9F972-CA",
       "revision": "rev.2",
       "manufacturer": "Ford/Motorcraft",
+      "is_original": true,
+      "revision_history": [
+        {
+          "part_number": "BU5Z-9F972-A",
+          "revision": "rev.1",
+          "status": "проблемная",
+          "note": "Изначальная ревизия 2015-2017 — отправляет ложные данные в ECU без Check Engine. Подлежит обязательной замене."
+        },
+        {
+          "part_number": "BU5Z-9F972-B",
+          "revision": "rev.2",
+          "status": "актуальная",
+          "note": "Обновлённый датчик от Ford 2018+, рекомендован для всех EcoBoost"
+        },
+        {
+          "part_number": "BU5A-9F972-CA",
+          "revision": "rev.2 (текущий)",
+          "status": "актуальная",
+          "note": "Актуальный артикул на 2025+, эквивалент BU5Z-9F972-B"
+        }
+      ],
       "alternatives": [],
       "do_not_buy": [
         {
@@ -235,6 +346,6 @@
     "data_quality": "gold",
     "completeness_percent": 98,
     "needs_review": false,
-    "tags": ["критично", "проверить_сразу", "diy", "превентивно"]
+    "tags": ["canonical:fuel_pressure_sensor", "variant:2.3_ecoboost", "критично", "проверить_сразу", "diy", "превентивно"]
   }
 }

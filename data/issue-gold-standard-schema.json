@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "autoassistant-issue-gold-standard-v1",
-  "title": "AutoAssistantAi — Gold Standard болячки",
-  "description": "Эталонная схема описания болячки автомобиля. Основана на структуре мышления опытного владельца.",
+  "$id": "autoassistant-issue-gold-standard-v1.1",
+  "title": "AutoAssistantAi — Gold Standard болячки v1.1",
+  "description": "Эталонная схема описания болячки автомобиля. Основана на структуре мышления опытного владельца. Версия 1.1 включает блок defect_status, расширенный enum solution.type, type на корне для классификации записей, поля для climate-зависимости, history тегов и DIY оценки сложности.",
   
   "type": "object",
-  "required": ["id", "car", "issue", "solutions"],
+  "required": ["id", "type", "car", "issue"],
   
   "properties": {
     
@@ -31,6 +31,19 @@
       "type": "string", 
       "format": "date",
       "example": "2025-01-21"
+    },
+
+    "type": {
+      "type": "string",
+      "description": "Тип записи. Определяет, на какой странице UI она показывается.",
+      "enum": ["systemic_defect", "common_wear", "maintenance", "minor_annoyance", "rare", "discarded_rare"],
+      "example": "systemic_defect"
+    },
+
+    "type_reason": {
+      "type": "string",
+      "description": "Обоснование классификации. Особенно важно для systemic_defect (>10% частота, recall, TSB) и discarded_rare (почему отброшено).",
+      "example": "частота >15%, подтверждено Drive2 + 2 независимых источника"
     },
 
     "car": {
@@ -83,6 +96,32 @@
             "turbo": {
               "type": "boolean",
               "example": true
+            },
+            "fuel_requirements": {
+              "type": "object",
+              "description": "Требования к топливу. Помогает UI показать предупреждение (например, 'АИ-92 ускоряет разрушение катализатора').",
+              "properties": {
+                "octane_min": {
+                  "type": "integer",
+                  "description": "Минимально допустимое октановое число",
+                  "example": 92
+                },
+                "octane_recommended": {
+                  "type": "integer",
+                  "description": "Рекомендуемое октановое число",
+                  "example": 95
+                },
+                "compatible": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "example": ["АИ-92", "АИ-95", "АИ-98"]
+                },
+                "warning": {
+                  "type": ["string", "null"],
+                  "description": "Предупреждение о топливе если есть",
+                  "example": "АИ-92 ускоряет разрушение катализатора"
+                }
+              }
             }
           }
         },
@@ -241,6 +280,201 @@
       }
     },
 
+    "consequences": {
+      "type": "object",
+      "description": "ПОСЛЕДСТВИЯ — что будет если не починить",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Что произойдёт если игнорировать проблему",
+          "example": "При обрыве цепи — встреча поршней с клапанами"
+        },
+        "worst_case": {
+          "type": "string",
+          "description": "Худший сценарий",
+          "example": "Замена двигателя"
+        },
+        "worst_case_cost_rub": {
+          "type": "object",
+          "properties": {
+            "min": {"type": "integer"},
+            "max": {"type": "integer"},
+            "as_of_date": {"type": "string", "format": "date"}
+          },
+          "example": {"min": 200000, "max": 350000, "as_of_date": "2025-01"}
+        },
+        "repair_if_ignored_cost_rub": {
+          "type": "object",
+          "description": "Стоимость ремонта если запустить (например, ремонт ГБЦ)",
+          "properties": {
+            "min": {"type": "integer"},
+            "max": {"type": "integer"},
+            "as_of_date": {"type": "string", "format": "date"}
+          },
+          "example": {"min": 80000, "max": 150000, "as_of_date": "2025-01"}
+        },
+        "time_to_failure": {
+          "type": "string",
+          "description": "Сколько можно ездить до критического отказа",
+          "example": "от нескольких дней до нескольких месяцев"
+        }
+      }
+    },
+
+    "history": {
+      "type": "object",
+      "description": "ИСТОРИЯ — когда появилась и исправлена проблема",
+      "properties": {
+        "known_since_year": {
+          "type": "integer",
+          "description": "С какого года известна проблема",
+          "example": 2010
+        },
+        "fixed_in_year": {
+          "type": ["integer", "null"],
+          "description": "В каком году производитель исправил (null = не исправлено)",
+          "example": 2012
+        },
+        "fixed_description": {
+          "type": "string",
+          "description": "Что именно исправили",
+          "example": "VAG модернизировал натяжитель цепи"
+        },
+        "affected_years": {
+          "type": "array",
+          "description": "Годы выпуска с проблемой",
+          "items": {"type": "integer"},
+          "example": [2010, 2011]
+        },
+        "safe_years": {
+          "type": "array",
+          "description": "Годы выпуска без проблемы (после исправления)",
+          "items": {"type": "integer"},
+          "example": [2012, 2013, 2014, 2015]
+        },
+        "tsb_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Дата выпуска TSB (Technical Service Bulletin)",
+          "example": "2012-03-15"
+        },
+        "recall_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Дата отзывной кампании",
+          "example": null
+        }
+      }
+    },
+
+    "defect_status": {
+      "type": "object",
+      "description": "ЮРИДИЧЕСКИЙ СТАТУС ДЕФЕКТА — recall, class action, TSB, исправление в производстве. Используется на UI для метки 'Признано производителем' и для блока 'Защита прав'.",
+      "properties": {
+        "is_acknowledged": {
+          "type": "boolean",
+          "description": "Признан ли дефект производителем",
+          "example": true
+        },
+        "acknowledged_by": {
+          "type": ["string", "null"],
+          "description": "Кто признал — производитель, регулятор",
+          "example": "Hyundai"
+        },
+        "acknowledged_date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "example": "2017-06-15"
+        },
+        "class_actions": {
+          "type": "array",
+          "description": "Коллективные иски по этому дефекту",
+          "items": {
+            "type": "object",
+            "properties": {
+              "country": {"type": "string", "example": "США"},
+              "country_flag": {"type": "string", "example": "🇺🇸"},
+              "year": {"type": ["integer", "null"], "example": 2022},
+              "plaintiffs_count": {"type": ["integer", "null"]},
+              "status": {
+                "type": "string",
+                "enum": ["pending", "won", "lost", "settlement", "dismissed", "withdrawn"],
+                "example": "dismissed"
+              },
+              "result": {
+                "type": ["string", "null"],
+                "description": "Краткий результат",
+                "example": "Иск добровольно отозван истцами 22.06.2023"
+              },
+              "case_number": {
+                "type": ["string", "null"],
+                "example": "8:22-cv-00448-SPG-KES"
+              },
+              "description": {"type": "string"},
+              "source_url": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "related_recalls": {
+          "type": "array",
+          "description": "Отзывные кампании по этому дефекту",
+          "items": {
+            "type": "object",
+            "properties": {
+              "country": {"type": "string", "example": "США"},
+              "country_flag": {"type": "string", "example": "🇺🇸"},
+              "recall_id": {
+                "type": ["string", "null"],
+                "description": "Официальный ID отзыва (NHTSA, Транспорт Канада, Росстандарт и т.д.)",
+                "example": "23V-651000"
+              },
+              "campaign_code": {
+                "type": ["string", "null"],
+                "description": "Код кампании производителя",
+                "example": "Hyundai 251"
+              },
+              "date": {"type": ["string", "null"], "format": "date"},
+              "year": {"type": ["integer", "null"], "example": 2023},
+              "description": {"type": "string"},
+              "affected_units": {
+                "type": ["integer", "null"],
+                "description": "Сколько автомобилей затронуто",
+                "example": 240589
+              },
+              "status": {
+                "type": "string",
+                "enum": ["open", "active", "completed", "unknown"],
+                "example": "open"
+              },
+              "source_url": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "tsb": {
+          "type": "array",
+          "description": "Technical Service Bulletins производителя",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {"type": "string", "example": "TSB 17-06-15"},
+              "date": {"type": ["string", "null"], "format": "date"},
+              "description": {"type": "string"},
+              "country": {"type": ["string", "null"]},
+              "country_flag": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "fix_in_production": {
+          "type": "object",
+          "description": "Когда производитель исправил дефект на конвейере",
+          "properties": {
+            "date": {"type": ["string", "null"], "format": "date"},
+            "description": {"type": ["string", "null"], "example": "Перешли на ревизию B катколлектора"}
+          }
+        }
+      }
+    },
+
     "mileage": {
       "type": "object",
       "description": "ПРОБЕГ — когда проявляется",
@@ -257,45 +491,58 @@
         },
         "peak_km": {
           "type": "integer",
-          "description": "Пик проявления — на каком пробеге чаще всего",
+          "description": "Пик проблем — на каком пробеге чаще всего",
           "example": 40000
         },
         "early_cases_km": {
           "type": "integer",
-          "description": "Самые ранние известные случаи",
+          "description": "Самые ранние случаи",
           "example": 15000
         },
         "frequency_percent": {
-          "type": "integer",
-          "description": "% владельцев, столкнувшихся с проблемой",
-          "minimum": 0,
-          "maximum": 100,
+          "type": ["integer", "null"],
+          "description": "Частота (%) среди владельцев. null если нет статистики",
           "example": 35
+        },
+        "frequency_description": {
+          "type": ["string", "null"],
+          "description": "Текстовое описание частоты для UI ('У каждого третьего владельца', 'Часто упоминается'). Используется когда нет точного процента.",
+          "example": "У каждого третьего владельца"
         },
         "age_related": {
           "type": "boolean",
-          "description": "Зависит ли от возраста (а не только от пробега)",
+          "description": "Зависит ли от возраста (а не только пробега)",
           "example": false
         },
         "age_years": {
-          "type": "integer",
-          "description": "Если age_related=true, через сколько лет проявляется",
+          "type": ["integer", "null"],
+          "description": "Через сколько лет проявляется (если age_related=true)",
           "example": null
+        },
+        "climate_dependent": {
+          "type": "boolean",
+          "description": "Зависит ли проявление от климата (зима, реагенты, жара)",
+          "example": false
+        },
+        "climate_note": {
+          "type": ["string", "null"],
+          "description": "Описание зависимости от климата",
+          "example": "Проявляется в тёплое время года, в пробках"
         }
       }
     },
 
     "solutions": {
       "type": "array",
-      "description": "РЕШЕНИЯ — как исправить",
+      "description": "РЕШЕНИЯ — как починить",
       "items": {
         "type": "object",
         "required": ["type", "title"],
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["correct", "temporary", "wrong", "preventive"],
-            "description": "correct=правильное, temporary=временное, wrong=неправильное (НЕ делать!), preventive=профилактика",
+            "enum": ["correct", "temporary", "preventive", "workaround", "replacement", "repair", "maintenance", "modification"],
+            "description": "Тип решения. correct=правильное универсальное решение; replacement=замена детали; repair=ремонт без замены; temporary=временное решение; preventive=превентивная мера; maintenance=плановое обслуживание; workaround=обходной путь; modification=модификация (например, удаление катализатора)",
             "example": "correct"
           },
           "title": {
@@ -304,58 +551,122 @@
           },
           "description": {
             "type": "string",
-            "example": "Заменить датчик топлива на обновлённую версию BU5Z-9F972-B"
+            "example": "Заменить датчик на обновлённую версию"
           },
           "diy_possible": {
             "type": "boolean",
-            "description": "Можно ли сделать самому",
             "example": true
           },
           "diy_difficulty": {
             "type": "string",
-            "enum": ["easy", "medium", "hard", "professional"],
+            "enum": ["easy", "medium", "hard", "professional_only"],
             "example": "easy"
+          },
+          "diy_difficulty_score": {
+            "type": ["integer", "null"],
+            "description": "Численная шкала сложности DIY: 1=элементарно, 2=легко, 3=средне, 4=сложно, 5=очень сложно",
+            "minimum": 1,
+            "maximum": 5,
+            "example": 2
           },
           "diy_time_hours": {
             "type": "number",
-            "description": "Время на самостоятельную замену",
             "example": 0.5
           },
           "diy_tools": {
             "type": "array",
-            "description": "Какие инструменты нужны",
             "items": {"type": "string"},
-            "example": ["Ключ на 24", "Ключ на 12", "Ветошь"]
+            "example": ["Ключ на 24", "Ветошь"]
           },
           "diy_warning": {
-            "type": "string",
-            "description": "Важное предупреждение при самостоятельной замене",
-            "example": "Подстелите ветошь — польётся топливо. Если не выкручивается — не ломайте, меняйте магистраль целиком."
+            "type": ["string", "null"],
+            "description": "Важные предупреждения для DIY",
+            "example": "Подстелите ветошь — польётся топливо"
           },
           "service_time_hours": {
             "type": "number",
-            "description": "Время работы в сервисе (нормо-часы)",
+            "description": "Время работы на СТО",
             "example": 0.3
+          },
+          "service_recommendation": {
+            "type": "string",
+            "description": "Какой сервис рекомендуется: 'любой' = подойдёт любая СТО, 'специализированный' = нужен профильный сервис, 'только_дилер' = только официальный дилер",
+            "enum": ["любой", "специализированный", "только_дилер"],
+            "example": "любой"
           },
           "labor_cost": {
             "type": "object",
             "properties": {
-              "min": {"type": "integer", "example": 500},
-              "max": {"type": "integer", "example": 1500},
-              "currency": {"type": "string", "example": "RUB"}
-            }
+              "min": {"type": "integer"},
+              "max": {"type": "integer"},
+              "currency": {"type": "string", "default": "RUB"},
+              "as_of_date": {"type": "string", "format": "date"}
+            },
+            "example": {"min": 500, "max": 1500, "currency": "RUB", "as_of_date": "2025-01"}
           },
           "effectiveness": {
             "type": "string",
-            "enum": ["permanent", "long_term", "short_term"],
-            "description": "Насколько хватает решения",
+            "enum": ["permanent", "temporary", "uncertain"],
             "example": "permanent"
           },
           "side_effects": {
             "type": "array",
-            "description": "Побочные эффекты решения",
             "items": {"type": "string"},
             "example": []
+          },
+          "consumables": {
+            "type": "array",
+            "description": "Расходники нужные для решения (герметик, прокладки, смазка) — в дополнение к основным parts",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string", "example": "Резьбовой герметик Loctite 243"},
+                "part_number": {"type": ["string", "null"]},
+                "quantity": {"type": "integer", "default": 1},
+                "is_one_time_use": {"type": "boolean", "default": true},
+                "note": {"type": ["string", "null"], "example": "малый тюбик хватит"}
+              }
+            }
+          },
+          "torque_specs": {
+            "type": "array",
+            "description": "Моменты затяжки болтов/гаек для сложного ремонта",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fastener": {"type": "string", "example": "Болт головки блока цилиндров"},
+                "torque_nm": {"type": ["number", "null"], "example": 30},
+                "angle_deg": {"type": ["number", "null"], "example": 90, "description": "Дополнительный угол после момента (для болтов с пластической деформацией)"},
+                "stages": {"type": ["string", "null"], "description": "Если затяжка в несколько этапов", "example": "30 Нм + 90° + 90°"},
+                "note": {"type": ["string", "null"]}
+              }
+            }
+          },
+          "special_tools": {
+            "type": "array",
+            "description": "Специнструмент, который не у каждого DIY-щика есть",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string", "example": "Съёмник пружины клапана"},
+                "part_number": {"type": ["string", "null"]},
+                "alternative": {"type": ["string", "null"], "description": "Можно ли заменить чем-то"},
+                "rental_possible": {"type": "boolean", "default": false}
+              }
+            }
+          },
+          "post_repair_procedures": {
+            "type": "array",
+            "description": "Процедуры после ремонта: адаптации ЭБУ, прокачки, тесты",
+            "items": {
+              "type": "object",
+              "properties": {
+                "procedure": {"type": "string", "example": "Сброс адаптаций АКПП через OBD"},
+                "required_tools": {"type": "array", "items": {"type": "string"}},
+                "time_minutes": {"type": ["integer", "null"]},
+                "is_critical": {"type": "boolean", "default": false, "description": "Критично или опционально"}
+              }
+            }
           }
         }
       }
@@ -363,38 +674,63 @@
 
     "parts": {
       "type": "array",
-      "description": "ЗАПЧАСТИ — что покупать",
+      "description": "ЗАПЧАСТИ — что нужно купить",
       "items": {
         "type": "object",
-        "required": ["name", "part_number"],
+        "required": ["name"],
         "properties": {
           "name": {
             "type": "string",
             "example": "Датчик давления топлива"
           },
           "part_number": {
-            "type": "string",
-            "description": "Основной артикул (рекомендуемый)",
+            "type": ["string", "null"],
+            "description": "Оригинальный артикул",
             "example": "BU5Z-9F972-B"
           },
           "part_number_actual": {
             "type": "string",
-            "description": "Что реально написано на детали (может отличаться от упаковки)",
+            "description": "Актуальный артикул (если изменился)",
             "example": "BU5A-9F972-CA"
           },
           "revision": {
             "type": "string",
-            "description": "Номер ревизии",
+            "description": "Ревизия детали",
             "example": "rev.2"
           },
           "manufacturer": {
             "type": "string",
-            "description": "OEM производитель",
             "example": "Ford/Motorcraft"
+          },
+          "is_original": {
+            "type": "boolean",
+            "description": "Является ли деталь оригиналом (OEM) или аналогом",
+            "default": true,
+            "example": true
+          },
+          "revision_history": {
+            "type": "array",
+            "description": "История ревизий детали — какие были и какая актуальна. Помогает определить старые проблемные ревизии при покупке.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "part_number": {"type": "string", "example": "2441025001"},
+                "revision": {"type": "string", "example": "rev.1"},
+                "status": {
+                  "type": "string",
+                  "enum": ["актуальная", "проблемная", "снята_с_производства", "временная"],
+                  "example": "проблемная"
+                },
+                "note": {
+                  "type": ["string", "null"],
+                  "example": "Оригинал G4FA/G4FC — натяжитель проваливается, замена обязательна"
+                }
+              }
+            }
           },
           "alternatives": {
             "type": "array",
-            "description": "Альтернативные артикулы (аналоги)",
+            "description": "Хорошие аналоги",
             "items": {
               "type": "object",
               "properties": {
@@ -519,8 +855,8 @@
             "type": "object",
             "properties": {
               "description": {"type": "string"},
-              "interval_km": {"type": "integer"},
-              "interval_months": {"type": "integer"}
+              "interval_km": {"type": ["integer", "null"]},
+              "interval_months": {"type": ["integer", "null"]}
             }
           },
           "example": [
@@ -549,7 +885,7 @@
           "example": "Подключить OBD-сканер, проверить наличие ошибок P008A, P0148, P018C, P018D"
         },
         "visual_check": {
-          "type": "string",
+          "type": ["string", "null"],
           "description": "Что можно увидеть глазами",
           "example": null
         },
@@ -647,8 +983,9 @@
         },
         "tags": {
           "type": "array",
+          "description": "Теги для поиска и фильтрации. Кроме произвольных используются: 'canonical:NAME' для группировки по канонической болячке, 'variant:NAME' для варианта (двигатель, рынок), 'verified_by_websearch' если запись подтверждена web-поиском, 'recall' если есть отзывная кампания.",
           "items": {"type": "string"},
-          "example": ["критично", "проверить_сразу", "diy"]
+          "example": ["canonical:cylinder_scoring", "variant:1.6_g4fc", "критично", "проверить_сразу", "diy"]
         }
       }
     }
