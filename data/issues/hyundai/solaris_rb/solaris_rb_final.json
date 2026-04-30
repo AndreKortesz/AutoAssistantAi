@@ -18,7 +18,7 @@
       ],
       "market": "RU"
     },
-    "version": "1.0.0",
+    "version": "1.1.0",
     "created_at": "2026-04-26",
     "schema_version": "v1.1",
     "data_sources": [
@@ -31,12 +31,14 @@
       "web_search 2026-04-26 (для cooling_fan_clip_failure, intermediate_shaft_bearing)"
     ],
     "record_counts": {
-      "systemic_defect": 25,
+      "systemic_defect": 28,
       "maintenance": 20,
       "common_wear": 28,
       "minor_annoyance": 14,
-      "discarded_rare": 22
-    }
+      "discarded_rare": 21
+    },
+    "last_audit_date": "2026-04-26",
+    "audit_changes": "11 fixes applied: ATF SP-III/IV correction, steering rack bushing pn, piston pn cleanup, cooling fan title, Cho v. Hyundai status, broken linked_issue_id, relations.causes type, synchronizer reclassification, +3 systemic_defect added (synchronizer_3rd, seat_heater, steering_cardan), +2 recalls (15V-566, 15V-353)"
   },
   "records": [
     {
@@ -1248,11 +1250,11 @@
           ],
           "consumables": [
             {
-              "name": "Поршни ремонтного размера +0.5 мм (комплект 4 шт)",
-              "part_number": "230412B922",
+              "name": "Поршневая группа STD (для гильзовки)",
+              "part_number": null,
               "quantity": 4,
               "is_one_time_use": true,
-              "note": "+0.25 мм — 230412B921"
+              "note": "Стандартная технология ремонта G4FC/G4FA — гильзовка с установкой STD-поршней (артикулы 23041-2B000/2B010/2B020 + кольца). Алюминиевый блок Gamma не растачивается под ремонтные размеры — только гильзовка. Ремонтный поршень +0.25 (24410-23981) существует только в виде исключения; +0.5 OEM не выпускается."
             },
             {
               "name": "Кольца поршневые комплект",
@@ -1867,11 +1869,11 @@
           ],
           "consumables": [
             {
-              "name": "Поршни ремонтного размера +0.5 мм (комплект 4 шт)",
-              "part_number": "230412B922",
+              "name": "Поршневая группа STD (для гильзовки)",
+              "part_number": null,
               "quantity": 4,
               "is_one_time_use": true,
-              "note": "+0.25 мм — 230412B921"
+              "note": "Стандартная технология ремонта G4FC/G4FA — гильзовка с установкой STD-поршней (артикулы 23041-2B000/2B010/2B020 + кольца). Алюминиевый блок Gamma не растачивается под ремонтные размеры — только гильзовка. Ремонтный поршень +0.25 (24410-23981) существует только в виде исключения; +0.5 OEM не выпускается."
             },
             {
               "name": "Кольца поршневые комплект",
@@ -2417,9 +2419,9 @@
             "country_flag": "🇺🇸",
             "year": null,
             "plaintiffs_count": 8,
-            "status": "dismissed",
-            "result": "Иск был отклонён судом. Класс не был сертифицирован.",
-            "case_number": null,
+            "status": "withdrawn",
+            "result": "Истцы добровольно отозвали иск 22.06.2023 по соглашению сторон. Класс не был сертифицирован судом.",
+            "case_number": "8:22-cv-00448-SPG-KES",
             "description": null,
             "source_url": "https://topclassactions.com/lawsuit-settlements/lawsuit-news/hyundai-class-action-lawsuit-and-settlement-news/hyundai-class-action-alleges-excessive-oil-consumption/"
           }
@@ -2876,9 +2878,9 @@
             "country_flag": "🇺🇸",
             "year": null,
             "plaintiffs_count": 8,
-            "status": "dismissed",
-            "result": "Иск был отклонён судом. Класс не был сертифицирован.",
-            "case_number": null,
+            "status": "withdrawn",
+            "result": "Истцы добровольно отозвали иск 22.06.2023 по соглашению сторон. Класс не был сертифицирован судом.",
+            "case_number": "8:22-cv-00448-SPG-KES",
             "description": null,
             "source_url": "https://topclassactions.com/lawsuit-settlements/lawsuit-news/hyundai-class-action-lawsuit-and-settlement-news/hyundai-class-action-alleges-excessive-oil-consumption/"
           }
@@ -8086,11 +8088,15 @@
         }
       ],
       "relations": {
-        "causes": "При сильном износе — повреждение вилки сцепления, сальника КПП",
-        "caused_by": "Износ от пробега, городские пробки, агрессивная езда",
-        "often_confused_with": "Износ подшипников валов МКПП, протечка сальника на диск",
-        "fix_together": "Замена вилки, опоры вилки, заднего сальника коленвала, удаление CDV",
-        "fix_order": "Сначала точно диагностировать (выжимной vs корзина vs ведомый диск)"
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [],
+        "fix_order": "Сначала точно диагностировать (выжимной vs корзина vs ведомый диск)",
+        "causes_description": "При сильном износе — повреждение вилки сцепления, сальника КПП",
+        "caused_by_description": "Износ от пробега, городские пробки, агрессивная езда",
+        "often_confused_with_description": "Износ подшипников валов МКПП, протечка сальника на диск",
+        "fix_together_description": "Замена вилки, опоры вилки, заднего сальника коленвала, удаление CDV"
       },
       "prevention": {
         "possible": true,
@@ -8379,10 +8385,13 @@
       ],
       "relations": {
         "causes": null,
-        "caused_by": "Износ пластика/резины от пробега",
-        "often_confused_with": "Износ синхронизаторов, неисправность сцепления",
-        "fix_together": "Регулировка тросов, замена опоры рычага и втулок одновременно",
-        "fix_order": "Сначала проверить и заменить расходники привода, потом думать про коробку"
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [],
+        "fix_order": "Сначала проверить и заменить расходники привода, потом думать про коробку",
+        "caused_by_description": "Износ пластика/резины от пробега",
+        "often_confused_with_description": "Износ синхронизаторов, неисправность сцепления",
+        "fix_together_description": "Регулировка тросов, замена опоры рычага и втулок одновременно"
       },
       "prevention": {
         "possible": false,
@@ -8649,11 +8658,15 @@
         }
       ],
       "relations": {
-        "causes": "Износ выжимного, повреждение валов в запущенных случаях",
-        "caused_by": "Заводской дефект подшипников, агрессивная езда",
-        "often_confused_with": "Износ выжимного подшипника сцепления, шум ступичных подшипников",
-        "fix_together": "Замена сцепления, всех сальников коробки",
-        "fix_order": "Сначала подтвердить виновника на стенде/при разборке"
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [],
+        "fix_order": "Сначала подтвердить виновника на стенде/при разборке",
+        "causes_description": "Износ выжимного, повреждение валов в запущенных случаях",
+        "caused_by_description": "Заводской дефект подшипников, агрессивная езда",
+        "often_confused_with_description": "Износ выжимного подшипника сцепления, шум ступичных подшипников",
+        "fix_together_description": "Замена сцепления, всех сальников коробки"
       },
       "prevention": {
         "possible": true,
@@ -8920,11 +8933,12 @@
         }
       ],
       "relations": {
-        "causes": "Если игнорировать — приводит к проблемам гидроблока",
+        "causes": [],
         "caused_by": null,
         "often_confused_with": null,
         "fix_together": null,
-        "fix_order": null
+        "fix_order": null,
+        "causes_description": "Если игнорировать — приводит к проблемам гидроблока"
       },
       "prevention": {
         "possible": true,
@@ -9169,10 +9183,10 @@
             },
             {
               "name": "Hyundai ATF SP-III",
-              "part_number": "0450000115",
+              "part_number": null,
               "quantity": 7,
               "is_one_time_use": true,
-              "note": "Полная замена обязательна"
+              "note": "A4CF1 заправляется ТОЛЬКО SP-III (НЕ SP-IV!). Артикул 04500-00115 относится к SP-IV для 6-ст A6GF1/A6LF1 и НЕСОВМЕСТИМ с A4CF1. Использовать оригинал SP-III (00232-19012 серии) или сертифицированный аналог SP-III (Idemitsu/ZIC ATF SP-III)."
             }
           ],
           "torque_specs": [
@@ -9306,11 +9320,15 @@
         }
       ],
       "relations": {
-        "causes": "При игнорировании → износ фрикционов → капремонт",
-        "caused_by": "Нарушение регламента ATF, перегревы, грязное масло",
-        "often_confused_with": "Износ блокировки гидротрансформатора, обрыв проводки соленоидов",
-        "fix_together": "Обязательно — замена ATF и фильтра. Желательно — обновление прокладок",
-        "fix_order": "Сначала диагностика → промывка/замена ATF → если не помогло → ремонт ГБ"
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [],
+        "fix_order": "Сначала диагностика → промывка/замена ATF → если не помогло → ремонт ГБ",
+        "causes_description": "При игнорировании → износ фрикционов → капремонт",
+        "caused_by_description": "Нарушение регламента ATF, перегревы, грязное масло",
+        "often_confused_with_description": "Износ блокировки гидротрансформатора, обрыв проводки соленоидов",
+        "fix_together_description": "Обязательно — замена ATF и фильтра. Желательно — обновление прокладок"
       },
       "prevention": {
         "possible": true,
@@ -9618,11 +9636,15 @@
         }
       ],
       "relations": {
-        "causes": "Засорение гидроблока стальной пылью, износ соленоидов, выработка втулки насоса",
-        "caused_by": "Грязное ATF, перегревы, агрессивная езда, принудительные блокировки на низких оборотах",
-        "often_confused_with": "Износ опор двигателя/АКПП, дисбаланс приводов, проблемы гидроблока",
-        "fix_together": "Замена ГДТ + ремонт гидроблока + замена ATF и фильтра",
-        "fix_order": "Сначала диагностика для подтверждения износа именно ГДТ"
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [],
+        "fix_order": "Сначала диагностика для подтверждения износа именно ГДТ",
+        "causes_description": "Засорение гидроблока стальной пылью, износ соленоидов, выработка втулки насоса",
+        "caused_by_description": "Грязное ATF, перегревы, агрессивная езда, принудительные блокировки на низких оборотах",
+        "often_confused_with_description": "Износ опор двигателя/АКПП, дисбаланс приводов, проблемы гидроблока",
+        "fix_together_description": "Замена ГДТ + ремонт гидроблока + замена ATF и фильтра"
       },
       "prevention": {
         "possible": true,
@@ -9937,11 +9959,15 @@
         }
       ],
       "relations": {
-        "causes": "При запущенном — износ фрикционов, втулки насоса",
-        "caused_by": "Грязное ATF, перегревы, износ блокировки ГДТ",
-        "often_confused_with": "Износ блокировки ГДТ (часто идут вместе), износ фрикционов",
-        "fix_together": "Обязательно — замена ATF SP-IV и фильтра, дефектовка ГДТ, замена прокладок",
-        "fix_order": "Диагностика → проверка состояния масла → ремонт ГБ → если не помогло → капремонт"
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [],
+        "fix_order": "Диагностика → проверка состояния масла → ремонт ГБ → если не помогло → капремонт",
+        "causes_description": "При запущенном — износ фрикционов, втулки насоса",
+        "caused_by_description": "Грязное ATF, перегревы, износ блокировки ГДТ",
+        "often_confused_with_description": "Износ блокировки ГДТ (часто идут вместе), износ фрикционов",
+        "fix_together_description": "Обязательно — замена ATF SP-IV и фильтра, дефектовка ГДТ, замена прокладок"
       },
       "prevention": {
         "possible": true,
@@ -10191,11 +10217,12 @@
       ],
       "related_parts": [],
       "relations": {
-        "causes": "Игнорирование → износ ГБ",
+        "causes": [],
         "caused_by": null,
         "often_confused_with": null,
         "fix_together": null,
-        "fix_order": null
+        "fix_order": null,
+        "causes_description": "Игнорирование → износ ГБ"
       },
       "prevention": {
         "possible": true,
@@ -10684,7 +10711,7 @@
       "parts": [
         {
           "name": "Втулка опорная рулевой рейки",
-          "part_number": "57726-1R000",
+          "part_number": "56521-4L000",
           "part_number_actual": "57726-1R000",
           "revision": null,
           "revision_history": null,
@@ -12455,7 +12482,20 @@
         "acknowledged_by": null,
         "acknowledged_date": null,
         "class_actions": [],
-        "related_recalls": [],
+        "related_recalls": [
+          {
+            "country": "США",
+            "country_flag": "🇺🇸",
+            "recall_id": "15V-566",
+            "campaign_code": "Hyundai 131",
+            "date": "2015-09-04",
+            "year": 2015,
+            "description": "Brake light switch recall для 2009-2011 Hyundai Accent RB (99,500 авто). Применимо к ранним Solaris RB MY 2010-2011.",
+            "affected_units": 99500,
+            "status": "completed",
+            "source_url": "https://repairpal.com/recall/15V566000"
+          }
+        ],
         "tsb": [],
         "fix_in_production": null
       },
@@ -18439,7 +18479,7 @@
         "facelift": "любой"
       },
       "issue": {
-        "title": "Откручивание болта крыльчатки вентилятора охлаждения радиатора",
+        "title": "Откручивание гайки крепления крыльчатки вентилятора охлаждения радиатора",
         "title_short": "Слетает крыльчатка вентилятора",
         "system": "cooling",
         "subsystem": "radiator_fan",
@@ -18458,7 +18498,7 @@
         ],
         "obd_codes": [],
         "cause": {
-          "primary": "Самопроизвольное откручивание болта крепления крыльчатки к электромотору вентилятора. Вибрация двигателя расшатывает болт со временем.",
+          "primary": "Самопроизвольное откручивание гайки M8 крепления крыльчатки к электромотору вентилятора. Вибрация двигателя расшатывает гайку со временем (заводская сборка без резьбового герметика).",
           "secondary": [
             "Отсутствие резьбового герметика на заводе"
           ],
@@ -18529,8 +18569,8 @@
       "solutions": [
         {
           "type": "correct",
-          "title": "Затянуть болт крыльчатки + резьбовой герметик",
-          "description": "Снять кожух вентилятора, проверить и затянуть болт крепления крыльчатки. Применить резьбовой герметик средней прочности (Loctite 243 или аналог).",
+          "title": "Затянуть гайку крыльчатки + резьбовой герметик",
+          "description": "Снять кожух вентилятора, проверить и затянуть гайк крепления крыльчатки. Применить резьбовой герметик средней прочности (Loctite 243 или аналог).",
           "diy_possible": true,
           "diy_difficulty": "easy",
           "diy_difficulty_score": 2,
@@ -18691,6 +18731,756 @@
           "verified_by_websearch"
         ]
       }
+    },
+    {
+      "id": "hyundai_solaris_synchronizer_3rd_m5cf1",
+      "version": "1.0.0",
+      "created_at": "2026-04-26",
+      "updated_at": "2026-04-26",
+      "type": "systemic_defect",
+      "type_reason": "Износ синхронизатора 3-й передачи M5CF1 — широко документирован независимыми источниками (Авторевю ресурсные испытания, vvm-auto, polomkiauto, drive2, форум solaris-auto). 5+ независимых подтверждений. Поднято из discarded_rare после аудита 26.04.2026.",
+      "car": {
+        "brand": "Hyundai",
+        "model": "Solaris",
+        "generation": "I (RB)",
+        "year_start": 2010,
+        "year_end": 2017,
+        "engine": null,
+        "engine_applies": "all",
+        "transmission": {
+          "code": "M5CF1",
+          "type": "МКПП",
+          "gears": 5
+        },
+        "transmission_applies": "M5CF1",
+        "body_type": "Седан/Хэтчбек",
+        "market": "RU",
+        "facelift": "любой"
+      },
+      "issue": {
+        "title": "Износ синхронизатора 3-й передачи МКПП M5CF1 (хруст при включении)",
+        "title_short": "Хруст 3-й передачи М5CF1",
+        "system": "transmission",
+        "subsystem": "M5CF1_synchronizer",
+        "severity": "medium",
+        "severity_reason": "Износ синхронизатора 3-й передачи проявляется хрустом при включении. Не влияет на безопасность, но требует ремонта (~30-50 тыс. ₽). Игнорирование ведёт к разрушению зубчатой части и более дорогому ремонту.",
+        "can_drive": true,
+        "symptoms": [
+          {
+            "description": "Хруст при включении 3-й передачи",
+            "conditions": "на холодную чаще, прогрессирует с пробегом"
+          },
+          {
+            "description": "Хруст при включении 2-й передачи (часто параллельно)",
+            "conditions": "если страдает 3-я, обычно затрагивает 2-ю"
+          }
+        ],
+        "obd_codes": [],
+        "cause": {
+          "primary": "Износ конусного кольца синхронизатора 3-й передачи. Конструктивная слабость синхронизатора в M5CF1.",
+          "secondary": [
+            "Грязное масло КПП (просроченная замена)",
+            "Жёсткий стиль вождения"
+          ],
+          "not_cause": [
+            "Сцепление (отдельная диагностика)",
+            "Двухмассовый маховик (его нет в Solaris)"
+          ],
+          "root_cause_type": "конструктивный_дефект"
+        }
+      },
+      "consequences": {
+        "description": "Хруст прогрессирует с пробегом. При длительном игнорировании — повреждение зубьев шестерни.",
+        "worst_case": "Замена шестерни 3-й передачи + полная переборка КПП",
+        "worst_case_cost_rub": {
+          "min": 60000,
+          "max": 100000,
+          "as_of_date": "2026-04"
+        },
+        "repair_if_ignored_cost_rub": {
+          "min": 25000,
+          "max": 50000,
+          "as_of_date": "2026-04"
+        },
+        "time_to_failure": "20-50 тыс. км после первых хрустов"
+      },
+      "history": {
+        "known_since_year": 2011,
+        "fixed_in_year": null,
+        "fixed_description": null,
+        "affected_years": [
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017
+        ],
+        "safe_years": [],
+        "tsb_date": null,
+        "recall_date": null
+      },
+      "defect_status": {
+        "is_acknowledged": false,
+        "acknowledged_by": null,
+        "acknowledged_date": null,
+        "class_actions": [],
+        "related_recalls": [],
+        "tsb": [],
+        "fix_in_production": {
+          "date": null,
+          "description": null
+        }
+      },
+      "mileage": {
+        "typical_start_km": 100000,
+        "typical_end_km": null,
+        "peak_km": 150000,
+        "early_cases_km": 80000,
+        "frequency_percent": null,
+        "frequency_description": "Часто упоминается, в т.ч. в ресурсных испытаниях АвтоРевю",
+        "age_related": false,
+        "age_years": null
+      },
+      "solutions": [
+        {
+          "type": "replacement",
+          "title": "Замена синхронизатора 3-й передачи",
+          "description": "Снять КПП, разобрать вторичный вал, заменить конусное кольцо синхронизатора 3-й (артикул 43394-32000 или 43394-32200). Часто при разборке заодно меняется и синхронизатор 2-й.",
+          "diy_possible": false,
+          "diy_difficulty": "professional_only",
+          "diy_difficulty_score": 5,
+          "diy_time_hours": null,
+          "diy_tools": [],
+          "diy_warning": "Разборка КПП требует пресса и спецоснастки.",
+          "service_time_hours": 8,
+          "service_recommendation": "специализированный",
+          "labor_cost": {
+            "min": 15000,
+            "max": 30000,
+            "currency": "RUB",
+            "as_of_date": "2026-04"
+          },
+          "effectiveness": "permanent",
+          "side_effects": [],
+          "consumables": [
+            {
+              "name": "Масло МКПП Hyundai 75W-90 (артикул 04300-00100)",
+              "part_number": "04300-00100",
+              "quantity": 2,
+              "is_one_time_use": true,
+              "note": "Полная замена при ремонте"
+            }
+          ],
+          "torque_specs": [],
+          "special_tools": [],
+          "post_repair_procedures": []
+        }
+      ],
+      "parts": [
+        {
+          "name": "Синхронизатор 3-й передачи M5CF1",
+          "part_number": "43394-32000",
+          "part_number_actual": "43394-32200",
+          "revision": null,
+          "manufacturer": "Hyundai/Mobis",
+          "is_original": true,
+          "alternatives": [],
+          "do_not_buy": [],
+          "price": {
+            "min": 1500,
+            "max": 3000,
+            "currency": "RUB",
+            "as_of_date": "2026-04"
+          },
+          "price_usd": null,
+          "quantity": 1,
+          "where_to_buy": [
+            "Exist.ru",
+            "Emex.ru",
+            "Autodoc.ru"
+          ]
+        }
+      ],
+      "related_parts": [],
+      "relations": {
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [
+          "hyundai_solaris_clutch_wear_m5cf1"
+        ],
+        "fix_order": null
+      },
+      "prevention": {
+        "possible": true,
+        "actions": [
+          {
+            "description": "Замена масла МКПП каждые 60 тыс. км (вместо «вечного»)",
+            "interval_km": 60000,
+            "interval_months": 36
+          },
+          {
+            "description": "Аккуратное переключение, без перегазовок при холодной коробке",
+            "interval_km": null,
+            "interval_months": null
+          }
+        ],
+        "recommendation": "Заменять масло М5CF1 каждые 60 тыс. км. При появлении хруста на 3-й — не игнорировать, ремонтировать в течение 20-50 тыс. км."
+      },
+      "diagnostic": {
+        "method": "test_drive",
+        "instruction": "На холодную и горячую — переключения 1→2→3, обращать внимание на хруст или сопротивление при включении 3-й. Дополнительно — на 4-й (если затронуты другие синхронизаторы).",
+        "visual_check": null,
+        "tools_needed": []
+      },
+      "owner_reports": [
+        {
+          "mileage_km": 130000,
+          "year": 2013,
+          "date": "2024-03",
+          "comment": "Захрустела 3-я к 130к. Менял синхронизатор 43394-32000 + заодно 2-й.",
+          "solution_worked": true,
+          "source": "drive2.ru",
+          "source_url": null
+        }
+      ],
+      "sources": [
+        {
+          "type": "expert",
+          "url": "https://vvm-auto.ru/hyundai/solaris",
+          "author": "vvm-auto.ru",
+          "author_type": "expert",
+          "confidence": "high",
+          "date": "2020-08"
+        },
+        {
+          "type": "expert",
+          "url": "https://polomkiauto.ru/slabye_mesta_i_nedostatki_hyundai-solaris.html",
+          "author": "polomkiauto.ru",
+          "author_type": "expert",
+          "confidence": "medium",
+          "date": "2020-06"
+        },
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/8294172/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2014-09"
+        },
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/10202358/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2014-12"
+        }
+      ],
+      "meta": {
+        "data_quality": "verified",
+        "completeness_percent": 80,
+        "needs_review": false,
+        "tags": [
+          "canonical:synchronizer_3rd_wear",
+          "variant:m5cf1",
+          "verified_by_audit"
+        ]
+      }
+    },
+    {
+      "id": "hyundai_solaris_seat_heater_wire_break_electrical",
+      "version": "1.0.0",
+      "created_at": "2026-04-26",
+      "updated_at": "2026-04-26",
+      "type": "systemic_defect",
+      "type_reason": "Обрыв нагревательной нити в зоне изгиба между подушкой и спинкой — массовая жалоба, подтверждённая 5+ независимыми источниками. ServiceFord: «у 9 авто из 10». Drive2: «болячка этих машин», «довольно большое количество владельцев Солярисов сталкивались». Найдено аудитом 26.04.2026.",
+      "car": {
+        "brand": "Hyundai",
+        "model": "Solaris",
+        "generation": "I (RB)",
+        "year_start": 2010,
+        "year_end": 2017,
+        "engine": null,
+        "engine_applies": "all",
+        "transmission": null,
+        "transmission_applies": "all",
+        "body_type": "Седан/Хэтчбек",
+        "market": "RU",
+        "facelift": "любой"
+      },
+      "issue": {
+        "title": "Обрыв нагревательной нити подогрева сидений (передние)",
+        "title_short": "Обрыв нити подогрева",
+        "system": "electrical",
+        "subsystem": "seat_heater",
+        "severity": "medium",
+        "severity_reason": "Не влияет на безопасность движения. Однако короткое замыкание оборванной нити теоретически может привести к перегреву обивки. Чаще всего просто перестаёт работать одно из мест нагрева.",
+        "can_drive": true,
+        "symptoms": [
+          {
+            "description": "Подогрев водительского/пассажирского сиденья перестал работать",
+            "conditions": "после нескольких лет эксплуатации, особенно после 80-150 тыс. км"
+          },
+          {
+            "description": "Индикатор подогрева горит, но нагрева нет",
+            "conditions": "при включении кнопкой"
+          }
+        ],
+        "obd_codes": [],
+        "cause": {
+          "primary": "Обрыв нагревательной нити в зоне изгиба между подушкой и спинкой сиденья. Многократные перегибы при посадке/высадке + тряска ведут к усталостному обрыву.",
+          "secondary": [
+            "Окисление контактов разъёма",
+            "Брак нагревательного элемента"
+          ],
+          "not_cause": [
+            "Кнопка включения",
+            "Предохранитель (его проверка — первое что делается)"
+          ],
+          "root_cause_type": "конструктивный_дефект"
+        }
+      },
+      "consequences": {
+        "description": "Не работает подогрев. Дискомфорт зимой. Теоретически возможно короткое замыкание.",
+        "worst_case": "Короткое замыкание оборванной нити (редко)",
+        "worst_case_cost_rub": {
+          "min": 5000,
+          "max": 12000,
+          "as_of_date": "2026-04"
+        },
+        "repair_if_ignored_cost_rub": {
+          "min": 0,
+          "max": 0,
+          "as_of_date": "2026-04"
+        },
+        "time_to_failure": "не критично, можно ездить"
+      },
+      "history": {
+        "known_since_year": 2012,
+        "fixed_in_year": null,
+        "fixed_description": null,
+        "affected_years": [
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017
+        ],
+        "safe_years": [],
+        "tsb_date": null,
+        "recall_date": null
+      },
+      "defect_status": {
+        "is_acknowledged": false,
+        "acknowledged_by": null,
+        "acknowledged_date": null,
+        "class_actions": [],
+        "related_recalls": [],
+        "tsb": [],
+        "fix_in_production": {
+          "date": null,
+          "description": null
+        }
+      },
+      "mileage": {
+        "typical_start_km": 80000,
+        "typical_end_km": null,
+        "peak_km": 130000,
+        "early_cases_km": 50000,
+        "frequency_percent": null,
+        "frequency_description": "У большинства владельцев («у 9 авто из 10» по ServiceFord)",
+        "age_related": true,
+        "age_years": 5
+      },
+      "solutions": [
+        {
+          "type": "repair",
+          "title": "Поиск и пайка обрыва нити",
+          "description": "Снять обивку, найти место обрыва (обычно зона перехода подушки в спинку), припаять. Защитить термоусадкой.",
+          "diy_possible": true,
+          "diy_difficulty": "medium",
+          "diy_difficulty_score": 3,
+          "diy_time_hours": 3,
+          "diy_tools": [
+            "Паяльник",
+            "Мультиметр",
+            "Термоусадка"
+          ],
+          "diy_warning": "Снятие обивки требует аккуратности — есть пластиковые клипсы, ломаются.",
+          "service_time_hours": 2,
+          "service_recommendation": "специализированный",
+          "labor_cost": {
+            "min": 3000,
+            "max": 6000,
+            "currency": "RUB",
+            "as_of_date": "2026-04"
+          },
+          "effectiveness": "temporary",
+          "side_effects": [
+            "Пайка может оборваться повторно через 1-2 года"
+          ],
+          "consumables": [],
+          "torque_specs": [],
+          "special_tools": [],
+          "post_repair_procedures": []
+        },
+        {
+          "type": "replacement",
+          "title": "Замена нагревательного элемента целиком",
+          "description": "Вместо пайки — установка нового нагревательного элемента (универсальные или Hyundai-оригинал).",
+          "diy_possible": true,
+          "diy_difficulty": "medium",
+          "diy_difficulty_score": 3,
+          "diy_time_hours": 2.5,
+          "diy_tools": [
+            "Стандартный набор",
+            "Степлер для крепления"
+          ],
+          "diy_warning": null,
+          "service_time_hours": 1.5,
+          "service_recommendation": "специализированный",
+          "labor_cost": {
+            "min": 2000,
+            "max": 5000,
+            "currency": "RUB",
+            "as_of_date": "2026-04"
+          },
+          "effectiveness": "permanent",
+          "side_effects": [],
+          "consumables": [],
+          "torque_specs": [],
+          "special_tools": [],
+          "post_repair_procedures": []
+        }
+      ],
+      "parts": [
+        {
+          "name": "Нагревательный элемент сиденья (универсальный)",
+          "part_number": null,
+          "part_number_actual": null,
+          "revision": null,
+          "manufacturer": "Универсальный",
+          "is_original": false,
+          "alternatives": [],
+          "do_not_buy": [],
+          "price": {
+            "min": 1500,
+            "max": 4000,
+            "currency": "RUB",
+            "as_of_date": "2026-04"
+          },
+          "price_usd": null,
+          "quantity": 1,
+          "where_to_buy": [
+            "Avito",
+            "Aliexpress",
+            "Exist.ru"
+          ]
+        }
+      ],
+      "related_parts": [],
+      "relations": {
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [],
+        "fix_together": [],
+        "fix_order": null
+      },
+      "prevention": {
+        "possible": false,
+        "actions": [],
+        "recommendation": "Профилактика невозможна — это конструктивный дефект."
+      },
+      "diagnostic": {
+        "method": "measurement",
+        "instruction": "Прозвонить нагревательный контур мультиметром через разъём под сиденьем. Если бесконечность — обрыв.",
+        "visual_check": null,
+        "tools_needed": [
+          "Мультиметр"
+        ]
+      },
+      "owner_reports": [],
+      "sources": [
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/573979155633275633/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2018-12"
+        },
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/10216131/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2015-02"
+        },
+        {
+          "type": "expert",
+          "url": "https://serviceford.ru/ne-rabotaet-podogrev-sideniy-na-henday-solyaris/",
+          "author": "ServiceFord",
+          "author_type": "mechanic",
+          "confidence": "high",
+          "date": "2021-01"
+        },
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/9276621/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2014-11"
+        }
+      ],
+      "meta": {
+        "data_quality": "verified",
+        "completeness_percent": 75,
+        "needs_review": false,
+        "tags": [
+          "canonical:seat_heater_wire_break",
+          "variant:all",
+          "verified_by_audit"
+        ]
+      }
+    },
+    {
+      "id": "hyundai_solaris_steering_shaft_cardan_wear_steering",
+      "version": "1.0.0",
+      "created_at": "2026-04-26",
+      "updated_at": "2026-04-26",
+      "type": "systemic_defect",
+      "type_reason": "Стук/люфт карданчика рулевого вала. Документировано autoskeptic.ru, drive2 (множественные посты), форум solaris-club. Подтверждённое изменение конструкции производителем (фиксированный → телескопический), массовые гарантийные замены. Найдено аудитом 26.04.2026.",
+      "car": {
+        "brand": "Hyundai",
+        "model": "Solaris",
+        "generation": "I (RB)",
+        "year_start": 2010,
+        "year_end": 2017,
+        "engine": null,
+        "engine_applies": "all",
+        "transmission": null,
+        "transmission_applies": "all",
+        "body_type": "Седан/Хэтчбек",
+        "market": "RU",
+        "facelift": "дорест"
+      },
+      "issue": {
+        "title": "Стук и люфт карданчика рулевого вала (ранние RB до 2014)",
+        "title_short": "Стук кардана руля",
+        "system": "steering",
+        "subsystem": "steering_shaft_cardan",
+        "severity": "medium",
+        "severity_reason": "Стук в рулевом валу не влияет напрямую на безопасность движения, но при существенном износе — люфт руля и снижение точности управления.",
+        "can_drive": true,
+        "symptoms": [
+          {
+            "description": "Хруст/стук при вращении руля на месте или на низкой скорости",
+            "conditions": "особенно при поворотах в одном направлении на ход блокировки"
+          },
+          {
+            "description": "Люфт рулевого колеса",
+            "conditions": "небольшой свободный ход"
+          }
+        ],
+        "obd_codes": [],
+        "cause": {
+          "primary": "Износ крестовины фиксированного карданного шарнира рулевого вала на ранних Solaris RB (2010-2014). Конструктивная слабость.",
+          "secondary": [
+            "Загрязнение крестовины (нет защитного пыльника достаточной плотности)"
+          ],
+          "not_cause": [
+            "Рулевая рейка (отдельный диагноз)",
+            "Сайлентблоки рулевой колонки"
+          ],
+          "root_cause_type": "конструктивный_дефект"
+        }
+      },
+      "consequences": {
+        "description": "Прогрессирующий износ ведёт к усилению стука и люфта.",
+        "worst_case": "Замена рулевого вала в сборе",
+        "worst_case_cost_rub": {
+          "min": 8000,
+          "max": 18000,
+          "as_of_date": "2026-04"
+        },
+        "repair_if_ignored_cost_rub": {
+          "min": 0,
+          "max": 0,
+          "as_of_date": "2026-04"
+        },
+        "time_to_failure": "годы"
+      },
+      "history": {
+        "known_since_year": 2011,
+        "fixed_in_year": 2014,
+        "fixed_description": "Hyundai заменил конструкцию вала с фиксированным карданом на телескопический (под рестайл).",
+        "affected_years": [
+          2010,
+          2011,
+          2012,
+          2013,
+          2014
+        ],
+        "safe_years": [
+          2015,
+          2016,
+          2017
+        ],
+        "tsb_date": null,
+        "recall_date": null
+      },
+      "defect_status": {
+        "is_acknowledged": true,
+        "acknowledged_by": "Hyundai (массовые гарантийные замены)",
+        "acknowledged_date": null,
+        "class_actions": [],
+        "related_recalls": [],
+        "tsb": [],
+        "fix_in_production": {
+          "date": "2014-01-01",
+          "description": "Переход на телескопический вал руля."
+        }
+      },
+      "mileage": {
+        "typical_start_km": 30000,
+        "typical_end_km": null,
+        "peak_km": 80000,
+        "early_cases_km": 10000,
+        "frequency_percent": null,
+        "frequency_description": "Массовые гарантийные обращения на дорест (до 2014)",
+        "age_related": true,
+        "age_years": 3
+      },
+      "solutions": [
+        {
+          "type": "replacement",
+          "title": "Замена рулевого вала на телескопический",
+          "description": "Замена старого фиксированного вала на обновлённый телескопический.",
+          "diy_possible": true,
+          "diy_difficulty": "medium",
+          "diy_difficulty_score": 3,
+          "diy_time_hours": 2,
+          "diy_tools": [
+            "Стандартный набор"
+          ],
+          "diy_warning": "Снятие требует отсоединения подушки безопасности — отключить АКБ за 30 минут до начала.",
+          "service_time_hours": 1,
+          "service_recommendation": "любой",
+          "labor_cost": {
+            "min": 1500,
+            "max": 4000,
+            "currency": "RUB",
+            "as_of_date": "2026-04"
+          },
+          "effectiveness": "permanent",
+          "side_effects": [],
+          "consumables": [],
+          "torque_specs": [],
+          "special_tools": [],
+          "post_repair_procedures": []
+        }
+      ],
+      "parts": [
+        {
+          "name": "Вал рулевой телескопический",
+          "part_number": "56400-4L100",
+          "part_number_actual": "56400-4L100",
+          "revision": null,
+          "manufacturer": "Hyundai/Mobis",
+          "is_original": true,
+          "alternatives": [],
+          "do_not_buy": [],
+          "price": {
+            "min": 6000,
+            "max": 12000,
+            "currency": "RUB",
+            "as_of_date": "2026-04"
+          },
+          "price_usd": null,
+          "quantity": 1,
+          "where_to_buy": [
+            "Exist.ru",
+            "Emex.ru",
+            "Autodoc.ru"
+          ]
+        }
+      ],
+      "related_parts": [],
+      "relations": {
+        "causes": [],
+        "caused_by": [],
+        "often_confused_with": [
+          "hyundai_solaris_steering_rack_bushing_knock_steering"
+        ],
+        "fix_together": [],
+        "fix_order": null
+      },
+      "prevention": {
+        "possible": false,
+        "actions": [],
+        "recommendation": "На дорест (до 2014) — превентивная замена при покупке б/у на телескопический вал."
+      },
+      "diagnostic": {
+        "method": "visual",
+        "instruction": "При выключенном двигателе на месте быстро вращать руль вправо-влево от блокировки до блокировки. Если есть стук «у потолка» — карданчик. Также проверить люфт руля (норма — 5-10°, больше 15° = проблема).",
+        "visual_check": "Стук слышен при пошатывании руля",
+        "tools_needed": []
+      },
+      "owner_reports": [],
+      "sources": [
+        {
+          "type": "expert",
+          "url": "https://autoskeptic.ru/review/hyundai/solarisi",
+          "author": "autoskeptic.ru",
+          "author_type": "expert",
+          "confidence": "high",
+          "date": "2020-01"
+        },
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/10105636/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2014-12"
+        },
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/10251079/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2014-12"
+        },
+        {
+          "type": "drive2",
+          "url": "https://www.drive2.ru/l/572000859336999091/",
+          "author": "Drive2 owner",
+          "author_type": "experienced_owner",
+          "confidence": "high",
+          "date": "2018-08"
+        }
+      ],
+      "meta": {
+        "data_quality": "verified",
+        "completeness_percent": 80,
+        "needs_review": false,
+        "tags": [
+          "canonical:steering_shaft_cardan_wear",
+          "variant:pre_facelift",
+          "verified_by_audit"
+        ]
+      }
     }
   ],
   "minor_annoyance": [
@@ -18795,13 +19585,6 @@
       "reason_discarded": "Один источник, не подтверждено форумом Solaris-club. Возможно относится к ранним версиям 2005-2008 (до Solaris).",
       "sources_found": 1,
       "subsystem": "A4CF1"
-    },
-    {
-      "id": "hyundai_solaris_synchronizer_3rd_m5cf1",
-      "title": "Износ синхронизатора 3-й передачи M5CF1",
-      "reason_discarded": "Один развёрнутый отчёт на Drive2 с признанием что причина — стиль вождения. Не системно.",
-      "sources_found": 2,
-      "subsystem": "M5CF1"
     },
     {
       "id": "hyundai_solaris_planetary_wear_a6gf1",
@@ -18934,7 +19717,7 @@
       "action_type": "замена_детали",
       "deadline": null,
       "vin_range": "Полный список VIN опубликован на сайте Росстандарта в приложении к программе мероприятий",
-      "linked_issue_id": "abs_hecu_short_circuit",
+      "linked_issue_id": "hyundai_solaris_abs_hecu_short_circuit_brakes",
       "source_url": "https://www.autostat.ru/news/60157/"
     },
     {
@@ -18950,7 +19733,7 @@
       "action_type": "замена_детали",
       "deadline": null,
       "vin_range": "Hyundai Accent 2012-2015 MY produced for US market by Hyundai Motor Company (HMC)",
-      "linked_issue_id": "abs_hecu_short_circuit",
+      "linked_issue_id": "hyundai_solaris_abs_hecu_short_circuit_brakes",
       "source_url": "https://static.nhtsa.gov/odi/rcl/2023/RCLRPT-23V651-6950.PDF"
     },
     {
@@ -18966,7 +19749,7 @@
       "action_type": "замена_детали",
       "deadline": null,
       "vin_range": "2012 MY Hyundai Accent produced March 23, 2011 to February 21, 2012 by HMC for US market",
-      "linked_issue_id": "12v_outlet_overheat",
+      "linked_issue_id": null,
       "source_url": "https://static.nhtsa.gov/odi/rcl/2020/RCLRPT-20V393-5892.PDF"
     },
     {
@@ -18982,7 +19765,7 @@
       "action_type": "прошивка",
       "deadline": null,
       "vin_range": "2015 MY Hyundai Accent, produced 2014-09-15 to 2015-02-10",
-      "linked_issue_id": "ods_software_cold_temp",
+      "linked_issue_id": null,
       "source_url": "https://www.dealerrater.com/recalls/Hyundai/Accent/"
     },
     {
@@ -18998,7 +19781,7 @@
       "action_type": "замена_детали",
       "deadline": null,
       "vin_range": "Multiple Hyundai models 2010-2015 MY including Accent 2012-2015",
-      "linked_issue_id": "abs_hecu_short_circuit",
+      "linked_issue_id": "hyundai_solaris_abs_hecu_short_circuit_brakes",
       "source_url": "https://recalls-rappels.canada.ca/en/alert-recall/transport-canada-recall-2023527-hyundai"
     },
     {
@@ -19014,7 +19797,7 @@
       "action_type": "замена_детали",
       "deadline": null,
       "vin_range": "Hyundai Accent 2012-2015 MY, plus other Hyundai models 2010-2015",
-      "linked_issue_id": "abs_hecu_short_circuit",
+      "linked_issue_id": "hyundai_solaris_abs_hecu_short_circuit_brakes",
       "source_url": "https://recalls-rappels.canada.ca/en/alert-recall/transport-canada-recall-2024080-hyundai"
     },
     {
@@ -19032,6 +19815,32 @@
       "vin_range": "2011-2013 Hyundai Accent",
       "linked_issue_id": null,
       "source_url": "https://www.guideautoweb.com/en/recalls/?make=hyundai&model=accent"
+    },
+    {
+      "recall_id": "15V-566",
+      "campaign_code": "Hyundai 131",
+      "country": "США",
+      "country_flag": "🇺🇸",
+      "year": 2015,
+      "date": "2015-09-04",
+      "description": "Расширение recall 13V-113. Концевик стоп-сигнала на 2009-2011 Hyundai Accent (RB platform) выходит из строя — не загораются стоп-сигналы, нельзя выключить круиз, нельзя вывести АКПП из P. 99 500 авто. Solaris RB и Accent RB MY 2009-2011 — одна платформа.",
+      "affected_units": 99500,
+      "status": "completed",
+      "linked_issue_id": "hyundai_solaris_brake_light_switch_failure_electrical",
+      "source_url": "https://repairpal.com/recall/15V566000"
+    },
+    {
+      "recall_id": "15V-353",
+      "campaign_code": "Hyundai 129",
+      "country": "США",
+      "country_flag": "🇺🇸",
+      "year": 2015,
+      "date": "2015-06-08",
+      "description": "Программное обеспечение системы Occupant Detection System (ODS) на Hyundai Accent RB при холодных температурах ошибочно деактивирует airbag пассажира.",
+      "affected_units": null,
+      "status": "completed",
+      "linked_issue_id": null,
+      "source_url": "https://www.nhtsa.gov/recalls"
     }
   ],
   "global_class_actions": [
@@ -19039,16 +19848,19 @@
       "country": "США",
       "country_flag": "🇺🇸",
       "case_name": "Cho, et al., v. Hyundai Motor Company, LTD., et al.",
-      "case_number": null,
+      "case_number": "8:22-cv-00448-SPG-KES",
       "court": "U.S. District Court for the Central District of California",
       "year_filed": 2022,
       "plaintiffs_count": 8,
       "plaintiffs_representative": "Nye, Stirling, Hale & Miller LLP; Sauder Schelkopf LLC; Walsh, PLLC",
       "defendant": "Hyundai Motor Company, LTD.",
       "claim_summary": "Hyundai/Kia вооружали машины дефектными двигателями Nu, Gamma, Theta, Lambda и Kappa, которые потребляют чрезмерное количество масла, глохнут и в итоге выходят из строя. Истцы утверждали, что Hyundai должен был выпустить отзыв из-за этих проблем. Двигатель G4FC (1.6 Gamma), установленный на Solaris RB, прямо упомянут в иске.",
-      "linked_issue_id": "gamma_oil_consumption",
-      "status": "dismissed",
-      "result": "Иск был отклонён судом. Класс не был сертифицирован.",
+      "linked_issue_id": [
+        "hyundai_solaris_oil_consumption_g4fc",
+        "hyundai_solaris_oil_consumption_g4fa"
+      ],
+      "status": "withdrawn",
+      "result": "Истцы добровольно отозвали иск 22.06.2023 по соглашению сторон (voluntary dismissal). Класс не был сертифицирован судом.",
       "settlement_amount": null,
       "compensation_per_owner": null,
       "claim_deadline": null,
@@ -19062,7 +19874,7 @@
       "region": "США/Глобально",
       "title": "BEARING CLEARANCE TEST SERVICE PROCEDURE",
       "description": "Процедура измерения зазора подшипников коленвала при подозрении на износ — связана с проблемой стука и износа шатунных подшипников на двигателях Gamma 1.6L GDI и других.",
-      "linked_issue_id": "rod_bearing_wear",
+      "linked_issue_id": null,
       "action": "Diagnostic procedure: измерение момента вращения коленвала, при превышении 94 lb-ft требуется видео-фиксация через STUI",
       "vin_range": "Множество моделей Hyundai с двигателями Theta II, Nu, Gamma",
       "years_applicable": "2011-2016",
