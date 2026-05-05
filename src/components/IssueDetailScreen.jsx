@@ -1,368 +1,537 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useCar } from '../contexts/CarContext';
+import * as dataService from '../services/dataService';
+import {
+  severityColor,
+  severityLabel,
+  formatPrice,
+  formatMileage,
+  frequencyText,
+  getLinkedRecalls,
+  getLinkedClassActions,
+  getLinkedTSB,
+} from '../utils/issueHelpers';
 
-const IssueDetailScreen = ({ issue, car, onBack }) => {
-  const [activeTab, setActiveTab] = useState('service');
-  const [expandedSections, setExpandedSections] = useState({
-    symptoms: true,
-    obdCodes: true,
-    cause: true,
-    solution: true,
-    reviews: false
-  });
-  const [vinValue, setVinValue] = useState('');
-
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const styles = {
-    container: { background: '#F7F8FA', minHeight: '100vh' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 0, zIndex: 100 },
-    backButton: { background: 'none', border: 'none', fontSize: '16px', color: '#1F4FD8', cursor: 'pointer', fontWeight: '500' },
-    shareButton: { background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer' },
-    hero: { padding: '20px', background: '#FFFFFF' },
-    heroTop: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' },
-    severityBadge: { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', background: 'rgba(220, 38, 38, 0.08)', color: '#DC2626' },
-    systemTag: { fontSize: '13px', color: '#64748B', background: '#F7F8FA', padding: '4px 10px', borderRadius: '6px' },
-    title: { fontSize: '22px', fontWeight: '700', color: '#1E293B', lineHeight: '1.3', marginBottom: '8px' },
-    carInfo: { fontSize: '14px', color: '#64748B', marginBottom: '16px' },
-    statsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' },
-    statCard: { padding: '14px', background: '#F7F8FA', borderRadius: '12px', textAlign: 'center' },
-    statValue: { display: 'block', fontSize: '18px', fontWeight: '700', color: '#1E293B' },
-    statLabel: { fontSize: '12px', color: '#94A3B8' },
-    recommendationBox: { display: 'flex', gap: '12px', padding: '16px 20px', background: 'rgba(31, 79, 216, 0.08)', borderLeft: '4px solid #1F4FD8' },
-    consequencesBox: { display: 'flex', gap: '12px', padding: '16px 20px', background: 'rgba(217, 119, 6, 0.08)', borderLeft: '4px solid #D97706' },
-    boxIcon: { fontSize: '18px', flexShrink: 0 },
-    boxTitle: { display: 'block', fontSize: '14px', fontWeight: '600', color: '#1F4FD8', marginBottom: '4px' },
-    consequencesTitle: { display: 'block', fontSize: '14px', fontWeight: '600', color: '#D97706', marginBottom: '4px' },
-    boxText: { fontSize: '14px', color: '#64748B', lineHeight: '1.5' },
-    section: { background: '#FFFFFF', marginTop: '8px' },
-    sectionHeader: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' },
-    sectionTitle: { fontSize: '16px', fontWeight: '600', color: '#1E293B' },
-    chevron: (open) => ({ fontSize: '10px', color: '#94A3B8', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }),
-    sectionContent: (open) => ({ padding: open ? '0 20px 20px' : '0', display: open ? 'block' : 'none' }),
-    symptomRow: { display: 'flex', gap: '8px', marginBottom: '10px' },
-    symptomBullet: { color: '#1F4FD8', fontWeight: '700' },
-    symptomText: { fontSize: '15px', color: '#1E293B', lineHeight: '1.5' },
-    symptomCondition: { color: '#64748B' },
-    obdCodes: { display: 'flex', flexDirection: 'column', gap: '8px' },
-    obdCodeItem: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#F7F8FA', borderRadius: '8px' },
-    obdCode: { fontFamily: 'monospace', fontSize: '15px', fontWeight: '700', color: '#DC2626', background: 'rgba(220, 38, 38, 0.08)', padding: '4px 10px', borderRadius: '6px' },
-    obdDesc: { fontSize: '13px', color: '#64748B', flex: 1 },
-    causeText: { fontSize: '14px', color: '#64748B', lineHeight: '1.6', marginBottom: '16px' },
-    notCauseBlock: { padding: '14px', background: 'rgba(220, 38, 38, 0.08)', borderRadius: '10px', border: '1px solid rgba(220, 38, 38, 0.2)' },
-    notCauseTitle: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '600', color: '#DC2626', marginBottom: '10px' },
-    notCauseList: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
-    notCauseItem: { fontSize: '13px', color: '#1E293B', background: '#FFFFFF', padding: '6px 12px', borderRadius: '6px', border: '1px solid #E2E8F0' },
-    solutionTabs: { display: 'flex', gap: '8px', marginBottom: '16px' },
-    solutionTab: (active) => ({ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px 12px', background: active ? 'rgba(31, 79, 216, 0.08)' : '#F7F8FA', border: `2px solid ${active ? '#1F4FD8' : '#E2E8F0'}`, borderRadius: '12px', cursor: 'pointer' }),
-    tabIcon: { fontSize: '18px' },
-    tabText: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
-    tabLabel: { fontSize: '14px', fontWeight: '600', color: '#1E293B' },
-    tabHint: { fontSize: '11px', color: '#94A3B8' },
-    solutionCard: { padding: '16px', background: 'rgba(46, 158, 111, 0.08)', borderRadius: '12px' },
-    solutionTitle: { fontSize: '16px', fontWeight: '600', color: '#1E293B', marginBottom: '8px' },
-    solutionDesc: { fontSize: '14px', color: '#64748B', lineHeight: '1.5', marginBottom: '16px' },
-    solutionMeta: { display: 'flex', gap: '16px', marginBottom: '16px' },
-    metaItem: { display: 'flex', alignItems: 'center', gap: '6px' },
-    metaIcon: { fontSize: '14px' },
-    metaText: { fontSize: '14px', fontWeight: '600', color: '#1E293B' },
-    difficultyContainer: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' },
-    difficultyLabel: { fontSize: '13px', color: '#64748B' },
-    difficultyDots: { display: 'flex', gap: '4px' },
-    difficultyDot: (filled) => ({ width: '8px', height: '8px', borderRadius: '50%', background: filled ? '#D97706' : '#E2E8F0' }),
-    difficultyText: { fontSize: '13px', fontWeight: '600', color: '#1E293B' },
-    toolsSection: { marginBottom: '16px' },
-    toolsTitle: { fontSize: '13px', color: '#64748B', marginBottom: '8px', display: 'block' },
-    toolsList: { display: 'flex', flexWrap: 'wrap', gap: '6px' },
-    toolChip: { fontSize: '12px', padding: '6px 10px', background: '#FFFFFF', borderRadius: '6px', color: '#1E293B' },
-    warningBox: { display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '12px', background: 'rgba(217, 119, 6, 0.08)', borderRadius: '8px', marginBottom: '16px' },
-    warningIcon: { fontSize: '14px' },
-    warningText: { fontSize: '13px', color: '#1E293B', lineHeight: '1.4' },
-    partsInDiy: { marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #E2E8F0' },
-    partsInDiyTitle: { fontSize: '14px', fontWeight: '600', color: '#1E293B', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' },
-    vinPrompt: { padding: '14px', background: '#FFFFFF', borderRadius: '10px', border: '1px dashed #1F4FD8', marginBottom: '12px' },
-    vinHeader: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' },
-    vinIcon: { fontSize: '16px' },
-    vinTitle: { fontSize: '14px', fontWeight: '600', color: '#1E293B' },
-    vinText: { fontSize: '13px', color: '#64748B', marginBottom: '10px' },
-    vinInputRow: { display: 'flex', gap: '8px' },
-    vinInput: { flex: 1, padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '13px', fontFamily: 'monospace', textTransform: 'uppercase' },
-    vinButton: { padding: '10px 16px', background: '#1F4FD8', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
-    partCard: { padding: '14px', background: '#F7F8FA', borderRadius: '10px', marginBottom: '10px' },
-    partHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-    partName: { fontSize: '14px', fontWeight: '600', color: '#1E293B' },
-    partRevision: { fontSize: '11px', color: '#2E9E6F', background: 'rgba(46, 158, 111, 0.08)', padding: '2px 8px', borderRadius: '4px' },
-    partNumber: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' },
-    partNumberLabel: { fontSize: '12px', color: '#94A3B8' },
-    partNumberValue: { fontFamily: 'monospace', fontSize: '13px', fontWeight: '600', color: '#1E293B' },
-    copyButton: { background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' },
-    partManufacturer: { fontSize: '12px', color: '#64748B', marginBottom: '6px' },
-    priceRange: { fontSize: '15px', fontWeight: '700', color: '#1E293B', marginBottom: '10px', display: 'block' },
-    alternativesSection: { paddingTop: '10px', borderTop: '1px solid #E2E8F0' },
-    alternativesLabel: { fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '6px' },
-    alternativesList: { display: 'flex', flexWrap: 'wrap', gap: '6px' },
-    alternativeChip: { fontSize: '11px', padding: '4px 8px', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', color: '#64748B' },
-    ctaPrimary: { width: '100%', padding: '16px', background: '#1F4FD8', color: 'white', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', marginTop: '16px' },
-    ctaBuy: { width: '100%', padding: '14px', background: '#2E9E6F', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', marginTop: '12px' },
-    whereBox: { padding: '12px', background: '#FFFFFF', borderRadius: '8px' },
-    whereLabel: { fontSize: '12px', color: '#94A3B8', display: 'block', marginBottom: '4px' },
-    whereText: { fontSize: '14px', color: '#1E293B' },
-    reviewCard: { padding: '14px', background: '#F7F8FA', borderRadius: '10px', marginBottom: '10px' },
-    reviewHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
-    reviewMeta: { fontSize: '13px', color: '#94A3B8' },
-    reviewStatus: { fontSize: '12px', color: '#2E9E6F' },
-    reviewText: { fontSize: '14px', lineHeight: '1.5', color: '#1E293B' },
-    bottomActions: { padding: '20px', background: '#FFFFFF', marginTop: '8px' },
-    journalButton: { width: '100%', padding: '14px', background: '#FFFFFF', color: '#1F4FD8', border: '2px solid #1F4FD8', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' },
-    secondaryRow: { display: 'flex', gap: '12px' },
-    secondaryButton: { flex: 1, padding: '12px', background: '#F7F8FA', color: '#64748B', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
-    footer: { padding: '20px', background: '#F7F8FA' },
-    footerText: { fontSize: '12px', color: '#94A3B8', lineHeight: '1.5' },
-  };
-
-  return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <button style={styles.backButton} onClick={onBack}>← Назад</button>
-        <button style={styles.shareButton}>↗</button>
-      </div>
-
-      {/* Hero */}
-      <div style={styles.hero}>
-        <div style={styles.heroTop}>
-          <span style={styles.severityBadge}>🔴 Критично</span>
-          <span style={styles.systemTag}>{issue?.system || 'Топливная система'}</span>
-        </div>
-        <h1 style={styles.title}>{issue?.name || 'Датчик давления топлива старой ревизии'}</h1>
-        <p style={styles.carInfo}>{car?.brand || 'Ford'} {car?.model || 'Mustang 6G (S550)'} • {car?.engine || '2.3L EcoBoost'} • 2015–2023</p>
-        <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
-            <span style={styles.statValue}>~40K км</span>
-            <span style={styles.statLabel}>пик проявления</span>
-          </div>
-          <div style={styles.statCard}>
-            <span style={{...styles.statValue, color: '#D97706'}}>35%</span>
-            <span style={styles.statLabel}>владельцев</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Recommendation */}
-      <div style={styles.recommendationBox}>
-        <span style={styles.boxIcon}>💡</span>
-        <div>
-          <span style={styles.boxTitle}>Рекомендуем проверить</span>
-          <span style={styles.boxText}>Проверять и менять датчик при покупке б/у, даже если симптомов нет.</span>
-        </div>
-      </div>
-
-      {/* Consequences */}
-      <div style={styles.consequencesBox}>
-        <span style={styles.boxIcon}>⚠️</span>
-        <div>
-          <span style={styles.consequencesTitle}>Возможные последствия</span>
-          <span style={styles.boxText}>Обеднение смеси может привести к задирам в цилиндрах. Ремонт двигателя: 150 000 – 300 000 ₽</span>
-        </div>
-      </div>
-
-      {/* Симптомы */}
-      <div style={styles.section}>
-        <button style={styles.sectionHeader} onClick={() => toggleSection('symptoms')}>
-          <span style={styles.sectionTitle}>🔍 Симптомы</span>
-          <span style={styles.chevron(expandedSections.symptoms)}>▼</span>
-        </button>
-        <div style={styles.sectionContent(expandedSections.symptoms)}>
-          <div style={styles.symptomRow}><span style={styles.symptomBullet}>•</span><span style={styles.symptomText}>Плавающие обороты<span style={styles.symptomCondition}> — на холостом ходу</span></span></div>
-          <div style={styles.symptomRow}><span style={styles.symptomBullet}>•</span><span style={styles.symptomText}>Потеря мощности<span style={styles.symptomCondition}> — при разгоне под нагрузкой</span></span></div>
-          <div style={styles.symptomRow}><span style={styles.symptomBullet}>•</span><span style={styles.symptomText}>Двигатель глохнет<span style={styles.symptomCondition}> — спонтанно</span></span></div>
-        </div>
-      </div>
-
-      {/* Коды ошибок OBD */}
-      <div style={styles.section}>
-        <button style={styles.sectionHeader} onClick={() => toggleSection('obdCodes')}>
-          <span style={styles.sectionTitle}>📟 Коды ошибок</span>
-          <span style={styles.chevron(expandedSections.obdCodes)}>▼</span>
-        </button>
-        <div style={styles.sectionContent(expandedSections.obdCodes)}>
-          <div style={styles.obdCodes}>
-            <div style={styles.obdCodeItem}><span style={styles.obdCode}>P008A</span><span style={styles.obdDesc}>Давление топлива слишком низкое</span></div>
-            <div style={styles.obdCodeItem}><span style={styles.obdCode}>P0148</span><span style={styles.obdDesc}>Ошибка подачи топлива</span></div>
-            <div style={styles.obdCodeItem}><span style={styles.obdCode}>P018C</span><span style={styles.obdDesc}>Показания датчика вне допустимого диапазона</span></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Причина */}
-      <div style={styles.section}>
-        <button style={styles.sectionHeader} onClick={() => toggleSection('cause')}>
-          <span style={styles.sectionTitle}>🔧 Причина</span>
-          <span style={styles.chevron(expandedSections.cause)}>▼</span>
-        </button>
-        <div style={styles.sectionContent(expandedSections.cause)}>
-          <p style={styles.causeText}>Датчики первых ревизий имеют конструктивную особенность, из-за которой могут передавать в блок управления заниженные значения давления.</p>
-          <div style={styles.notCauseBlock}>
-            <div style={styles.notCauseTitle}><span>❌</span><span>Часто путают с:</span></div>
-            <div style={styles.notCauseList}>
-              <span style={styles.notCauseItem}>Топливный насос</span>
-              <span style={styles.notCauseItem}>Форсунки</span>
-              <span style={styles.notCauseItem}>Топливный фильтр</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Решение */}
-      <div style={styles.section}>
-        <button style={styles.sectionHeader} onClick={() => toggleSection('solution')}>
-          <span style={styles.sectionTitle}>✅ Решение</span>
-          <span style={styles.chevron(expandedSections.solution)}>▼</span>
-        </button>
-        <div style={styles.sectionContent(expandedSections.solution)}>
-          {/* Табы */}
-          <div style={styles.solutionTabs}>
-            <button style={styles.solutionTab(activeTab === 'service')} onClick={() => setActiveTab('service')}>
-              <span style={styles.tabIcon}>🔧</span>
-              <div style={styles.tabText}><span style={styles.tabLabel}>В сервисе</span><span style={styles.tabHint}>рекомендуем</span></div>
-            </button>
-            <button style={styles.solutionTab(activeTab === 'diy')} onClick={() => setActiveTab('diy')}>
-              <span style={styles.tabIcon}>🛠</span>
-              <div style={styles.tabText}><span style={styles.tabLabel}>Своими руками</span><span style={styles.tabHint}>для опытных</span></div>
-            </button>
-          </div>
-
-          {/* Контент "В сервисе" */}
-          {activeTab === 'service' && (
-            <div style={styles.solutionCard}>
-              <h3 style={styles.solutionTitle}>Замена датчика на актуальную ревизию</h3>
-              <p style={styles.solutionDesc}>Мастер заменит датчик давления топлива на версию с исправленной конструкцией. Работа занимает 20–30 минут.</p>
-              <div style={styles.solutionMeta}>
-                <div style={styles.metaItem}><span style={styles.metaIcon}>⏱</span><span style={styles.metaText}>20–30 минут</span></div>
-                <div style={styles.metaItem}><span style={styles.metaIcon}>💰</span><span style={styles.metaText}>500 – 1 500 ₽</span></div>
-              </div>
-              <div style={styles.whereBox}>
-                <span style={styles.whereLabel}>Где делать:</span>
-                <span style={styles.whereText}>Любой сервис с опытом работы с Ford</span>
-              </div>
-              <button style={styles.ctaPrimary}>📍 Записаться в сервис</button>
-            </div>
-          )}
-
-          {/* Контент "Своими руками" */}
-          {activeTab === 'diy' && (
-            <div style={styles.solutionCard}>
-              <h3 style={styles.solutionTitle}>Самостоятельная замена</h3>
-              <p style={styles.solutionDesc}>Датчик расположен в доступном месте перед ТНВД. Замена не требует специального оборудования.</p>
-              <div style={styles.solutionMeta}>
-                <div style={styles.metaItem}><span style={styles.metaIcon}>⏱</span><span style={styles.metaText}>30–40 минут</span></div>
-              </div>
-              <div style={styles.difficultyContainer}>
-                <span style={styles.difficultyLabel}>Сложность:</span>
-                <div style={styles.difficultyDots}>
-                  <div style={styles.difficultyDot(true)}></div>
-                  <div style={styles.difficultyDot(false)}></div>
-                  <div style={styles.difficultyDot(false)}></div>
-                </div>
-                <span style={styles.difficultyText}>Несложно</span>
-              </div>
-              <div style={styles.toolsSection}>
-                <span style={styles.toolsTitle}>Инструменты:</span>
-                <div style={styles.toolsList}>
-                  <span style={styles.toolChip}>Ключ на 24</span>
-                  <span style={styles.toolChip}>Ключ на 12</span>
-                  <span style={styles.toolChip}>Ветошь</span>
-                  <span style={styles.toolChip}>Ёмкость для топлива</span>
-                </div>
-              </div>
-              <div style={styles.warningBox}>
-                <span style={styles.warningIcon}>⚠️</span>
-                <span style={styles.warningText}>Если датчик прикипел и не поддаётся — не прилагайте чрезмерных усилий. Есть риск повредить резьбу.</span>
-              </div>
-
-              {/* Запчасти */}
-              <div style={styles.partsInDiy}>
-                <div style={styles.partsInDiyTitle}>🔩 Запчасти</div>
-                
-                <div style={styles.vinPrompt}>
-                  <div style={styles.vinHeader}><span style={styles.vinIcon}>🔍</span><span style={styles.vinTitle}>Уточнить по VIN</span></div>
-                  <p style={styles.vinText}>Введите VIN для точных артикулов под ваш автомобиль</p>
-                  <div style={styles.vinInputRow}>
-                    <input type="text" style={styles.vinInput} placeholder="1FA6P8TH8H5123456" maxLength={17} value={vinValue} onChange={(e) => setVinValue(e.target.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''))} />
-                    <button style={styles.vinButton}>Найти</button>
-                  </div>
-                </div>
-
-                <div style={styles.partCard}>
-                  <div style={styles.partHeader}>
-                    <span style={styles.partName}>Датчик давления топлива</span>
-                    <span style={styles.partRevision}>rev.2</span>
-                  </div>
-                  <div style={styles.partNumber}>
-                    <span style={styles.partNumberLabel}>Артикул:</span>
-                    <span style={styles.partNumberValue}>BU5Z-9F972-B</span>
-                    <button style={styles.copyButton}>📋</button>
-                  </div>
-                  <p style={styles.partManufacturer}>Ford / Motorcraft (оригинал)</p>
-                  <span style={styles.priceRange}>4 500 – 6 000 ₽</span>
-                  <div style={styles.alternativesSection}>
-                    <span style={styles.alternativesLabel}>Альтернативы:</span>
-                    <div style={styles.alternativesList}>
-                      <span style={styles.alternativeChip}>Bosch</span>
-                      <span style={styles.alternativeChip}>Delphi</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button style={styles.ctaBuy}>🛒 Купить запчасть</button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Отзывы */}
-      <div style={styles.section}>
-        <button style={styles.sectionHeader} onClick={() => toggleSection('reviews')}>
-          <span style={styles.sectionTitle}>💬 Отзывы владельцев</span>
-          <span style={styles.chevron(expandedSections.reviews)}>▼</span>
-        </button>
-        <div style={styles.sectionContent(expandedSections.reviews)}>
-          <div style={styles.reviewCard}>
-            <div style={styles.reviewHeader}>
-              <span style={styles.reviewMeta}>Mustang 2016 • 45 000 км</span>
-              <span style={styles.reviewStatus}>✓ Проблема решена</span>
-            </div>
-            <p style={styles.reviewText}>Заменил сам за полчаса. Обороты перестали плавать, машина поехала совсем по-другому.</p>
-          </div>
-          <div style={styles.reviewCard}>
-            <div style={styles.reviewHeader}>
-              <span style={styles.reviewMeta}>Mustang 2017 • 32 000 км</span>
-              <span style={styles.reviewStatus}>✓ Профилактика</span>
-            </div>
-            <p style={styles.reviewText}>Поменял при покупке б/у, хотя симптомов не было. На старом датчике была первая ревизия.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Нижние действия */}
-      <div style={styles.bottomActions}>
-        <button style={styles.journalButton}><span>📝</span><span>Добавить в журнал обслуживания</span></button>
-        <div style={styles.secondaryRow}>
-          <button style={styles.secondaryButton}>💾 Сохранить</button>
-          <button style={styles.secondaryButton}>↗ Поделиться</button>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div style={styles.footer}>
-        <p style={styles.footerText}>Информация основана на данных от владельцев и официальных источниках. Рекомендуем проверять актуальность цен и наличие запчастей.</p>
-      </div>
-
-      <div style={{height: '40px'}}></div>
-    </div>
-  );
+const c = {
+  bg: '#F7F8FA',
+  card: '#FFFFFF',
+  border: '#E2E8F0',
+  primary: '#1F4FD8',
+  primaryLight: 'rgba(31, 79, 216, 0.08)',
+  success: '#2E9E6F',
+  warning: '#D97706',
+  critical: '#DC2626',
+  textPrimary: '#1E293B',
+  textSecondary: '#64748B',
+  textTertiary: '#94A3B8',
 };
 
-export default IssueDetailScreen;
+export default function IssueDetailScreen() {
+  const { issueId } = useParams();
+  const navigate = useNavigate();
+  const { userCar, carDetails, issuesData, loading: carLoading } = useCar();
+  
+  const [issue, setIssue] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('service');
+  const [expanded, setExpanded] = useState({
+    symptoms: true,
+    cause: true,
+    solution: true,
+    parts: true,
+    reviews: false,
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    if (!userCar?.modelId || !issueId) return;
+    
+    dataService.getIssueById(userCar.modelId, issueId)
+      .then(data => {
+        if (mounted) {
+          setIssue(data);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load issue:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [userCar, issueId]);
+
+  const toggle = (key) => {
+    setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  if (carLoading || loading) {
+    return <div style={s.loading}>Загрузка...</div>;
+  }
+
+  if (!issue) {
+    return (
+      <div style={s.container}>
+        <Header onBack={() => navigate('/issues')} />
+        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+          <h2 style={{ color: c.textPrimary, marginBottom: '8px' }}>Болячка не найдена</h2>
+          <p style={{ color: c.textSecondary }}>Возможно, она была удалена или не относится к вашей конфигурации</p>
+        </div>
+      </div>
+    );
+  }
+
+  const severity = issue.issue?.severity || 'low';
+  const title = issue.issue?.title || 'Без названия';
+  const carInfo = issue.car || {};
+  const engine = carInfo.engine?.code || '';
+  const trans = carInfo.transmission?.code || '';
+  
+  const recalls = getLinkedRecalls(issue.id, issuesData?.recalls);
+  const classActions = getLinkedClassActions(issue.id, issuesData?.classActions);
+  const tsbs = getLinkedTSB(issue.id, issuesData?.tsb);
+  
+  const solutions = issue.solutions || [];
+  const diySol = solutions.find(s => s.diy_possible) || solutions[0];
+  const serviceSol = solutions.find(s => s.diy_difficulty === 'professional_only') || solutions[0];
+  const currentSol = activeTab === 'diy' ? diySol : serviceSol;
+
+  return (
+    <div style={s.container}>
+      <Header onBack={() => navigate('/issues')} />
+
+      {/* Hero */}
+      <div style={s.hero}>
+        <div style={s.heroTop}>
+          <div style={{ ...s.severityBadge, color: severityColor(severity), background: severityColor(severity) + '14' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: severityColor(severity) }} />
+            {severityLabel(severity)}
+          </div>
+          {issue.issue?.system && <div style={s.systemTag}>{issue.issue.system}</div>}
+        </div>
+        <h1 style={s.title}>{title}</h1>
+        <div style={s.carInfo}>
+          {carInfo.brand} {carInfo.model} {carInfo.generation}
+          {engine && ` · ${engine}`}
+          {trans && ` · ${trans}`}
+        </div>
+
+        {issue.issue?.severity_reason && (
+          <div style={s.severityNote}>
+            {issue.issue.severity_reason}
+          </div>
+        )}
+
+        {/* Stats */}
+        <div style={s.statsGrid}>
+          <div style={s.statCard}>
+            <div style={s.statValue}>{frequencyText(issue.mileage)}</div>
+            <div style={s.statLabel}>Частота</div>
+          </div>
+          {issue.mileage?.peak_km && (
+            <div style={s.statCard}>
+              <div style={s.statValue}>~{formatMileage(issue.mileage.peak_km)}</div>
+              <div style={s.statLabel}>Пик проявления</div>
+            </div>
+          )}
+          {issue.consequences?.worst_case_cost_rub && (
+            <div style={s.statCard}>
+              <div style={s.statValue}>{formatPrice(issue.consequences.worst_case_cost_rub)}</div>
+              <div style={s.statLabel}>Худший случай</div>
+            </div>
+          )}
+          {issue.issue?.can_drive !== undefined && (
+            <div style={s.statCard}>
+              <div style={s.statValue}>{issue.issue.can_drive ? 'Можно' : 'Нельзя'}</div>
+              <div style={s.statLabel}>Можно ли ехать</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Юридический статус */}
+      {(recalls.length > 0 || classActions.length > 0 || tsbs.length > 0) && (
+        <Section title="📋 Признано производителем">
+          {classActions.length > 0 && (
+            <div style={s.legalBlock}>
+              <div style={s.legalTitle}>⚖️ Коллективные иски</div>
+              {classActions.map((ca, i) => (
+                <div key={i} style={s.legalItem}>
+                  <span style={s.legalFlag}>{ca.country_flag || '🌐'}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={s.legalCountry}>{ca.country} {ca.year_filed ? `(${ca.year_filed})` : ''}</div>
+                    <div style={s.legalDescription}>{ca.case_name || ca.claim_summary?.slice(0, 120)}</div>
+                    {ca.result && <div style={s.legalDescription}><strong>Результат:</strong> {ca.result}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {recalls.length > 0 && (
+            <div style={s.legalBlock}>
+              <div style={s.legalTitle}>📋 Отзывные кампании</div>
+              {recalls.map((r, i) => (
+                <div key={i} style={s.legalItem}>
+                  <span style={s.legalFlag}>{r.country_flag || '🌐'}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={s.legalCountry}>
+                      {r.country} {r.year ? `(${r.year})` : ''}
+                      {r.recall_id && <span style={s.recallId}> · {r.recall_id}</span>}
+                    </div>
+                    <div style={s.legalDescription}>{r.description}</div>
+                    {r.affected_units && <div style={s.legalDescription}>Затронуто: {r.affected_units.toLocaleString('ru-RU')} авто</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {tsbs.length > 0 && (
+            <div style={s.legalBlock}>
+              <div style={s.legalTitle}>📄 Сервисные бюллетени (TSB)</div>
+              {tsbs.map((t, i) => (
+                <div key={i} style={s.legalItem}>
+                  <div style={{ flex: 1 }}>
+                    <div style={s.legalCountry}>{t.code} {t.date ? `(${t.date})` : ''}</div>
+                    <div style={s.legalDescription}>{t.title || t.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* Симптомы */}
+      {issue.issue?.symptoms?.length > 0 && (
+        <Section title="🩺 Симптомы" expanded={expanded.symptoms} onToggle={() => toggle('symptoms')}>
+          <div style={s.symptomsList}>
+            {issue.issue.symptoms.map((sy, i) => (
+              <div key={i} style={s.symptomItem}>
+                <div style={s.symptomDot} />
+                <div>
+                  <div style={s.symptomDesc}>{sy.description}</div>
+                  {sy.conditions && <div style={s.symptomCond}>{sy.conditions}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+          {issue.issue?.obd_codes?.length > 0 && (
+            <div style={s.obdCodes}>
+              <div style={s.obdTitle}>Коды OBD</div>
+              <div style={s.obdList}>
+                {issue.issue.obd_codes.map((code, i) => (
+                  <div key={i} style={s.obdItem}>
+                    <code style={s.obdCode}>{code.code}</code>
+                    <span style={s.obdDesc}>{code.description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* Причина */}
+      {issue.issue?.cause && (
+        <Section title="🔍 Почему это происходит" expanded={expanded.cause} onToggle={() => toggle('cause')}>
+          {issue.issue.cause.primary && (
+            <p style={s.causeText}>{issue.issue.cause.primary}</p>
+          )}
+          {issue.issue.cause.secondary?.length > 0 && (
+            <div style={s.causeList}>
+              <div style={s.causeListTitle}>Дополнительные причины:</div>
+              {issue.issue.cause.secondary.map((s2, i) => (
+                <div key={i} style={s.causeItem}>• {s2}</div>
+              ))}
+            </div>
+          )}
+          {issue.issue.cause.not_cause?.length > 0 && (
+            <div style={s.causeList}>
+              <div style={s.causeListTitle}>НЕ является причиной (частые ошибки диагностики):</div>
+              {issue.issue.cause.not_cause.map((s2, i) => (
+                <div key={i} style={{ ...s.causeItem, color: c.textTertiary }}>✗ {s2}</div>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* Решение */}
+      {solutions.length > 0 && (
+        <Section title="🛠 Решение" expanded={expanded.solution} onToggle={() => toggle('solution')}>
+          {/* Tabs */}
+          <div style={s.tabs}>
+            <button
+              style={{ ...s.tab, ...(activeTab === 'service' ? s.tabActive : {}) }}
+              onClick={() => setActiveTab('service')}
+            >
+              В сервисе
+            </button>
+            <button
+              style={{ ...s.tab, ...(activeTab === 'diy' ? s.tabActive : {}) }}
+              onClick={() => setActiveTab('diy')}
+            >
+              Самому
+            </button>
+          </div>
+
+          {currentSol && (
+            <div style={s.solutionContent}>
+              <h3 style={s.solutionTitle}>{currentSol.title}</h3>
+              {currentSol.description && <p style={s.solutionDesc}>{currentSol.description}</p>}
+              
+              <div style={s.solutionMetrics}>
+                {activeTab === 'diy' ? (
+                  <>
+                    {currentSol.diy_difficulty && (
+                      <Metric icon="🎯" label="Сложность" value={difficultyLabel(currentSol.diy_difficulty)} />
+                    )}
+                    {currentSol.diy_time_hours && (
+                      <Metric icon="⏱" label="Время" value={`${currentSol.diy_time_hours} ч`} />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {currentSol.service_time_hours && (
+                      <Metric icon="⏱" label="Время в сервисе" value={`${currentSol.service_time_hours} ч`} />
+                    )}
+                    {currentSol.labor_cost && (
+                      <Metric icon="💰" label="Работа" value={formatPrice(currentSol.labor_cost)} />
+                    )}
+                  </>
+                )}
+                {currentSol.effectiveness && (
+                  <Metric icon="✅" label="Эффективность" value={effectivenessLabel(currentSol.effectiveness)} />
+                )}
+              </div>
+
+              {currentSol.diy_warning && activeTab === 'diy' && (
+                <div style={s.warning}>
+                  <strong>⚠️ Внимание:</strong> {currentSol.diy_warning}
+                </div>
+              )}
+
+              {currentSol.diy_tools?.length > 0 && activeTab === 'diy' && (
+                <div style={s.toolsList}>
+                  <div style={s.toolsTitle}>Инструменты:</div>
+                  <div style={s.toolsTags}>
+                    {currentSol.diy_tools.map((tool, i) => (
+                      <span key={i} style={s.toolTag}>{tool}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* Запчасти */}
+      {issue.parts?.length > 0 && (
+        <Section title="🔧 Запчасти" expanded={expanded.parts} onToggle={() => toggle('parts')}>
+          {issue.parts.map((part, i) => (
+            <PartCard key={i} part={part} />
+          ))}
+          {issue.related_parts?.length > 0 && (
+            <>
+              <div style={{ ...s.causeListTitle, marginTop: '16px' }}>Заменить заодно:</div>
+              {issue.related_parts.map((part, i) => (
+                <PartCard key={i} part={part} secondary />
+              ))}
+            </>
+          )}
+        </Section>
+      )}
+
+      {/* Отзывы владельцев */}
+      {issue.owner_reports?.length > 0 && (
+        <Section
+          title={`💬 Опыт владельцев (${issue.owner_reports.length})`}
+          expanded={expanded.reviews}
+          onToggle={() => toggle('reviews')}
+        >
+          {issue.owner_reports.map((r, i) => (
+            <div key={i} style={s.reviewCard}>
+              <div style={s.reviewMeta}>
+                {r.year && <span>{r.year} год</span>}
+                {r.mileage_km && <span> · {formatMileage(r.mileage_km)}</span>}
+                {r.solution_worked !== undefined && (
+                  <span style={{ color: r.solution_worked ? c.success : c.critical }}>
+                    {r.solution_worked ? ' · решение помогло' : ' · решение не помогло'}
+                  </span>
+                )}
+              </div>
+              <div style={s.reviewText}>{r.comment}</div>
+              {r.source && <div style={s.reviewSource}>— {r.source}</div>}
+            </div>
+          ))}
+        </Section>
+      )}
+
+      <div style={{ height: '40px' }} />
+    </div>
+  );
+}
+
+function Header({ onBack }) {
+  return (
+    <div style={s.header}>
+      <button style={s.backButton} onClick={onBack}>← Назад</button>
+    </div>
+  );
+}
+
+function Section({ title, expanded = true, onToggle, children }) {
+  const showToggle = onToggle !== undefined;
+  return (
+    <div style={s.section}>
+      {showToggle ? (
+        <button style={s.sectionHeader} onClick={onToggle}>
+          <span style={s.sectionTitle}>{title}</span>
+          <span style={{ ...s.sectionToggle, transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+        </button>
+      ) : (
+        <div style={s.sectionHeader}>
+          <span style={s.sectionTitle}>{title}</span>
+        </div>
+      )}
+      {expanded && <div style={s.sectionBody}>{children}</div>}
+    </div>
+  );
+}
+
+function Metric({ icon, label, value }) {
+  return (
+    <div style={s.metric}>
+      <span style={s.metricIcon}>{icon}</span>
+      <div>
+        <div style={s.metricValue}>{value}</div>
+        <div style={s.metricLabel}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function PartCard({ part, secondary }) {
+  return (
+    <div style={{ ...s.partCard, ...(secondary ? { background: c.bg } : {}) }}>
+      <div style={s.partHeader}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={s.partName}>{part.name}</div>
+          {part.manufacturer && <div style={s.partManuf}>{part.manufacturer}</div>}
+        </div>
+        {part.part_number && <code style={s.partNumber}>{part.part_number}</code>}
+      </div>
+      {part.price && (
+        <div style={s.partPrice}>{formatPrice(part.price)}</div>
+      )}
+      {part.reason && <div style={s.partReason}>{part.reason}</div>}
+    </div>
+  );
+}
+
+function difficultyLabel(d) {
+  const map = { easy: 'Легко', medium: 'Средне', hard: 'Сложно', professional_only: 'Только сервис' };
+  return map[d] || d;
+}
+
+function effectivenessLabel(e) {
+  const map = { permanent: 'Навсегда', temporary: 'Временно', uncertain: 'Не точно' };
+  return map[e] || e;
+}
+
+const s = {
+  container: { background: c.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif' },
+  loading: { padding: '40px', textAlign: 'center', color: c.textSecondary },
+  
+  header: { display: 'flex', alignItems: 'center', padding: '12px 16px', background: c.card, borderBottom: `1px solid ${c.border}`, position: 'sticky', top: 0, zIndex: 100 },
+  backButton: { background: 'none', border: 'none', fontSize: '15px', color: c.primary, cursor: 'pointer', fontWeight: '500', padding: '4px 0' },
+  
+  hero: { padding: '20px', background: c.card },
+  heroTop: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' },
+  severityBadge: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' },
+  systemTag: { fontSize: '13px', color: c.textSecondary, background: c.bg, padding: '4px 10px', borderRadius: '6px' },
+  title: { fontSize: '22px', fontWeight: '700', color: c.textPrimary, lineHeight: '1.3', margin: '0 0 8px' },
+  carInfo: { fontSize: '14px', color: c.textSecondary, marginBottom: '16px' },
+  
+  severityNote: { padding: '12px 14px', background: c.primaryLight, borderLeft: `3px solid ${c.primary}`, borderRadius: '6px', fontSize: '13px', color: c.textSecondary, lineHeight: '1.5', marginBottom: '16px' },
+  
+  statsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' },
+  statCard: { padding: '14px', background: c.bg, borderRadius: '12px', textAlign: 'center' },
+  statValue: { fontSize: '15px', fontWeight: '700', color: c.textPrimary, marginBottom: '2px' },
+  statLabel: { fontSize: '11px', color: c.textTertiary },
+  
+  section: { background: c.card, marginTop: '12px', overflow: 'hidden' },
+  sectionHeader: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },
+  sectionTitle: { fontSize: '16px', fontWeight: '600', color: c.textPrimary },
+  sectionToggle: { fontSize: '10px', color: c.textTertiary, transition: 'transform 0.2s' },
+  sectionBody: { padding: '0 20px 20px' },
+  
+  // Юридический статус
+  legalBlock: { marginBottom: '14px' },
+  legalTitle: { fontSize: '12px', fontWeight: '600', color: c.primary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' },
+  legalItem: { display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px', background: c.bg, borderRadius: '8px', marginBottom: '6px' },
+  legalFlag: { fontSize: '20px', flexShrink: 0 },
+  legalCountry: { fontSize: '13px', fontWeight: '600', color: c.textPrimary, marginBottom: '2px' },
+  legalDescription: { fontSize: '12px', color: c.textSecondary, lineHeight: '1.4', marginTop: '2px' },
+  recallId: { fontFamily: 'monospace', color: c.textSecondary, fontWeight: '500' },
+  
+  // Симптомы
+  symptomsList: { display: 'flex', flexDirection: 'column', gap: '10px' },
+  symptomItem: { display: 'flex', alignItems: 'flex-start', gap: '10px' },
+  symptomDot: { width: '6px', height: '6px', borderRadius: '50%', background: c.primary, marginTop: '8px', flexShrink: 0 },
+  symptomDesc: { fontSize: '14px', color: c.textPrimary, lineHeight: '1.4' },
+  symptomCond: { fontSize: '12px', color: c.textSecondary, marginTop: '2px' },
+  
+  // OBD
+  obdCodes: { marginTop: '16px', padding: '12px', background: c.bg, borderRadius: '8px' },
+  obdTitle: { fontSize: '12px', fontWeight: '600', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
+  obdList: { display: 'flex', flexDirection: 'column', gap: '6px' },
+  obdItem: { display: 'flex', alignItems: 'baseline', gap: '8px' },
+  obdCode: { fontSize: '12px', fontFamily: 'monospace', color: c.primary, fontWeight: '600', background: c.primaryLight, padding: '2px 6px', borderRadius: '4px' },
+  obdDesc: { fontSize: '12px', color: c.textSecondary },
+  
+  // Cause
+  causeText: { fontSize: '14px', color: c.textPrimary, lineHeight: '1.5', margin: '0 0 12px' },
+  causeList: { marginTop: '10px' },
+  causeListTitle: { fontSize: '12px', fontWeight: '600', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' },
+  causeItem: { fontSize: '13px', color: c.textSecondary, lineHeight: '1.5', paddingLeft: '4px' },
+  
+  // Solution
+  tabs: { display: 'flex', gap: '0', borderRadius: '10px', background: c.bg, padding: '4px', marginBottom: '14px' },
+  tab: { flex: 1, padding: '10px', background: 'none', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', color: c.textSecondary, cursor: 'pointer', fontFamily: 'inherit' },
+  tabActive: { background: c.card, color: c.primary, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' },
+  
+  solutionContent: {},
+  solutionTitle: { fontSize: '16px', fontWeight: '600', color: c.textPrimary, margin: '0 0 6px' },
+  solutionDesc: { fontSize: '13px', color: c.textSecondary, lineHeight: '1.5', margin: '0 0 14px' },
+  
+  solutionMetrics: { display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' },
+  metric: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: c.bg, borderRadius: '8px', minWidth: '120px' },
+  metricIcon: { fontSize: '18px' },
+  metricValue: { fontSize: '13px', fontWeight: '600', color: c.textPrimary },
+  metricLabel: { fontSize: '11px', color: c.textTertiary },
+  
+  warning: { padding: '12px 14px', background: 'rgba(217, 119, 6, 0.08)', borderLeft: `3px solid ${c.warning}`, borderRadius: '6px', fontSize: '13px', color: c.textSecondary, lineHeight: '1.5', marginBottom: '14px' },
+  
+  toolsList: { marginBottom: '14px' },
+  toolsTitle: { fontSize: '12px', fontWeight: '600', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' },
+  toolsTags: { display: 'flex', flexWrap: 'wrap', gap: '6px' },
+  toolTag: { fontSize: '12px', padding: '4px 10px', background: c.bg, borderRadius: '6px', color: c.textPrimary },
+  
+  // Parts
+  partCard: { padding: '12px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '10px', marginBottom: '8px' },
+  partHeader: { display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '6px' },
+  partName: { fontSize: '14px', fontWeight: '600', color: c.textPrimary },
+  partManuf: { fontSize: '12px', color: c.textTertiary, marginTop: '2px' },
+  partNumber: { fontSize: '12px', fontFamily: 'monospace', color: c.primary, fontWeight: '600', background: c.primaryLight, padding: '4px 8px', borderRadius: '4px', flexShrink: 0 },
+  partPrice: { fontSize: '14px', fontWeight: '600', color: c.success, marginTop: '4px' },
+  partReason: { fontSize: '12px', color: c.textSecondary, marginTop: '4px', fontStyle: 'italic' },
+  
+  // Reviews
+  reviewCard: { padding: '12px 14px', background: c.bg, borderRadius: '10px', marginBottom: '8px' },
+  reviewMeta: { fontSize: '12px', color: c.textTertiary, marginBottom: '6px' },
+  reviewText: { fontSize: '13px', color: c.textPrimary, lineHeight: '1.5' },
+  reviewSource: { fontSize: '11px', color: c.textTertiary, marginTop: '6px' },
+};

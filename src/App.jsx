@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+
+import { CarProvider, useCar } from './contexts/CarContext'
+import * as userCarService from './services/userCarService'
 
 // Импорт экранов
 import Onboarding from './components/Onboarding'
@@ -64,73 +67,46 @@ const BottomNav = () => {
   )
 }
 
-// Проверяем, показывать ли нижнюю навигацию
 const shouldShowNav = (pathname) => {
   const noNavRoutes = ['/', '/add-car']
-  // Скрываем навигацию на детальной странице болячки
   if (pathname.startsWith('/issues/')) return false
   return !noNavRoutes.includes(pathname)
 }
 
-export default function App() {
+// Внутренний компонент роутинга, имеет доступ к контексту
+function AppRoutes() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { userCar, loading } = useCar()
   
-  // Проверяем, прошёл ли пользователь онбординг
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
-    return localStorage.getItem('onboardingCompleted') === 'true'
-  })
+  const hasCompletedOnboarding = userCarService.isOnboardingCompleted()
   
-  // Проверяем, добавлен ли автомобиль
-  const [hasCar, setHasCar] = useState(() => {
-    return localStorage.getItem('userCar') !== null
-  })
-
-  // Обработчик завершения онбординга
   const handleOnboardingComplete = () => {
-    localStorage.setItem('onboardingCompleted', 'true')
-    setHasCompletedOnboarding(true)
+    userCarService.markOnboardingCompleted()
     navigate('/add-car')
   }
-
-  // Обработчик добавления автомобиля
-  const handleCarAdded = (carData) => {
-    localStorage.setItem('userCar', JSON.stringify(carData))
-    setHasCar(true)
-    navigate('/dashboard')
-  }
-
+  
   // Редирект при первом запуске
   useEffect(() => {
+    if (loading) return
     if (location.pathname === '/') {
       if (!hasCompletedOnboarding) {
         // Остаёмся на онбординге
-      } else if (!hasCar) {
+      } else if (!userCar) {
         navigate('/add-car')
       } else {
         navigate('/dashboard')
       }
     }
-  }, [location.pathname, hasCompletedOnboarding, hasCar, navigate])
+  }, [location.pathname, hasCompletedOnboarding, userCar, loading, navigate])
 
   const showNav = shouldShowNav(location.pathname)
 
   return (
     <div style={styles.app}>
       <Routes>
-        {/* Онбординг */}
-        <Route 
-          path="/" 
-          element={<Onboarding onComplete={handleOnboardingComplete} />} 
-        />
-        
-        {/* Добавление авто */}
-        <Route 
-          path="/add-car" 
-          element={<AddCarForm onComplete={handleCarAdded} />} 
-        />
-        
-        {/* Основные экраны */}
+        <Route path="/" element={<Onboarding onComplete={handleOnboardingComplete} />} />
+        <Route path="/add-car" element={<AddCarForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/issues" element={<IssuesScreen />} />
         <Route path="/issues/:issueId" element={<IssueDetailScreen />} />
@@ -140,6 +116,14 @@ export default function App() {
       
       {showNav && <BottomNav />}
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <CarProvider>
+      <AppRoutes />
+    </CarProvider>
   )
 }
 

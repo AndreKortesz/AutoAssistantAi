@@ -1,0 +1,90 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-05-05",
+  "schema_version": "v1.1",
+  "brands": [
+    {
+      "id": "hyundai",
+      "name": "Hyundai",
+      "name_ru": "Хёндай",
+      "country": "Корея",
+      "models": [
+        {
+          "id": "solaris_rb",
+          "model_name": "Solaris",
+          "generation": "I (RB)",
+          "generation_label": "I поколение (2010-2017)",
+          "year_start": 2010,
+          "year_end": 2017,
+          "data_file": "/data/issues/hyundai/solaris_rb/solaris_rb_final.json",
+          "engines": [
+            {
+              "code": "G4FA",
+              "displacement": 1.4,
+              "power_hp": 107,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.4 MPI (107 л.с.)"
+            },
+            {
+              "code": "G4FC",
+              "displacement": 1.6,
+              "power_hp": 123,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.6 MPI (123 л.с.)"
+            }
+          ],
+          "transmissions": [
+            { "code": "M5CF1", "type": "МКПП", "gears": 5, "label": "Механика 5-ст (M5CF1)" },
+            { "code": "M6CF1", "type": "МКПП", "gears": 6, "label": "Механика 6-ст (M6CF1)" },
+            { "code": "A4CF1", "type": "АКПП", "gears": 4, "label": "Автомат 4-ст (A4CF1)" },
+            { "code": "A6GF1", "type": "АКПП", "gears": 6, "label": "Автомат 6-ст (A6GF1)" }
+          ],
+          "engine_transmission_compat": [
+            { "engine": "G4FA", "transmissions": ["M5CF1", "M6CF1", "A4CF1"] },
+            { "engine": "G4FC", "transmissions": ["M5CF1", "M6CF1", "A4CF1", "A6GF1"] }
+          ],
+          "body_types": ["Седан", "Хэтчбек"]
+        },
+        {
+          "id": "solaris_hc",
+          "model_name": "Solaris",
+          "generation": "II (HC/HCR)",
+          "generation_label": "II поколение (2017-2022)",
+          "year_start": 2017,
+          "year_end": 2022,
+          "data_file": "/data/issues/hyundai/solaris_hc/solaris_ii_final.json",
+          "engines": [
+            {
+              "code": "G4LC",
+              "displacement": 1.4,
+              "power_hp": 100,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.4 Kappa (100 л.с.)"
+            },
+            {
+              "code": "G4FG",
+              "displacement": 1.6,
+              "power_hp": 123,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.6 Gamma II (123 л.с.)"
+            }
+          ],
+          "transmissions": [
+            { "code": "M6CF1", "type": "МКПП", "gears": 6, "label": "Механика 6-ст (M6CF1)" },
+            { "code": "A6GF1", "type": "АКПП", "gears": 6, "label": "Автомат 6-ст (A6GF1)" },
+            { "code": "A6GF1-2", "type": "АКПП", "gears": 6, "label": "Автомат 6-ст обновлённый (A6GF1-2)" }
+          ],
+          "engine_transmission_compat": [
+            { "engine": "G4LC", "transmissions": ["M6CF1", "A6GF1"] },
+            { "engine": "G4FG", "transmissions": ["M6CF1", "A6GF1", "A6GF1-2"] }
+          ],
+          "body_types": ["Седан"]
+        }
+      ]
+    }
+  ]
+}
