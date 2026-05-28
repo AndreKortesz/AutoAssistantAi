@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCar } from '../contexts/CarContext';
 
 // AutoAssistantAi — AI Ассистент
 // Чат с диагностикой и подсказками
@@ -27,17 +29,6 @@ const colors = {
   
   userBubble: '#1F4FD8',
   assistantBubble: '#FFFFFF',
-};
-
-// Данные автомобиля
-const carData = {
-  brand: 'Hyundai',
-  model: 'Solaris',
-  year: 2015,
-  engine: '1.6 G4FC',
-  transmission: '6-АКПП',
-  mileage: 87000,
-  mileageConfidence: 'high',
 };
 
 // Форматирование пробега с ~
@@ -379,12 +370,12 @@ const QuickPrompts = ({ categories, onSelect, visible }) => {
 };
 
 // Приветственное сообщение
-const WelcomeMessage = () => (
+const WelcomeMessage = ({ car }) => (
   <div style={styles.welcome}>
     <div style={styles.welcomeIcon}>🤖</div>
     <div style={styles.welcomeTitle}>Привет! Я ваш автоассистент</div>
     <div style={styles.welcomeText}>
-      Знаю ваш {carData.brand} {carData.model} ({carData.engine}) вдоль и поперёк. 
+      Знаю ваш {car.brand} {car.model} ({car.engine}) вдоль и поперёк.
       Спросите о симптомах, обслуживании или запчастях.
     </div>
     <div style={styles.welcomeHint}>
@@ -394,6 +385,23 @@ const WelcomeMessage = () => (
 );
 
 export default function AssistantScreen() {
+  const navigate = useNavigate();
+  const { userCar, carDetails } = useCar();
+  const car = useMemo(() => {
+    if (!carDetails || !userCar) return null;
+    const engine = carDetails.engines?.find(e => e.code === userCar.engineCode);
+    const trans = carDetails.transmissions?.find(t => t.code === userCar.transmissionCode);
+    return {
+      brand: carDetails.brand,
+      model: carDetails.model_name,
+      generation: carDetails.generation,
+      year: userCar.year,
+      engine: engine?.label || userCar.engineCode || '',
+      transmission: trans?.label || userCar.transmissionCode || '',
+      mileage: userCar.mileage ? parseInt(userCar.mileage) : 0,
+    };
+  }, [carDetails, userCar]);
+
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -408,6 +416,24 @@ export default function AssistantScreen() {
     scrollToBottom();
   }, [messages]);
 
+  if (!car) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.welcome}>
+          <div style={styles.welcomeIcon}>🚗</div>
+          <div style={styles.welcomeTitle}>Сначала добавьте автомобиль</div>
+          <div style={styles.welcomeText}>Чтобы ассистент знал вашу машину и давал точные ответы</div>
+          <button
+            onClick={() => navigate('/add-car')}
+            style={{ marginTop: 16, padding: '12px 24px', background: colors.primary, color: '#FFFFFF', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Добавить автомобиль
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleSend = (text) => {
     const messageText = text || inputValue.trim();
     if (!messageText) return;
@@ -419,7 +445,7 @@ export default function AssistantScreen() {
 
     // Симулируем задержку ответа
     setTimeout(() => {
-      const response = getAssistantResponse(messageText, carData);
+      const response = getAssistantResponse(messageText, car);
       setMessages(prev => [...prev, { type: 'assistant', response }]);
       setIsTyping(false);
     }, 800 + Math.random() * 700);
@@ -446,7 +472,7 @@ export default function AssistantScreen() {
         <div style={styles.headerCenter}>
           <div style={styles.headerTitle}>Ассистент</div>
           <div style={styles.headerSubtitle}>
-            {carData.brand} {carData.model} • {carData.engine}
+            {car.brand} {car.model} • {car.engine}
           </div>
         </div>
         <button style={styles.newChatButton}>+</button>
@@ -454,7 +480,7 @@ export default function AssistantScreen() {
 
       {/* Messages */}
       <div style={styles.messagesContainer}>
-        {messages.length === 0 && <WelcomeMessage />}
+        {messages.length === 0 && <WelcomeMessage car={car} />}
         
         {messages.map((msg, i) => (
           msg.type === 'user' 

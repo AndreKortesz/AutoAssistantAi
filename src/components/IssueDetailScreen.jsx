@@ -27,6 +27,21 @@ const c = {
   textTertiary: '#94A3B8',
 };
 
+// Объединяет глобальные (linked_issue_id) и встроенные в запись (defect_status)
+// юридические данные, отбрасывая дубли по ключу.
+function mergeLegal(primary, extra, keyFn) {
+  const seen = new Set(primary.map(keyFn).filter(Boolean));
+  const merged = [...primary];
+  for (const item of extra || []) {
+    const key = keyFn(item);
+    if (!key || !seen.has(key)) {
+      if (key) seen.add(key);
+      merged.push(item);
+    }
+  }
+  return merged;
+}
+
 export default function IssueDetailScreen() {
   const { issueId } = useParams();
   const navigate = useNavigate();
@@ -88,9 +103,22 @@ export default function IssueDetailScreen() {
   const engine = carInfo.engine?.code || '';
   const trans = carInfo.transmission?.code || '';
   
-  const recalls = getLinkedRecalls(issue.id, issuesData?.recalls);
-  const classActions = getLinkedClassActions(issue.id, issuesData?.classActions);
-  const tsbs = getLinkedTSB(issue.id, issuesData?.tsb);
+  const ds = issue.defect_status || {};
+  const recalls = mergeLegal(
+    getLinkedRecalls(issue.id, issuesData?.recalls),
+    ds.related_recalls,
+    (r) => r.recall_id || r.campaign_code || r.description
+  ).map(r => ({ ...r, affected_units: r.affected_units ?? r.affected }));
+  const classActions = mergeLegal(
+    getLinkedClassActions(issue.id, issuesData?.classActions),
+    ds.class_actions,
+    (ca) => ca.case_number || ca.case_name || ca.claim_summary
+  ).map(ca => ({ ...ca, year_filed: ca.year_filed ?? ca.year }));
+  const tsbs = mergeLegal(
+    getLinkedTSB(issue.id, issuesData?.tsb),
+    ds.tsb,
+    (t) => t.code || t.title || t.description
+  );
   
   const solutions = issue.solutions || [];
   const diySol = solutions.find(s => s.diy_possible) || solutions[0];
@@ -151,8 +179,15 @@ export default function IssueDetailScreen() {
       </div>
 
       {/* Юридический статус */}
-      {(recalls.length > 0 || classActions.length > 0 || tsbs.length > 0) && (
+      {(recalls.length > 0 || classActions.length > 0 || tsbs.length > 0 || ds.is_acknowledged || ds.fix_in_production?.description) && (
         <Section title="📋 Признано производителем">
+          {ds.is_acknowledged && (
+            <div style={s.legalBlock}>
+              <div style={s.legalAck}>
+                ✓ Признано: {ds.acknowledged_by || 'производителем'}{ds.acknowledged_date ? ` (${ds.acknowledged_date})` : ''}
+              </div>
+            </div>
+          )}
           {classActions.length > 0 && (
             <div style={s.legalBlock}>
               <div style={s.legalTitle}>⚖️ Коллективные иски</div>
@@ -197,6 +232,14 @@ export default function IssueDetailScreen() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {ds.fix_in_production?.description && (
+            <div style={s.legalBlock}>
+              <div style={s.legalTitle}>🏭 Исправлено в производстве</div>
+              <div style={s.legalDescription}>
+                {ds.fix_in_production.date ? `${ds.fix_in_production.date}: ` : ''}{ds.fix_in_production.description}
+              </div>
             </div>
           )}
         </Section>
@@ -471,6 +514,7 @@ const s = {
   // Юридический статус
   legalBlock: { marginBottom: '14px' },
   legalTitle: { fontSize: '12px', fontWeight: '600', color: c.primary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' },
+  legalAck: { fontSize: '13px', fontWeight: '600', color: c.success },
   legalItem: { display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px', background: c.bg, borderRadius: '8px', marginBottom: '6px' },
   legalFlag: { fontSize: '20px', flexShrink: 0 },
   legalCountry: { fontSize: '13px', fontWeight: '600', color: c.textPrimary, marginBottom: '2px' },

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useCar } from '../contexts/CarContext';
 
 // AutoAssistantAi — Журнал обслуживания
 // История записей + быстрое добавление
@@ -24,14 +25,6 @@ const colors = {
   textPrimary: '#1E293B',
   textSecondary: '#64748B',
   textTertiary: '#94A3B8',
-};
-
-// Данные автомобиля
-const carData = {
-  brand: 'Hyundai',
-  model: 'Solaris',
-  mileage: 87000,
-  mileageConfidence: 'high',
 };
 
 // Форматирование пробега с ~
@@ -66,109 +59,27 @@ const presets = [
   { type: 'repair', name: 'Другое...' },
 ];
 
-// История записей
-const initialRecords = [
-  {
-    id: 1,
-    type: 'maintenance',
-    name: 'Замена масла ДВС',
-    date: '2025-01-12',
-    mileage: 85000,
-    cost: 4200,
-    location: 'AutoDoc Service',
-    notes: 'Shell Helix HX8 5W-40',
-  },
-  {
-    id: 2,
-    type: 'maintenance',
-    name: 'Замена свечей зажигания',
-    date: '2024-11-15',
-    mileage: 82000,
-    cost: 2800,
-    location: 'Сам',
-    notes: 'NGK LZKR6B-10E',
-  },
-  {
-    id: 3,
-    type: 'tires',
-    name: 'Сезонная замена шин',
-    date: '2024-11-01',
-    mileage: 81500,
-    cost: 1600,
-    location: 'Шиномонтаж на Ленина',
-    notes: '',
-  },
-  {
-    id: 4,
-    type: 'maintenance',
-    name: 'Замена воздушного фильтра',
-    date: '2024-11-15',
-    mileage: 82000,
-    cost: 850,
-    location: 'Сам',
-    notes: '',
-  },
-  {
-    id: 5,
-    type: 'repair',
-    name: 'Замена стоек стабилизатора',
-    date: '2024-09-20',
-    mileage: 78000,
-    cost: 3500,
-    location: 'Fit Service',
-    notes: 'CTR CLKK-9',
-  },
-  {
-    id: 6,
-    type: 'maintenance',
-    name: 'Замена масла ДВС',
-    date: '2024-06-10',
-    mileage: 70000,
-    cost: 4000,
-    location: 'AutoDoc Service',
-    notes: '',
-  },
-  {
-    id: 7,
-    type: 'diagnostics',
-    name: 'Компьютерная диагностика',
-    date: '2024-06-10',
-    mileage: 70000,
-    cost: 1500,
-    location: 'AutoDoc Service',
-    notes: 'Ошибок не обнаружено',
-  },
-  {
-    id: 8,
-    type: 'consumables',
-    name: 'Замена тормозных колодок',
-    date: '2024-03-05',
-    mileage: 65000,
-    cost: 4500,
-    location: 'Fit Service',
-    notes: 'Передние, Sangsin SP1399',
-  },
-  {
-    id: 9,
-    type: 'tires',
-    name: 'Сезонная замена шин',
-    date: '2024-04-15',
-    mileage: 66000,
-    cost: 1600,
-    location: 'Шиномонтаж на Ленина',
-    notes: '',
-  },
-  {
-    id: 10,
-    type: 'maintenance',
-    name: 'Замена масла ДВС',
-    date: '2023-12-20',
-    mileage: 55000,
-    cost: 3800,
-    location: 'Сам',
-    notes: '',
-  },
-];
+// Хранение журнала в localStorage (один автомобиль на пользователя)
+const STORAGE_KEY = 'aaa_journal';
+
+const loadRecords = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+const saveRecords = (records) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (e) {
+    // localStorage может быть недоступен (приватный режим)
+  }
+};
 
 // Группировка записей по месяцам
 const groupByMonth = (records) => {
@@ -469,9 +380,18 @@ const AddRecordModal = ({ isOpen, onClose, onSave, currentMileage }) => {
 };
 
 export default function JournalScreen() {
-  const [records, setRecords] = useState(initialRecords);
+  const { userCar, carDetails } = useCar();
+  const carBrand = carDetails?.brand || '';
+  const carModel = carDetails?.model_name || '';
+  const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
+
+  const [records, setRecords] = useState(loadRecords);
   const [selectedYear, setSelectedYear] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    saveRecords(records);
+  }, [records]);
 
   // Фильтрация по году
   const filteredRecords = useMemo(() => {
@@ -510,7 +430,7 @@ export default function JournalScreen() {
         <div style={styles.headerCenter}>
           <div style={styles.headerTitle}>Журнал</div>
           <div style={styles.headerSubtitle}>
-            {carData.brand} {carData.model} • {formatMileage(carData.mileage)} км
+            {carBrand} {carModel}{mileage ? ` • ${formatMileage(mileage)} км` : ''}
           </div>
         </div>
         <div style={styles.headerTotal}>
@@ -578,7 +498,7 @@ export default function JournalScreen() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleAddRecord}
-        currentMileage={carData.mileage}
+        currentMileage={mileage}
       />
 
     </div>

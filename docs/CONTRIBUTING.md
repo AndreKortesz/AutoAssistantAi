@@ -24,7 +24,7 @@ npm run dev
 ### 4. Открыть в браузере
 
 ```
-http://localhost:5173
+http://localhost:3000
 ```
 
 ---

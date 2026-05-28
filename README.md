@@ -200,7 +200,7 @@ npm install
 npm run dev
 
 # Открыть
-open http://localhost:5173
+open http://localhost:3000
 ```
 
 ---
@@ -209,11 +209,11 @@ open http://localhost:5173
 
 | Документ | Описание |
 |----------|----------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Архитектура системы |
-| [ISSUE_SCHEMA.md](./ISSUE_SCHEMA.md) | Gold Standard схема болячки |
-| [UI_GUIDELINES.md](./UI_GUIDELINES.md) | Гайдлайны дизайна |
-| [TONE_OF_VOICE.md](./TONE_OF_VOICE.md) | Тон коммуникации |
-| [DATA_COLLECTION.md](./DATA_COLLECTION.md) | Процесс сбора данных |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Архитектура системы |
+| [ISSUE_SCHEMA.md](./data/ISSUE_SCHEMA.md) | Gold Standard схема болячки |
+| [UI_GUIDELINES.md](./docs/UI_GUIDELINES.md) | Гайдлайны дизайна |
+| [TONE_OF_VOICE.md](./docs/TONE_OF_VOICE.md) | Тон коммуникации |
+| [DATA_COLLECTION.md](./docs/DATA_COLLECTION.md) | Процесс сбора данных |
 
 ---
 

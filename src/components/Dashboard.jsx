@@ -70,11 +70,11 @@ export default function Dashboard() {
   const engineLabel = carDetails.engines.find(e => e.code === userCar.engineCode)?.label || '';
   const transLabel = carDetails.transmissions.find(t => t.code === userCar.transmissionCode)?.label || '';
 
-  const healthStatus = 
-    healthIndex >= 80 ? { color: c.success, label: 'отличное' } :
-    healthIndex >= 60 ? { color: c.primary, label: 'хорошее' } :
-    healthIndex >= 40 ? { color: c.warning, label: 'требует внимания' } :
-    { color: c.critical, label: 'требует ремонта' };
+  const healthStatus =
+    healthIndex >= 80 ? { color: c.success, label: 'хорошее' } :
+    healthIndex >= 65 ? { color: c.primary, label: 'нормальное' } :
+    healthIndex >= 50 ? { color: c.warning, label: 'требует внимания' } :
+    { color: c.critical, label: 'есть что проверить' };
 
   return (
     <div style={s.container}>
@@ -121,7 +121,7 @@ export default function Dashboard() {
           Здоровье: <span style={{ color: healthStatus.color, fontWeight: 600 }}>{healthStatus.label}</span>
         </div>
         <div style={s.healthSubLabel}>
-          На основе {issuesData.systemic.length} известных болячек для вашей конфигурации
+          У этого поколения известно {issuesData.systemic.length} типичных мест внимания для вашей конфигурации
         </div>
       </div>
 

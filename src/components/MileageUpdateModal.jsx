@@ -37,12 +37,12 @@ const generateRanges = (currentMileage) => {
 };
 
 // Компонент модального окна уточнения пробега
-const MileageUpdateModal = ({ 
-  isOpen, 
-  onClose, 
-  onUpdate, 
-  currentMileage = 87000,
-  lastUpdated = '12 января',
+const MileageUpdateModal = ({
+  isOpen,
+  onClose,
+  onUpdate,
+  currentMileage = 0,
+  lastUpdated = null,
 }) => {
   const [selectedRange, setSelectedRange] = useState(null);
   const [showManualInput, setShowManualInput] = useState(false);
@@ -97,9 +97,11 @@ const MileageUpdateModal = ({
         <div style={styles.header}>
           <div style={styles.headerIcon}>📍</div>
           <h2 style={styles.title}>Уточним пробег?</h2>
-          <p style={styles.subtitle}>
-            Последнее обновление: {lastUpdated}
-          </p>
+          {lastUpdated && (
+            <p style={styles.subtitle}>
+              Последнее обновление: {lastUpdated}
+            </p>
+          )}
         </div>
         
         {/* Пояснение */}
@@ -273,85 +275,9 @@ const MileageConfidenceButton = ({
   );
 };
 
-// Демо-компонент для показа работы
-export default function MileageUpdateDemo() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [carData, setCarData] = useState({
-    mileage: 87000,
-    confidence: 'medium', // Показываем medium для демонстрации
-    lastUpdated: '12 января',
-  });
-  
-  const handleUpdate = (data) => {
-    setCarData(prev => ({
-      ...prev,
-      mileage: data.mileage,
-      confidence: data.confidence,
-      lastUpdated: 'только что',
-    }));
-    console.log('Пробег обновлён:', data);
-  };
-  
-  return (
-    <div style={styles.demoContainer}>
-      <div style={styles.demoCard}>
-        <h3 style={styles.demoTitle}>Индикатор пробега</h3>
-        <p style={styles.demoSubtitle}>
-          Нажмите, если confidence = medium или low
-        </p>
-        
-        <MileageConfidenceButton
-          mileage={carData.mileage}
-          confidence={carData.confidence}
-          onClick={() => setIsModalOpen(true)}
-        />
-        
-        {/* Переключатели для демо */}
-        <div style={styles.demoControls}>
-          <span style={styles.demoLabel}>Тест уровней:</span>
-          <button 
-            style={{
-              ...styles.demoButton,
-              background: carData.confidence === 'high' ? colors.successLight : colors.background,
-            }}
-            onClick={() => setCarData(prev => ({ ...prev, confidence: 'high' }))}
-          >
-            High
-          </button>
-          <button 
-            style={{
-              ...styles.demoButton,
-              background: carData.confidence === 'medium' ? colors.warningLight : colors.background,
-            }}
-            onClick={() => setCarData(prev => ({ ...prev, confidence: 'medium' }))}
-          >
-            Medium
-          </button>
-          <button 
-            style={{
-              ...styles.demoButton,
-              background: carData.confidence === 'low' ? colors.primaryLight : colors.background,
-            }}
-            onClick={() => setCarData(prev => ({ ...prev, confidence: 'low' }))}
-          >
-            Low
-          </button>
-        </div>
-      </div>
-      
-      <MileageUpdateModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onUpdate={handleUpdate}
-        currentMileage={carData.mileage}
-        lastUpdated={carData.lastUpdated}
-      />
-    </div>
-  );
-}
-
 // Экспортируем компоненты для использования в других экранах
-export { MileageUpdateModal, MileageConfidenceButton };
+export { MileageConfidenceButton };
+export default MileageUpdateModal;
 
 const styles = {
   // Overlay
@@ -597,59 +523,6 @@ const styles = {
   confidenceLabel: {
     fontSize: '12px',
     fontWeight: '500',
-  },
-  
-  // Demo
-  demoContainer: {
-    minHeight: '100vh',
-    background: colors.background,
-    padding: '24px',
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
-  },
-  
-  demoCard: {
-    background: colors.cardBg,
-    borderRadius: '16px',
-    padding: '20px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-  },
-  
-  demoTitle: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    margin: '0 0 4px',
-  },
-  
-  demoSubtitle: {
-    fontSize: '13px',
-    color: colors.textTertiary,
-    margin: '0 0 16px',
-  },
-  
-  demoControls: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginTop: '16px',
-    paddingTop: '16px',
-    borderTop: `1px solid ${colors.border}`,
-  },
-  
-  demoLabel: {
-    fontSize: '12px',
-    color: colors.textTertiary,
-  },
-  
-  demoButton: {
-    padding: '6px 12px',
-    fontSize: '12px',
-    fontWeight: '500',
-    color: colors.textPrimary,
-    background: colors.background,
-    border: `1px solid ${colors.border}`,
-    borderRadius: '6px',
-    cursor: 'pointer',
   },
 };
 

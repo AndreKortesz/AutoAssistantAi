@@ -11,19 +11,31 @@
  */
 export function classifyIssueByMileage(issue, currentMileage = 0) {
   const mileage = issue.mileage || {};
-  const start = mileage.typical_start_km || 0;
+  const start = mileage.typical_start_km ?? 0;
   const end = mileage.typical_end_km;
   const peak = mileage.peak_km;
+  const m = currentMileage || 0;
 
-  // Болячка с null end_km — хроническая, всегда актуальна
+  // Хроническая (end == null): ориентируемся на пик, а не "всегда актуальна"
   if (end === null || end === undefined) {
-    if (start && currentMileage < start - 10000) return 'upcoming';
+    if (peak != null) {
+      if (m > peak + 25000) return 'past';
+      const ahead = peak - m;
+      if (ahead > 50000) return 'future';
+      if (ahead > 25000) return 'upcoming';
+      return 'current';
+    }
+    // Без пика — постоянный риск с момента старта
+    if (start && start - m > 50000) return 'future';
+    if (start && start - m > 15000) return 'upcoming';
     return 'current';
   }
 
-  // По диапазону
-  if (currentMileage > end + 10000) return 'past';
-  if (currentMileage < start - 10000) return 'upcoming';
+  // Диапазонная: окно ±15k; «скоро» 15-50k впереди; дальше — «будущее»
+  if (m > end + 15000) return 'past';
+  const ahead = start - m;
+  if (ahead > 50000) return 'future';
+  if (ahead > 15000) return 'upcoming';
   return 'current';
 }
 
@@ -35,7 +47,7 @@ export function groupIssuesByMileage(issues, currentMileage = 0) {
   for (const issue of issues) {
     const cat = classifyIssueByMileage(issue, currentMileage);
     if (cat === 'past') result.past.push(issue);
-    else if (cat === 'upcoming') result.upcoming.push(issue);
+    else if (cat === 'upcoming' || cat === 'future') result.upcoming.push(issue);
     else result.current.push(issue);
   }
   
@@ -53,43 +65,46 @@ export function groupIssuesByMileage(issues, currentMileage = 0) {
 }
 
 /**
- * Расчёт индекса здоровья автомобиля (0-100)
- * 
- * Логика:
- * - Стартуем со 100
- * - Снимаем по {weight} баллов за каждую current systemic_defect
- *   - critical: -15
- *   - high: -8
- *   - medium: -4
- *   - low: -2
- * - upcoming болячки снимают вдвое меньше
- * - past — не снимают (пользователь либо починил, либо проехал)
- * 
- * Минимум 0, максимум 100.
+ * База здоровья от пробега: новая машина ~90, 200к+ ~65.
+ * Наличие известных болячек у модели ≠ состояние конкретной машины,
+ * поэтому базу задаёт пробег, а болячки лишь корректируют её.
  */
-export function calculateHealthIndex(issues, currentMileage = 0) {
-  let score = 100;
-  
+function mileageBase(mileage) {
+  const m = mileage || 0;
+  if (m <= 50000) return 90;
+  if (m >= 200000) return 65;
+  return 90 - ((m - 50000) / (200000 - 50000)) * (90 - 65);
+}
+
+/**
+ * Расчёт индекса здоровья автомобиля (40-95).
+ *
+ * Логика:
+ * - База зависит от пробега (mileageBase), не от количества болячек
+ * - Мягкие веса за актуальные неотмеченные болячки:
+ *   critical −3, high −1.5, medium −0.7, low −0.3
+ * - upcoming снимают вдвое меньше; past — не снимают
+ * - Болячки, отмеченные пользователем как «уже сделано» (fixedIssueIds), не снимают
+ * - Никогда не 0 и не 100: clamp 40-95
+ */
+export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds = []) {
+  const fixed = new Set(fixedIssueIds);
+  let score = mileageBase(currentMileage);
+
+  const weights = { critical: 3, high: 1.5, medium: 0.7, low: 0.3 };
+
   for (const issue of issues) {
-    const severity = issue.issue?.severity || 'low';
+    if (fixed.has(issue.id)) continue;
     const cat = classifyIssueByMileage(issue, currentMileage);
-    
-    if (cat === 'past') continue;
-    
-    const weights = {
-      critical: 15,
-      high: 8,
-      medium: 4,
-      low: 2,
-    };
-    
-    let weight = weights[severity] || 2;
+    if (cat === 'past' || cat === 'future') continue;
+
+    let weight = weights[issue.issue?.severity] ?? 0.3;
     if (cat === 'upcoming') weight = weight / 2;
-    
+
     score -= weight;
   }
-  
-  return Math.max(0, Math.min(100, Math.round(score)));
+
+  return Math.max(40, Math.min(95, Math.round(score)));
 }
 
 /**
@@ -155,23 +170,29 @@ export function frequencyText(mileage) {
   return '—';
 }
 
+// linked_issue_id может быть строкой или массивом строк
+function linkMatches(linked, issueId) {
+  if (Array.isArray(linked)) return linked.includes(issueId);
+  return linked === issueId;
+}
+
 /**
  * Получить связанные recalls для болячки
  */
 export function getLinkedRecalls(issueId, recalls) {
-  return (recalls || []).filter(r => r.linked_issue_id === issueId);
+  return (recalls || []).filter(r => linkMatches(r.linked_issue_id, issueId));
 }
 
 /**
  * Получить связанные class actions для болячки
  */
 export function getLinkedClassActions(issueId, classActions) {
-  return (classActions || []).filter(c => c.linked_issue_id === issueId);
+  return (classActions || []).filter(c => linkMatches(c.linked_issue_id, issueId));
 }
 
 /**
  * Получить связанные TSB для болячки
  */
 export function getLinkedTSB(issueId, tsbs) {
-  return (tsbs || []).filter(t => t.linked_issue_id === issueId);
+  return (tsbs || []).filter(t => linkMatches(t.linked_issue_id, issueId));
 }
