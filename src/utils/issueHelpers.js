@@ -6,18 +6,28 @@
  * Классификация болячек по пробегу:
  * - past:     уже должна была проявиться
  * - current:  актуальна сейчас
- * - upcoming: ещё впереди
- * - chronic:  актуальна на любом пробеге (typical_end_km == null)
+ * - upcoming: 15-50к впереди
+ * - future:   далеко впереди (>50к), в индекс не идёт, в UI сливается с upcoming
+ * - chronic:  «особенность поколения» — end_km==null и не critical. Фон, не давит на индекс.
  */
 export function classifyIssueByMileage(issue, currentMileage = 0) {
   const mileage = issue.mileage || {};
   const start = mileage.typical_start_km ?? 0;
   const end = mileage.typical_end_km;
   const peak = mileage.peak_km;
+  const severity = issue.issue?.severity;
   const m = currentMileage || 0;
 
-  // Хроническая (end == null): ориентируемся на пик, а не "всегда актуальна"
-  if (end === null || end === undefined) {
+  // Особенность поколения: end_km==null И не critical.
+  // Critical хроника (например, HECU recall) остаётся в current — безопасность.
+  if (end == null && severity !== 'critical') {
+    if (start && start - m > 50000) return 'future';
+    if (start && start - m > 15000) return 'upcoming';
+    return 'chronic';
+  }
+
+  // Critical хроника с пиком: ориентируемся на пик
+  if (end == null) {
     if (peak != null) {
       if (m > peak + 25000) return 'past';
       const ahead = peak - m;
@@ -25,13 +35,13 @@ export function classifyIssueByMileage(issue, currentMileage = 0) {
       if (ahead > 25000) return 'upcoming';
       return 'current';
     }
-    // Без пика — постоянный риск с момента старта
+    // Critical без конца и без пика — постоянный риск
     if (start && start - m > 50000) return 'future';
     if (start && start - m > 15000) return 'upcoming';
     return 'current';
   }
 
-  // Диапазонная: окно ±15k; «скоро» 15-50k впереди; дальше — «будущее»
+  // Ранжированная: окно ±15k; «скоро» 15-50к впереди; дальше — «будущее»
   if (m > end + 15000) return 'past';
   const ahead = start - m;
   if (ahead > 50000) return 'future';
@@ -40,13 +50,15 @@ export function classifyIssueByMileage(issue, currentMileage = 0) {
 }
 
 /**
- * Группировка болячек на: текущие, предстоящие, прошедшие
+ * Группировка болячек на 4 ведра: current / upcoming / chronic / past
+ * future-болячки UI-нo сливаются с upcoming.
  */
 export function groupIssuesByMileage(issues, currentMileage = 0) {
-  const result = { current: [], upcoming: [], past: [] };
+  const result = { current: [], upcoming: [], past: [], chronic: [] };
   for (const issue of issues) {
     const cat = classifyIssueByMileage(issue, currentMileage);
     if (cat === 'past') result.past.push(issue);
+    else if (cat === 'chronic') result.chronic.push(issue);
     else if (cat === 'upcoming' || cat === 'future') result.upcoming.push(issue);
     else result.current.push(issue);
   }
@@ -96,7 +108,7 @@ export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds =
   for (const issue of issues) {
     if (fixed.has(issue.id)) continue;
     const cat = classifyIssueByMileage(issue, currentMileage);
-    if (cat === 'past' || cat === 'future') continue;
+    if (cat === 'past' || cat === 'future' || cat === 'chronic') continue;
 
     let weight = weights[issue.issue?.severity] ?? 0.3;
     if (cat === 'upcoming') weight = weight / 2;

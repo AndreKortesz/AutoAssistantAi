@@ -37,6 +37,7 @@ export default function IssuesScreen() {
   const [expandedSections, setExpandedSections] = useState({
     current: true,
     upcoming: false,
+    chronic: false,
     past: false,
   });
   const [expandedIssue, setExpandedIssue] = useState(null);
@@ -200,6 +201,36 @@ export default function IssuesScreen() {
                 isFixed={fixedIssueIds.includes(issue.id)}
               />
             ))
+          )}
+        </Section>
+
+        <Section
+          type="info"
+          title="Особенности этого поколения"
+          count={grouped.chronic.length}
+          open={expandedSections.chronic}
+          onToggle={() => toggleSection('chronic')}
+        >
+          {grouped.chronic.length === 0 ? (
+            <EmptyText>У этого поколения мы пока не отметили постоянных особенностей</EmptyText>
+          ) : (
+            <>
+              <div style={s.chronicIntro}>
+                Проявляются у этого поколения вне зависимости от пробега. Не требуют действий сейчас — просто хорошо знать.
+              </div>
+              {grouped.chronic.map(issue => (
+                <IssueCard
+                  key={issue.id}
+                  issue={issue}
+                  expanded={expandedIssue === issue.id}
+                  onToggle={() => toggleIssue(issue.id)}
+                  onDetails={() => navigate(`/issues/${issue.id}`)}
+                  recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
+                  classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
+                  isFixed={fixedIssueIds.includes(issue.id)}
+                />
+              ))}
+            </>
           )}
         </Section>
 
@@ -408,23 +439,24 @@ const s = {
   section: { marginBottom: '16px' },
   sectionWrapper: (type) => ({
     background: c.card, borderRadius: '16px', overflow: 'hidden',
-    border: `1px solid ${type === 'critical' ? 'rgba(220, 38, 38, 0.3)' : type === 'warning' ? 'rgba(217, 119, 6, 0.3)' : type === 'success' ? 'rgba(46, 158, 111, 0.3)' : c.border}`
+    border: `1px solid ${type === 'critical' ? 'rgba(220, 38, 38, 0.3)' : type === 'warning' ? 'rgba(217, 119, 6, 0.3)' : type === 'success' ? 'rgba(46, 158, 111, 0.3)' : type === 'info' ? 'rgba(124, 92, 217, 0.3)' : c.border}`
   }),
   sectionHeader: (type) => ({
     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', border: 'none', cursor: 'pointer',
-    background: type === 'critical' ? 'rgba(220, 38, 38, 0.08)' : type === 'warning' ? 'rgba(217, 119, 6, 0.08)' : type === 'success' ? 'rgba(46, 158, 111, 0.08)' : c.bg,
+    background: type === 'critical' ? 'rgba(220, 38, 38, 0.08)' : type === 'warning' ? 'rgba(217, 119, 6, 0.08)' : type === 'success' ? 'rgba(46, 158, 111, 0.08)' : type === 'info' ? 'rgba(124, 92, 217, 0.08)' : c.bg,
     fontFamily: 'inherit',
   }),
   sectionHeaderLeft: { display: 'flex', alignItems: 'center', gap: '10px' },
   sectionDot: (type) => ({
     width: '10px', height: '10px', borderRadius: '50%',
-    background: type === 'critical' ? c.critical : type === 'warning' ? c.warning : type === 'success' ? c.success : c.textTertiary
+    background: type === 'critical' ? c.critical : type === 'warning' ? c.warning : type === 'success' ? c.success : type === 'info' ? '#7C5CD9' : c.textTertiary
   }),
   sectionTitle: { fontSize: '15px', fontWeight: '600', color: c.textPrimary },
   sectionCount: (type) => ({
     fontSize: '12px', fontWeight: '600', padding: '3px 10px', borderRadius: '10px', color: 'white',
-    background: type === 'critical' ? c.critical : type === 'warning' ? c.warning : type === 'success' ? c.success : c.textTertiary
+    background: type === 'critical' ? c.critical : type === 'warning' ? c.warning : type === 'success' ? c.success : type === 'info' ? '#7C5CD9' : c.textTertiary
   }),
+  chronicIntro: { fontSize: '12px', color: c.textSecondary, lineHeight: '1.5', padding: '4px 8px 12px', fontStyle: 'italic' },
   sectionToggle: (open) => ({ fontSize: '10px', color: c.textTertiary, transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }),
   sectionContent: (open) => ({ display: open ? 'block' : 'none', padding: '12px', background: c.bg }),
   
