@@ -32,7 +32,7 @@ const c = {
 
 export default function IssuesScreen() {
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading } = useCar();
+  const { userCar, carDetails, issuesData, loading, fixedIssueIds } = useCar();
 
   const [expandedSections, setExpandedSections] = useState({
     current: true,
@@ -172,6 +172,7 @@ export default function IssuesScreen() {
                 onDetails={() => navigate(`/issues/${issue.id}`)}
                 recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
                 classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
+                isFixed={fixedIssueIds.includes(issue.id)}
               />
             ))
           )}
@@ -196,6 +197,7 @@ export default function IssuesScreen() {
                 onDetails={() => navigate(`/issues/${issue.id}`)}
                 recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
                 classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
+                isFixed={fixedIssueIds.includes(issue.id)}
               />
             ))
           )}
@@ -220,6 +222,7 @@ export default function IssuesScreen() {
                 onDetails={() => navigate(`/issues/${issue.id}`)}
                 recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
                 classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
+                isFixed={fixedIssueIds.includes(issue.id)}
               />
             ))
           )}
@@ -251,7 +254,7 @@ function Section({ type, title, count, open, onToggle, children }) {
   );
 }
 
-function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions }) {
+function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed }) {
   const severity = issue.issue?.severity || 'low';
   const title = issue.issue?.title || 'Без названия';
   const subsystem = issue.issue?.subsystem || issue.issue?.system || '';
@@ -270,7 +273,10 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
         <div style={s.issueHeaderLeft}>
           <div style={s.severityDot(severity)} />
           <div style={s.issueHeaderInfo}>
-            <span style={s.issueName}>{title}</span>
+            <span style={s.issueName}>
+              {title}
+              {isFixed && <span style={s.fixedBadge}>✓ Сделано</span>}
+            </span>
             <span style={s.issueMeta}>
               {subsystem && `${subsystem} · `}{freq}
             </span>
@@ -435,6 +441,7 @@ const s = {
   }),
   issueHeaderInfo: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
   issueName: { fontSize: '15px', fontWeight: '600', color: c.textPrimary, lineHeight: '1.3' },
+  fixedBadge: { marginLeft: '8px', fontSize: '11px', fontWeight: '600', color: c.success, background: 'rgba(46, 158, 111, 0.12)', padding: '2px 6px', borderRadius: '6px', verticalAlign: 'middle', whiteSpace: 'nowrap' },
   issueMeta: { fontSize: '12px', color: c.textTertiary },
   statusIcons: { display: 'flex', gap: '4px', marginRight: '8px', flexShrink: 0 },
   statusIcon: { width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', background: c.primaryLight, borderRadius: '6px' },

@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import * as dataService from '../services/dataService';
 import * as userCarService from '../services/userCarService';
+import * as journalService from '../services/journalService';
 
 const CarContext = createContext(null);
 
@@ -8,12 +9,36 @@ export function CarProvider({ children }) {
   const [userCar, setUserCar] = useState(null);
   const [carDetails, setCarDetails] = useState(null); // данные модели из catalog
   const [issuesData, setIssuesData] = useState(null); // болячки + recalls и т.д.
+  const [journalRecords, setJournalRecords] = useState(() => journalService.loadRecords());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Загрузка при старте
   useEffect(() => {
     loadUserCar();
+  }, []);
+
+  // Подписка на изменения журнала — синхронизация между экранами.
+  useEffect(() => {
+    return journalService.subscribe(() => {
+      setJournalRecords(journalService.loadRecords());
+    });
+  }, []);
+
+  const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
+
+  // fixedIssueIds — всегда производный от журнала с учётом TTL.
+  const fixedIssueIds = useMemo(
+    () => journalService.getFixedIssueIds(journalRecords, mileage),
+    [journalRecords, mileage]
+  );
+
+  const markIssueFixed = useCallback((issue) => {
+    journalService.markIssueFixed(issue, mileage);
+  }, [mileage]);
+
+  const unmarkIssueFixed = useCallback((issueId) => {
+    journalService.unmarkIssueFixed(issueId);
   }, []);
 
   const loadUserCar = useCallback(async () => {
@@ -77,6 +102,10 @@ export function CarProvider({ children }) {
     updateMileage,
     removeCar,
     refresh: loadUserCar,
+    journalRecords,
+    fixedIssueIds,
+    markIssueFixed,
+    unmarkIssueFixed,
   };
 
   return <CarContext.Provider value={value}>{children}</CarContext.Provider>;

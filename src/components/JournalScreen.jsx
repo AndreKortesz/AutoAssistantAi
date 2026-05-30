@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useCar } from '../contexts/CarContext';
+import * as journalService from '../services/journalService';
 
 // AutoAssistantAi — Журнал обслуживания
 // История записей + быстрое добавление
@@ -58,28 +59,6 @@ const presets = [
   { type: 'diagnostics', name: 'Компьютерная диагностика' },
   { type: 'repair', name: 'Другое...' },
 ];
-
-// Хранение журнала в localStorage (один автомобиль на пользователя)
-const STORAGE_KEY = 'aaa_journal';
-
-const loadRecords = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
-};
-
-const saveRecords = (records) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  } catch (e) {
-    // localStorage может быть недоступен (приватный режим)
-  }
-};
 
 // Группировка записей по месяцам
 const groupByMonth = (records) => {
@@ -380,18 +359,14 @@ const AddRecordModal = ({ isOpen, onClose, onSave, currentMileage }) => {
 };
 
 export default function JournalScreen() {
-  const { userCar, carDetails } = useCar();
+  const { userCar, carDetails, journalRecords } = useCar();
   const carBrand = carDetails?.brand || '';
   const carModel = carDetails?.model_name || '';
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
-  const [records, setRecords] = useState(loadRecords);
+  const records = journalRecords;
   const [selectedYear, setSelectedYear] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    saveRecords(records);
-  }, [records]);
 
   // Фильтрация по году
   const filteredRecords = useMemo(() => {
@@ -418,7 +393,7 @@ export default function JournalScreen() {
   }, [records]);
 
   const handleAddRecord = (newRecord) => {
-    setRecords(prev => [newRecord, ...prev]);
+    journalService.addRecord({ ...newRecord, kind: 'manual' });
     setIsModalOpen(false);
   };
 

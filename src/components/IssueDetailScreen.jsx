@@ -11,6 +11,7 @@ import {
   getLinkedRecalls,
   getLinkedClassActions,
   getLinkedTSB,
+  calculateHealthIndex,
 } from '../utils/issueHelpers';
 
 const c = {
@@ -45,11 +46,12 @@ function mergeLegal(primary, extra, keyFn) {
 export default function IssueDetailScreen() {
   const { issueId } = useParams();
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading: carLoading } = useCar();
-  
+  const { userCar, carDetails, issuesData, loading: carLoading, fixedIssueIds, markIssueFixed, unmarkIssueFixed } = useCar();
+
   const [issue, setIssue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('service');
+  const [toast, setToast] = useState(null);
   const [expanded, setExpanded] = useState({
     symptoms: true,
     cause: true,
@@ -75,6 +77,35 @@ export default function IssueDetailScreen() {
       });
     return () => { mounted = false; };
   }, [userCar, issueId]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
+  const isFixed = issue ? fixedIssueIds.includes(issue.id) : false;
+  const isFixable = issue && (issue.type === 'systemic_defect' || issue.type === 'common_wear');
+
+  const handleMarkFixed = () => {
+    if (!issue || isFixed) return;
+    const before = calculateHealthIndex(issuesData?.systemic || [], mileage, fixedIssueIds);
+    const after = calculateHealthIndex(issuesData?.systemic || [], mileage, [...fixedIssueIds, issue.id]);
+    markIssueFixed(issue);
+    setToast({ before, after, issueId: issue.id });
+  };
+
+  const handleUndoFix = () => {
+    if (!toast) return;
+    unmarkIssueFixed(toast.issueId);
+    setToast(null);
+  };
+
+  const handleUnmark = () => {
+    if (!issue) return;
+    unmarkIssueFixed(issue.id);
+  };
 
   const toggle = (key) => {
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
@@ -176,6 +207,18 @@ export default function IssueDetailScreen() {
             </div>
           )}
         </div>
+
+        {isFixable && (
+          isFixed ? (
+            <button style={s.fixedDone} onClick={handleUnmark}>
+              ✓ Устранено — отменить
+            </button>
+          ) : (
+            <button style={s.fixedAction} onClick={handleMarkFixed}>
+              ✓ Уже сделал у себя
+            </button>
+          )
+        )}
       </div>
 
       {/* Юридический статус */}
@@ -413,6 +456,18 @@ export default function IssueDetailScreen() {
       )}
 
       <div style={{ height: '40px' }} />
+
+      {toast && (
+        <div style={s.toast}>
+          <div style={s.toastBody}>
+            <div style={s.toastTitle}>Записали в журнал</div>
+            <div style={s.toastSub}>
+              Если ещё проявится — отметите снова. Здоровье {toast.before} → {toast.after}
+            </div>
+          </div>
+          <button style={s.toastAction} onClick={handleUndoFix}>Отменить запись</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -504,6 +559,15 @@ const s = {
   statCard: { padding: '14px', background: c.bg, borderRadius: '12px', textAlign: 'center' },
   statValue: { fontSize: '15px', fontWeight: '700', color: c.textPrimary, marginBottom: '2px' },
   statLabel: { fontSize: '11px', color: c.textTertiary },
+
+  fixedAction: { width: '100%', marginTop: '14px', padding: '13px 16px', background: 'rgba(46, 158, 111, 0.08)', color: c.success, border: '1px solid rgba(46, 158, 111, 0.25)', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
+  fixedDone: { width: '100%', marginTop: '14px', padding: '13px 16px', background: 'rgba(46, 158, 111, 0.14)', color: c.success, border: '1px solid rgba(46, 158, 111, 0.4)', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
+
+  toast: { position: 'fixed', left: '16px', right: '16px', bottom: '24px', padding: '14px 16px', background: c.textPrimary, color: '#FFFFFF', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)', zIndex: 200, display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '420px', margin: '0 auto' },
+  toastBody: { flex: 1, minWidth: 0 },
+  toastTitle: { fontSize: '14px', fontWeight: '600', marginBottom: '2px' },
+  toastSub: { fontSize: '12px', opacity: 0.85, lineHeight: '1.4' },
+  toastAction: { background: 'none', border: 'none', color: '#7AB8FF', fontSize: '13px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit', padding: 0 },
   
   section: { background: c.card, marginTop: '12px', overflow: 'hidden' },
   sectionHeader: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },

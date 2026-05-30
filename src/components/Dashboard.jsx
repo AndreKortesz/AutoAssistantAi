@@ -30,22 +30,24 @@ const c = {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading, updateMileage } = useCar();
+  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds } = useCar();
   const [showMileageModal, setShowMileageModal] = useState(false);
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
   const healthIndex = useMemo(() => {
     if (!issuesData) return 100;
-    return calculateHealthIndex(issuesData.systemic, mileage);
-  }, [issuesData, mileage]);
+    return calculateHealthIndex(issuesData.systemic, mileage, fixedIssueIds);
+  }, [issuesData, mileage, fixedIssueIds]);
 
   const grouped = useMemo(() => {
     if (!issuesData) return { current: [], upcoming: [], past: [] };
     return groupIssuesByMileage(issuesData.systemic, mileage);
   }, [issuesData, mileage]);
 
-  const top3Current = grouped.current.slice(0, 3);
+  const top3Current = grouped.current
+    .filter(i => !fixedIssueIds.includes(i.id))
+    .slice(0, 3);
 
   if (loading) {
     return <div style={s.loading}>Загрузка...</div>;
@@ -68,7 +70,7 @@ export default function Dashboard() {
 
   const carLabel = `${carDetails.brand} ${carDetails.model_name} ${carDetails.generation}`;
   const engineLabel = carDetails.engines.find(e => e.code === userCar.engineCode)?.label || '';
-  const transLabel = carDetails.transmissions.find(t => t.code === userCar.transmissionCode)?.label || '';
+  const transLabel = carDetails.transmissions?.find(t => t.code === userCar.transmissionCode)?.label || '';
 
   const healthStatus =
     healthIndex >= 80 ? { color: c.success, label: 'хорошее' } :
@@ -84,7 +86,7 @@ export default function Dashboard() {
           <div>
             <h1 style={s.carName}>{carLabel}</h1>
             <div style={s.carDetails}>
-              {engineLabel} · {transLabel} · {userCar.year}
+              {engineLabel}{transLabel ? ` · ${transLabel}` : ''} · {userCar.year}
             </div>
           </div>
         </div>
