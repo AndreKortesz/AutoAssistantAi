@@ -97,33 +97,43 @@ export default function Dashboard() {
       </div>
 
       {/* Health Index */}
-      <div style={s.healthCard}>
-        <div style={s.healthRing}>
-          <svg width="160" height="160" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r="70" fill="none" stroke={c.border} strokeWidth="10" />
-            <circle
-              cx="80" cy="80" r="70"
-              fill="none"
-              stroke={healthStatus.color}
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={`${(healthIndex / 100) * 440} 440`}
-              transform="rotate(-90 80 80)"
-              style={{ transition: 'all 0.5s ease' }}
-            />
-          </svg>
-          <div style={s.healthRingCenter}>
-            <div style={{ ...s.healthValue, color: healthStatus.color }}>{healthIndex}</div>
-            <div style={s.healthMax}>из 100</div>
+      {issuesData.hasData ? (
+        <div style={s.healthCard}>
+          <div style={s.healthRing}>
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="70" fill="none" stroke={c.border} strokeWidth="10" />
+              <circle
+                cx="80" cy="80" r="70"
+                fill="none"
+                stroke={healthStatus.color}
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={`${(healthIndex / 100) * 440} 440`}
+                transform="rotate(-90 80 80)"
+                style={{ transition: 'all 0.5s ease' }}
+              />
+            </svg>
+            <div style={s.healthRingCenter}>
+              <div style={{ ...s.healthValue, color: healthStatus.color }}>{healthIndex}</div>
+              <div style={s.healthMax}>из 100</div>
+            </div>
+          </div>
+          <div style={s.healthLabel}>
+            Здоровье: <span style={{ color: healthStatus.color, fontWeight: 600 }}>{healthStatus.label}</span>
+          </div>
+          <div style={s.healthSubLabel}>
+            У этого поколения известно {issuesData.systemic.length} типичных мест внимания для вашей конфигурации
           </div>
         </div>
-        <div style={s.healthLabel}>
-          Здоровье: <span style={{ color: healthStatus.color, fontWeight: 600 }}>{healthStatus.label}</span>
+      ) : (
+        <div style={s.healthCard}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>📋</div>
+          <div style={s.healthLabel}>Данные для этой модели собираются</div>
+          <div style={s.healthSubLabel}>
+            Когда подготовим список типичных болячек, здесь появится индекс здоровья и что проверить на пробеге.
+          </div>
         </div>
-        <div style={s.healthSubLabel}>
-          У этого поколения известно {issuesData.systemic.length} типичных мест внимания для вашей конфигурации
-        </div>
-      </div>
+      )}
 
       {/* Что актуально */}
       {top3Current.length > 0 && (
@@ -156,33 +166,35 @@ export default function Dashboard() {
       )}
 
       {/* Краткая статистика */}
-      <div style={s.section}>
-        <h2 style={s.sectionTitle}>Что у вас в базе</h2>
-        <div style={s.statsGrid}>
-          <StatCard
-            value={issuesData.systemic.length}
-            label="Болячек"
-            color={c.critical}
-            onClick={() => navigate('/issues')}
-          />
-          <StatCard
-            value={issuesData.wear.length}
-            label="Износ"
-            color={c.warning}
-          />
-          <StatCard
-            value={issuesData.maintenance.length}
-            label="ТО"
-            color={c.primary}
-            onClick={() => navigate('/journal')}
-          />
-          <StatCard
-            value={issuesData.recalls.length}
-            label="Recalls"
-            color={c.success}
-          />
+      {issuesData.hasData && (
+        <div style={s.section}>
+          <h2 style={s.sectionTitle}>Что у вас в базе</h2>
+          <div style={s.statsGrid}>
+            <StatCard
+              value={issuesData.systemic.length}
+              label="Болячек"
+              color={c.critical}
+              onClick={() => navigate('/issues')}
+            />
+            <StatCard
+              value={issuesData.wear.length}
+              label="Износ"
+              color={c.warning}
+            />
+            <StatCard
+              value={issuesData.maintenance.length}
+              label="ТО"
+              color={c.primary}
+              onClick={() => navigate('/journal')}
+            />
+            <StatCard
+              value={issuesData.recalls.length}
+              label="Recalls"
+              color={c.success}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Быстрые действия */}
       <div style={s.section}>

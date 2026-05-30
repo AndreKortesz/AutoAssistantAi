@@ -127,17 +127,33 @@ export async function getModelById(modelId) {
  */
 export async function getModelData(modelId) {
   if (cache.models.has(modelId)) return cache.models.get(modelId);
-  
+
   const model = await getModelById(modelId);
   if (!model) throw new Error(`Model not found: ${modelId}`);
-  
+
+  // Для моделей без собранных болячек возвращаем пустую структуру с hasData=false
+  if (!model.data_file) {
+    const empty = {
+      records: [],
+      minor_annoyance: [],
+      global_recalls: [],
+      global_class_actions: [],
+      global_tsb: [],
+      discarded_rare: [],
+      metadata: {},
+      hasData: false,
+    };
+    cache.models.set(modelId, empty);
+    return empty;
+  }
+
   const data = await safeFetchJson(model.data_file);
-  
-  // Валидация: убеждаемся что это правильный JSON
+
   if (!data.records || !Array.isArray(data.records)) {
     throw new Error('Invalid model data: missing records');
   }
-  
+
+  data.hasData = true;
   cache.models.set(modelId, data);
   return data;
 }
@@ -202,6 +218,7 @@ export async function getIssuesForCar(modelId, filters = {}) {
     annual_budget: data.annual_budget_15000km || null,
     major_expenses: data.major_one_time_expenses || null,
     key_insights: data.key_insights || null,
+    hasData: data.hasData ?? true,
   };
 }
 

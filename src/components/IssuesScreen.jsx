@@ -91,11 +91,29 @@ export default function IssuesScreen() {
   const carLabel = `${carDetails.brand} ${carDetails.model_name} ${carDetails.generation}`;
   const engineLabel = carDetails.engines.find(e => e.code === userCar.engineCode)?.label || '';
 
+  if (!issuesData.hasData) {
+    return (
+      <div style={s.container}>
+        <div style={s.header}>
+          <h1 style={s.headerTitle}>Что бывает у этой модели</h1>
+          <div style={s.headerSubtitle}>{carLabel}{engineLabel ? ` • ${engineLabel}` : ''}</div>
+        </div>
+        <div style={s.emptyState}>
+          <div style={s.emptyIcon}>📋</div>
+          <h2 style={s.emptyTitle}>Данные собираются</h2>
+          <p style={s.emptySubtitle}>
+            Список типичных болячек для этой модели ещё не закончен. Подключим, как будет готово.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={s.container}>
       {/* Header */}
       <div style={s.header}>
-        <h1 style={s.headerTitle}>Болячки модели</h1>
+        <h1 style={s.headerTitle}>Что бывает у этой модели</h1>
         <div style={s.headerSubtitle}>
           {carLabel} • {engineLabel} • {formatMileage(userCar.mileage)}
         </div>

@@ -138,6 +138,8 @@ export default function AddCarForm() {
     return null;
   }, [catalog, formData.modelId]);
 
+  const hasTransmissions = (currentModel?.transmissions?.length ?? 0) > 0;
+
   const engines = useMemo(() => {
     if (!currentModel) return [];
     return currentModel.engines.map(e => ({ id: e.code, name: e.label }));
@@ -187,16 +189,11 @@ export default function AddCarForm() {
     setFormData(prev => ({ ...prev, mileage }));
   };
 
-  const filledFields = [
-    formData.brandId,
-    formData.modelName,
-    formData.modelId,
-    formData.engineCode,
-    formData.transmissionCode,
-    formData.year,
-    formData.mileage,
-  ].filter(Boolean).length;
-  const totalFields = 7;
+  const requiredFields = hasTransmissions
+    ? [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.transmissionCode, formData.year, formData.mileage]
+    : [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.year, formData.mileage];
+  const filledFields = requiredFields.filter(Boolean).length;
+  const totalFields = requiredFields.length;
   const progress = (filledFields / totalFields) * 100;
   const isComplete = filledFields === totalFields;
 
@@ -205,7 +202,7 @@ export default function AddCarForm() {
     const ok = await saveCar({
       modelId: formData.modelId,
       engineCode: formData.engineCode,
-      transmissionCode: formData.transmissionCode,
+      ...(formData.transmissionCode && { transmissionCode: formData.transmissionCode }),
       year: formData.year,
       mileage: formData.mileage,
     });
@@ -267,21 +264,23 @@ export default function AddCarForm() {
           disabled={!formData.modelId}
           hint={!formData.modelId ? null : 'Указано в ПТС или СТС'}
         />
-        <SelectField
-          label="Коробка передач"
-          value={formData.transmissionCode}
-          options={transmissions}
-          onChange={handleTransmission}
-          placeholder="Выберите КПП"
-          disabled={!formData.engineCode}
-        />
+        {hasTransmissions && (
+          <SelectField
+            label="Коробка передач"
+            value={formData.transmissionCode}
+            options={transmissions}
+            onChange={handleTransmission}
+            placeholder="Выберите КПП"
+            disabled={!formData.engineCode}
+          />
+        )}
         <SelectField
           label="Год выпуска"
           value={formData.year}
           options={years}
           onChange={handleYear}
           placeholder="Выберите год"
-          disabled={!formData.transmissionCode}
+          disabled={hasTransmissions ? !formData.transmissionCode : !formData.engineCode}
         />
         <MileageInput value={formData.mileage} onChange={handleMileage} />
         <div style={{ height: '120px' }} />
