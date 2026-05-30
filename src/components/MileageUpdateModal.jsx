@@ -289,7 +289,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '24px',
-    zIndex: 1000,
+    zIndex: 1100, // выше bottom-nav (1000)
   },
   
   // Modal

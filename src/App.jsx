@@ -4,6 +4,44 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { CarProvider, useCar } from './contexts/CarContext'
 import * as userCarService from './services/userCarService'
 
+// Ловит любую ошибку React-tree, чтобы вместо белого экрана пользователь
+// увидел внятное сообщение и мог перезагрузить страницу.
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null, info: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  componentDidCatch(error, info) {
+    console.error('App crashed:', error, info)
+    this.setState({ info })
+  }
+  render() {
+    if (!this.state.error) return this.props.children
+    return (
+      <div style={{ padding: '24px', minHeight: '100vh', background: '#F7F8FA', color: '#1E293B', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" }}>
+        <div style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Что-то пошло не так</div>
+        <div style={{ fontSize: '14px', color: '#64748B', marginBottom: '16px', lineHeight: 1.5 }}>
+          Попробуйте перезагрузить страницу. Если повторится — пришлите этот текст:
+        </div>
+        <pre style={{ fontSize: '11px', color: '#DC2626', background: '#FFFFFF', padding: '12px', borderRadius: '8px', overflow: 'auto', maxHeight: '40vh', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          {String(this.state.error?.message || this.state.error)}
+          {'\n\n'}
+          {this.state.error?.stack || ''}
+        </pre>
+        <button
+          onClick={() => { try { localStorage.clear() } catch (e) {}; window.location.href = '/' }}
+          style={{ marginTop: '16px', padding: '12px 16px', background: '#1F4FD8', color: '#FFFFFF', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+        >
+          Сбросить и перезагрузить
+        </button>
+      </div>
+    )
+  }
+}
+
 // Импорт экранов
 import Onboarding from './components/Onboarding'
 import AddCarForm from './components/AddCarForm'
@@ -121,9 +159,11 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <CarProvider>
-      <AppRoutes />
-    </CarProvider>
+    <ErrorBoundary>
+      <CarProvider>
+        <AppRoutes />
+      </CarProvider>
+    </ErrorBoundary>
   )
 }
 

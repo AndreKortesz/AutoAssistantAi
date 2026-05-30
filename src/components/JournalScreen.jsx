@@ -689,7 +689,7 @@ const styles = {
     background: 'rgba(0, 0, 0, 0.5)',
     display: 'flex',
     alignItems: 'flex-end',
-    zIndex: 200,
+    zIndex: 1100, // выше bottom-nav (1000), иначе он перекроет кнопку «Сохранить запись»
   },
 
   modal: {
