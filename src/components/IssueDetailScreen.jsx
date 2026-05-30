@@ -28,6 +28,14 @@ const c = {
   textTertiary: '#94A3B8',
 };
 
+// Поле может быть строкой ИЛИ массивом строк (в данных встречаются оба
+// варианта из-за исторической сборки). Нормализуем к массиву.
+function asArray(v) {
+  if (Array.isArray(v)) return v;
+  if (v == null || v === '') return [];
+  return [v];
+}
+
 // Объединяет глобальные (linked_issue_id) и встроенные в запись (defect_status)
 // юридические данные, отбрасывая дубли по ключу.
 function mergeLegal(primary, extra, keyFn) {
@@ -324,18 +332,18 @@ export default function IssueDetailScreen() {
           {issue.issue.cause.primary && (
             <p style={s.causeText}>{issue.issue.cause.primary}</p>
           )}
-          {issue.issue.cause.secondary?.length > 0 && (
+          {asArray(issue.issue.cause.secondary).length > 0 && (
             <div style={s.causeList}>
               <div style={s.causeListTitle}>Дополнительные причины:</div>
-              {issue.issue.cause.secondary.map((s2, i) => (
+              {asArray(issue.issue.cause.secondary).map((s2, i) => (
                 <div key={i} style={s.causeItem}>• {s2}</div>
               ))}
             </div>
           )}
-          {issue.issue.cause.not_cause?.length > 0 && (
+          {asArray(issue.issue.cause.not_cause).length > 0 && (
             <div style={s.causeList}>
               <div style={s.causeListTitle}>НЕ является причиной (частые ошибки диагностики):</div>
-              {issue.issue.cause.not_cause.map((s2, i) => (
+              {asArray(issue.issue.cause.not_cause).map((s2, i) => (
                 <div key={i} style={{ ...s.causeItem, color: c.textTertiary }}>✗ {s2}</div>
               ))}
             </div>
