@@ -257,9 +257,13 @@ export default function AssistantScreen() {
         body: JSON.stringify({ message: messageText, history, carContext: buildCarContext() }),
       });
       const data = await res.json().catch(() => ({}));
-      const text = res.ok && data.text
-        ? data.text
-        : (data.error || 'Не удалось получить ответ. Попробуйте ещё раз.');
+      let text;
+      if (res.ok && data.text) {
+        text = data.text;
+      } else {
+        text = data.error || 'Не удалось получить ответ. Попробуйте ещё раз.';
+        if (data.detail) text += `\n\n(${data.detail})`;
+      }
       setMessages(prev => [...prev, { type: 'assistant', response: { text } }]);
     } catch (e) {
       setMessages(prev => [...prev, { type: 'assistant', response: { text: 'Нет связи с ассистентом. Проверьте интернет и попробуйте снова.' } }]);

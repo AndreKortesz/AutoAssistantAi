@@ -4016,13 +4016,7 @@
         "generation": "II (HC/HCR)",
         "year_start": 2017,
         "year_end": 2022,
-        "engine": {
-          "code": "G4LC",
-          "displacement": "1.4",
-          "power_hp": 100,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1",
           "type": "АКПП",
@@ -4680,13 +4674,7 @@
         "generation": "II (HCR)",
         "year_start": 2020,
         "year_end": 2022,
-        "engine": {
-          "code": "G4FG",
-          "displacement": "1.6",
-          "power_hp": 123,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1-2",
           "type": "АКПП",
@@ -5082,13 +5070,7 @@
         "generation": "II (HC/HCR)",
         "year_start": 2017,
         "year_end": 2022,
-        "engine": {
-          "code": "G4LC",
-          "displacement": "1.4",
-          "power_hp": 100,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1",
           "type": "АКПП",
@@ -5529,13 +5511,7 @@
         "generation": "II (HC/HCR)",
         "year_start": 2017,
         "year_end": 2022,
-        "engine": {
-          "code": "G4LC",
-          "displacement": "1.4",
-          "power_hp": 100,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1",
           "type": "АКПП",
@@ -7344,13 +7320,7 @@
         "generation": "II (HC/HCR)",
         "year_start": 2017,
         "year_end": 2022,
-        "engine": {
-          "code": "G4LC",
-          "displacement": "1.4",
-          "power_hp": 100,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1",
           "type": "АКПП",
@@ -7558,13 +7528,7 @@
         "generation": "II (HCR)",
         "year_start": 2020,
         "year_end": 2022,
-        "engine": {
-          "code": "G4FG",
-          "displacement": "1.6",
-          "power_hp": 123,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1-2",
           "type": "АКПП",
@@ -7741,13 +7705,7 @@
         "generation": "II (HC/HCR)",
         "year_start": 2017,
         "year_end": 2022,
-        "engine": {
-          "code": "G4LC",
-          "displacement": "1.4",
-          "power_hp": 100,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1",
           "type": "АКПП",
@@ -7926,13 +7884,7 @@
         "generation": "II (HCR)",
         "year_start": 2020,
         "year_end": 2022,
-        "engine": {
-          "code": "G4FG",
-          "displacement": "1.6",
-          "power_hp": 123,
-          "fuel": "бензин",
-          "turbo": false
-        },
+        "engine": null,
         "transmission": {
           "code": "A6GF1-2",
           "type": "АКПП",

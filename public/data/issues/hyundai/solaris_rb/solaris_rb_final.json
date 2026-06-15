@@ -9756,7 +9756,7 @@
         "generation": "I (RB)",
         "year_start": 2014,
         "year_end": 2017,
-        "engine": "G4FC 1.6",
+        "engine": null,
         "transmission": {
           "code": "A6GF1",
           "type": "АКПП",

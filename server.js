@@ -82,8 +82,13 @@ app.post('/api/chat', async (req, res) => {
     );
     if (!r.ok) {
       const t = await r.text();
-      console.error('Gemini error', r.status, t.slice(0, 300));
-      return res.status(502).json({ error: 'Ассистент не ответил, попробуйте ещё раз.' });
+      console.error('Gemini error', r.status, t.slice(0, 500));
+      let msg = '';
+      try { msg = JSON.parse(t)?.error?.message || ''; } catch (_) { msg = t.slice(0, 160); }
+      return res.status(502).json({
+        error: 'Ассистент не ответил, попробуйте ещё раз.',
+        detail: `Gemini ${r.status} (${MODEL}): ${msg}`.slice(0, 280),
+      });
     }
     const data = await r.json();
     const text = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text).join('').trim();

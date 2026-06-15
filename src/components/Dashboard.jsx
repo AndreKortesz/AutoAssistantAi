@@ -302,10 +302,6 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <button style={s.nextAll} onClick={() => navigate('/journal')}>
-                Весь план до {Math.round((mileage + 10000) / 1000)} тыс. км
-                <Icon name="arrowRight" size={15} color={c.textSecondary} />
-              </button>
             </div>
           )}
         </>
