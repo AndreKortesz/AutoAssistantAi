@@ -37,15 +37,16 @@ export function classifyIssueByMileage(issue, currentMileage = 0) {
     }
     // Critical без конца и без пика — постоянный риск
     if (start && start - m > 50000) return 'future';
-    if (start && start - m > 15000) return 'upcoming';
+    if (start && start - m > 5000) return 'upcoming';
     return 'current';
   }
 
-  // Ранжированная: окно ±15k; «скоро» 15-50к впереди; дальше — «будущее»
+  // Ранжированная: «сейчас» = внутри диапазона (с лёгким преддверием 5к);
+  // «скоро» = старт впереди на 5-50к; дальше — «будущее»; после конца +15к — «пройдено».
   if (m > end + 15000) return 'past';
   const ahead = start - m;
   if (ahead > 50000) return 'future';
-  if (ahead > 15000) return 'upcoming';
+  if (ahead > 5000) return 'upcoming';
   return 'current';
 }
 

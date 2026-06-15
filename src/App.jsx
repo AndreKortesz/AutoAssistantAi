@@ -51,6 +51,7 @@ import IssuesScreen from './components/IssuesScreen'
 import IssueDetailScreen from './components/IssueDetailScreen'
 import JournalScreen from './components/JournalScreen'
 import AssistantScreen from './components/AssistantScreen'
+import MaintenanceScreen from './components/MaintenanceScreen'
 
 // Цветовая схема
 export const colors = {
@@ -151,6 +152,7 @@ function AppRoutes() {
         <Route path="/issues" element={<IssuesScreen />} />
         <Route path="/issues/:issueId" element={<IssueDetailScreen />} />
         <Route path="/journal" element={<JournalScreen />} />
+        <Route path="/maintenance" element={<MaintenanceScreen />} />
         <Route path="/assistant" element={<AssistantScreen />} />
       </Routes>
       

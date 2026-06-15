@@ -302,6 +302,10 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+              <button style={s.nextAll} onClick={() => navigate('/maintenance')}>
+                Весь регламент ТО
+                <Icon name="arrowRight" size={15} color={c.textSecondary} />
+              </button>
             </div>
           )}
         </>
