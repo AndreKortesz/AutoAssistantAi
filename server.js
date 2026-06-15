@@ -76,7 +76,9 @@ app.post('/api/chat', async (req, res) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: buildSystemPrompt(carContext) }] },
           contents,
-          generationConfig: { temperature: 0.4, maxOutputTokens: 800 },
+          // thinkingBudget: 0 — отключаем «мышление» 2.5 Flash, иначе оно
+          // съедает maxOutputTokens и ответ обрывается на полуслове.
+          generationConfig: { temperature: 0.4, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
         }),
       }
     );
