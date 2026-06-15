@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoAssistantAi — Dashboard v2 (превью)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --bg:#F7F8FA; --card:#FFFFFF; --border:#E2E8F0;
+    --primary:#1F4FD8; --primary-light:rgba(31,79,216,.08);
+    --success:#2E9E6F; --success-light:rgba(46,158,111,.08); --success-border:rgba(46,158,111,.25);
+    --warning:#D97706; --warning-light:rgba(217,119,6,.08); --warning-border:rgba(217,119,6,.25);
+    --critical:#DC2626; --critical-light:rgba(220,38,38,.08); --critical-border:rgba(220,38,38,.25);
+    --t1:#1E293B; --t2:#64748B; --t3:#94A3B8;
+  }
+  body{ font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+    background:var(--bg); color:var(--t1); line-height:1.5; max-width:420px; margin:0 auto; min-height:100vh; padding-bottom:96px; }
+
+  /* header */
+  .header{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; }
+  .logo{ width:30px; height:30px; background:var(--primary); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:12px; }
+  .h-center{ text-align:center; }
+  .car-name{ font-size:15px; font-weight:600; }
+  .car-sub{ font-size:12px; color:var(--t3); }
+  .h-mileage{ font-size:13px; font-weight:600; }
+
+  .section{ margin:12px; }
+
+  /* health card — horizontal */
+  .health{ background:var(--card); border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+  .health-main{ display:flex; align-items:center; gap:18px; }
+  .ring-wrap{ position:relative; width:96px; height:96px; flex-shrink:0; }
+  .ring{ transform:rotate(-90deg); }
+  .ring-center{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+  .ring-val{ font-size:32px; font-weight:700; line-height:1; }
+  .health-info{ flex:1; min-width:0; }
+  .health-status{ font-size:18px; font-weight:600; margin-bottom:3px; }
+  .health-mean{ font-size:13px; color:var(--t2); line-height:1.4; }
+  .health-trend{ font-size:12px; font-weight:500; margin-top:7px; display:flex; align-items:center; gap:4px; }
+  .health-compare{ font-size:12px; color:var(--t2); text-align:center; padding-top:14px; margin-top:14px; border-top:1px solid var(--border); }
+  .health-compare b{ color:var(--t1); font-weight:600; }
+
+  /* mileage row */
+  .mrow{ display:flex; align-items:center; justify-content:space-between; padding:11px 14px; margin:0 12px 12px; background:var(--card); border-radius:12px; border:1px solid var(--border); }
+  .mrow-l{ display:flex; align-items:center; gap:8px; font-size:14px; }
+  .mrow-acc{ font-size:13px; color:var(--success); font-weight:500; }
+
+  /* systems grid */
+  .sys-title{ font-size:13px; font-weight:600; color:var(--t2); margin:0 14px 8px; }
+  .systems{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin:0 12px 6px; }
+  .sys-card{ display:flex; align-items:center; gap:10px; padding:12px; background:var(--card); border-radius:12px; border:1px solid var(--border); cursor:pointer; }
+  .sys-ring-wrap{ position:relative; width:40px; height:40px; flex-shrink:0; }
+  .sys-ring{ transform:rotate(-90deg); }
+  .sys-ring-val{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:13px; font-weight:700; }
+  .sys-info{ display:flex; flex-direction:column; }
+  .sys-name{ font-size:13px; font-weight:600; }
+  .sys-state{ font-size:11px; }
+  .sys-foot{ font-size:11px; color:var(--t3); margin:6px 14px 16px; line-height:1.4; }
+
+  /* breakdown collapsible */
+  .bd{ margin:0 12px 16px; background:var(--card); border-radius:12px; border:1px solid var(--border); overflow:hidden; }
+  .bd-head{ width:100%; display:flex; align-items:center; justify-content:space-between; padding:13px 14px; background:none; border:none; cursor:pointer; text-align:left; font-family:inherit; }
+  .bd-head-t{ font-size:14px; font-weight:600; color:var(--t1); }
+  .bd-toggle{ font-size:10px; color:var(--t3); transition:transform .2s; }
+  .bd-toggle.open{ transform:rotate(180deg); }
+  .bd-body{ display:none; padding:4px 14px 12px; }
+  .bd-body.open{ display:block; }
+  .bd-base{ font-size:12px; color:var(--t2); padding:6px 0 10px; border-bottom:1px dashed var(--border); margin-bottom:6px; }
+  .bd-item{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); }
+  .bd-item:last-child{ border-bottom:none; }
+  .bd-label{ font-size:13px; }
+  .bd-val{ font-size:13px; font-weight:600; color:var(--t2); font-variant-numeric:tabular-nums; }
+
+  /* section header */
+  .sh{ display:flex; justify-content:space-between; align-items:center; margin:0 14px 10px; }
+  .sh-title{ font-size:17px; font-weight:600; }
+  .sh-badge{ font-size:12px; font-weight:600; padding:3px 9px; border-radius:11px; background:var(--warning-light); color:var(--warning); }
+  .sh-link{ background:none; border:none; color:var(--primary); font-size:13px; font-weight:500; cursor:pointer; }
+
+  /* alert cards */
+  .alert{ padding:13px 14px; border-radius:14px; border:1px solid var(--border); margin:0 12px 10px; background:var(--card); }
+  .alert.crit{ background:var(--critical-light); border-color:var(--critical-border); }
+  .alert.warn{ background:var(--warning-light); border-color:var(--warning-border); }
+  .a-head{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .a-dot{ width:8px; height:8px; border-radius:50%; }
+  .a-dot.crit{ background:var(--critical); } .a-dot.warn{ background:var(--warning); } .a-dot.neut{ background:var(--t3); }
+  .a-title{ flex:1; font-size:15px; font-weight:600; }
+  .a-meta{ font-size:12px; color:var(--t3); }
+  .a-desc{ font-size:13px; color:var(--t2); line-height:1.5; margin-bottom:10px; }
+  .a-foot{ display:flex; justify-content:space-between; align-items:center; }
+  .a-cost{ font-size:13px; color:var(--t2); }
+  .a-btn{ background:none; border:1.5px solid var(--primary); color:var(--primary); border-radius:8px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+
+  /* VIN recall banner */
+  .vin{ margin:0 12px 16px; padding:13px 14px; background:var(--primary-light); border:1px solid rgba(31,79,216,.2); border-radius:12px; display:flex; align-items:center; gap:12px; }
+  .vin-ic{ font-size:20px; }
+  .vin-t{ flex:1; }
+  .vin-t1{ font-size:13px; font-weight:600; }
+  .vin-t2{ font-size:12px; color:var(--t2); }
+  .vin-btn{ background:var(--primary); color:#fff; border:none; border-radius:8px; padding:7px 12px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+
+  /* bottom nav */
+  .nav{ position:fixed; bottom:0; left:0; right:0; max-width:420px; margin:0 auto; display:flex; justify-content:space-around; padding:6px 12px 22px; background:var(--card); border-top:1px solid var(--border); }
+  .nav-i{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 14px; background:none; border:none; cursor:pointer; border-radius:12px; }
+  .nav-i.active{ background:var(--primary-light); }
+  .nav-ic{ font-size:20px; } .nav-l{ font-size:10px; font-weight:500; color:var(--t2); }
+  .nav-i.active .nav-l{ color:var(--primary); }
+
+  .note{ font-size:11px; color:var(--t3); text-align:center; margin:4px 16px 0; font-style:italic; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">AAA</div>
+    <div class="h-center">
+      <div class="car-name">Hyundai Solaris II</div>
+      <div class="car-sub">1.6 Gamma II (123 л.с.) • A6GF1</div>
+    </div>
+    <div class="h-mileage">~90 000 км</div>
+  </div>
+
+  <!-- HEALTH CARD (горизонтальная, без «из 100») -->
+  <div class="section">
+    <div class="health">
+      <div class="health-main">
+        <div class="ring-wrap">
+          <svg class="ring" width="96" height="96">
+            <circle cx="48" cy="48" r="42" fill="none" stroke="#EDF0F4" stroke-width="8"/>
+            <circle cx="48" cy="48" r="42" fill="none" stroke="#1F4FD8" stroke-width="8"
+              stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="81.8"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" style="color:#1F4FD8;">69</div>
+          </div>
+        </div>
+        <div class="health-info">
+          <div class="health-status" style="color:#1F4FD8;">Нормальное состояние</div>
+          <div class="health-mean">Можно ездить спокойно. Есть несколько мест, за которыми стоит присмотреть.</div>
+          <div class="health-trend" style="color:var(--success);">↑ +3 с прошлой записи в журнал</div>
+        </div>
+      </div>
+      <div class="health-compare">
+        Пробег <b>~15 000 км/год</b> — типичный для 6-летней машины. <b>Крепче ~60% ровесников</b> по пробегу.
+      </div>
+    </div>
+  </div>
+
+  <!-- mileage accuracy -->
+  <div class="mrow">
+    <div class="mrow-l"><span style="color:var(--success);">✓</span> Пробег ~90 000 км</div>
+    <span class="mrow-acc">Точность высокая</span>
+  </div>
+
+  <!-- SYSTEMS GRID 2×2 + 1, мини-кольца, белые карточки -->
+  <div class="sys-title">Состояние по системам</div>
+  <div class="systems">
+    <!-- двигатель 77 -->
+    <div class="sys-card" onclick="alert('→ Болячки: фильтр Двигатель')">
+      <div class="sys-ring-wrap">
+        <svg class="sys-ring" width="40" height="40">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#EDF0F4" stroke-width="4"/>
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#1F4FD8" stroke-width="4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="23.1"/>
+        </svg>
+        <div class="sys-ring-val" style="color:#1F4FD8;">77</div>
+      </div>
+      <div class="sys-info"><span class="sys-name">Двигатель</span><span class="sys-state" style="color:#1F4FD8;">нормально</span></div>
+    </div>
+    <!-- кпп 81 -->
+    <div class="sys-card" onclick="alert('→ Болячки: фильтр КПП')">
+      <div class="sys-ring-wrap">
+        <svg class="sys-ring" width="40" height="40">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#EDF0F4" stroke-width="4"/>
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#2E9E6F" stroke-width="4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="19.1"/>
+        </svg>
+        <div class="sys-ring-val" style="color:#2E9E6F;">81</div>
+      </div>
+      <div class="sys-info"><span class="sys-name">Коробка</span><span class="sys-state" style="color:#2E9E6F;">хорошо</span></div>
+    </div>
+    <!-- подвеска 81 -->
+    <div class="sys-card" onclick="alert('→ Болячки: фильтр Подвеска')">
+      <div class="sys-ring-wrap">
+        <svg class="sys-ring" width="40" height="40">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#EDF0F4" stroke-width="4"/>
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#2E9E6F" stroke-width="4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="19.1"/>
+        </svg>
+        <div class="sys-ring-val" style="color:#2E9E6F;">81</div>
+      </div>
+      <div class="sys-info"><span class="sys-name">Подвеска</span><span class="sys-state" style="color:#2E9E6F;">хорошо</span></div>
+    </div>
+    <!-- тормоза 83 -->
+    <div class="sys-card" onclick="alert('→ Болячки: фильтр Тормоза')">
+      <div class="sys-ring-wrap">
+        <svg class="sys-ring" width="40" height="40">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#EDF0F4" stroke-width="4"/>
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#2E9E6F" stroke-width="4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="17.1"/>
+        </svg>
+        <div class="sys-ring-val" style="color:#2E9E6F;">83</div>
+      </div>
+      <div class="sys-info"><span class="sys-name">Тормоза</span><span class="sys-state" style="color:#2E9E6F;">хорошо</span></div>
+    </div>
+  </div>
+  <div class="sys-foot">Общий балл 69 ниже системных — он учитывает ещё электрику и кузов, где есть свои места внимания.</div>
+
+  <!-- BREAKDOWN — честные баллы, без процентов -->
+  <div class="bd">
+    <button class="bd-head" onclick="tg('bd1')">
+      <span class="bd-head-t">Из чего сложился балл</span>
+      <span class="bd-toggle" id="bd1t">▼</span>
+    </button>
+    <div class="bd-body" id="bd1">
+      <div class="bd-base">База от пробега: 83. Дальше — актуальные места внимания:</div>
+      <div class="bd-item"><span class="bd-label">Задиры цилиндров (катализатор)</span><span class="bd-val">−3</span></div>
+      <div class="bd-item"><span class="bd-label">Зажатие/прогар клапанов</span><span class="bd-val">−1,5</span></div>
+      <div class="bd-item"><span class="bd-label">Засорение гидроблока</span><span class="bd-val">−1,5</span></div>
+      <div class="bd-item"><span class="bd-label">Стук фазовращателей CVVT</span><span class="bd-val">−0,7</span></div>
+      <div class="bd-item"><span class="bd-label">Прочее (электрика, мелочи)</span><span class="bd-val">−7,3</span></div>
+      <div class="bd-item"><span class="bd-label" style="font-weight:600;">Итог</span><span class="bd-val" style="color:#1F4FD8;">69</span></div>
+    </div>
+  </div>
+
+  <!-- VIN recall (placeholder) -->
+  <div class="vin">
+    <span class="vin-ic">🛡️</span>
+    <div class="vin-t">
+      <div class="vin-t1">Проверить отзывные кампании</div>
+      <div class="vin-t2">По VIN — есть ли незакрытый recall (бесплатный ремонт у дилера)</div>
+    </div>
+    <button class="vin-btn">Проверить</button>
+  </div>
+
+  <!-- СТОИТ ПРИСМОТРЕТЬСЯ (топ-3) -->
+  <div class="sh">
+    <span class="sh-title">Стоит присмотреться</span>
+    <span class="sh-badge">3</span>
+  </div>
+
+  <div class="alert crit">
+    <div class="a-head"><span class="a-dot crit"></span><span class="a-title">Задиры цилиндров (катализатор)</span></div>
+    <div class="a-meta" style="margin-bottom:6px;">Двигатель • пик ~100 тыс. км • у части владельцев G4FG</div>
+    <p class="a-desc">Ваш пробег 90 тыс. — в зоне риска. Стоит сделать эндоскопию цилиндров (5 минут у любого СТО) и проверить расход масла.</p>
+    <div class="a-foot"><span class="a-cost">Диагностика: 1–2 тыс. ₽</span><button class="a-btn">Подробнее</button></div>
+  </div>
+
+  <div class="alert warn">
+    <div class="a-head"><span class="a-dot warn"></span><span class="a-title">Засорение гидроблока АКПП</span></div>
+    <div class="a-meta" style="margin-bottom:6px;">Коробка • проявляется на 80–150 тыс. км</div>
+    <p class="a-desc">Если есть толчки 1–2 в пробке — стоит проверить ATF и промыть теплообменник. Замена ATF раньше регламента продлевает ресурс.</p>
+    <div class="a-foot"><span class="a-cost">Замена ATF: 8–15 тыс. ₽</span><button class="a-btn">Подробнее</button></div>
+  </div>
+
+  <div class="alert warn">
+    <div class="a-head"><span class="a-dot warn"></span><span class="a-title">Зажатие/прогар клапанов</span></div>
+    <div class="a-meta" style="margin-bottom:6px;">Двигатель • регулировка на 90 тыс. км</div>
+    <p class="a-desc">У G4FG нет гидрокомпенсаторов — нужна регулировка клапанов на 90 тыс. км. Пропуск ведёт к прогару.</p>
+    <div class="a-foot"><span class="a-cost">Регулировка: 8–15 тыс. ₽</span><button class="a-btn">Подробнее</button></div>
+  </div>
+
+  <!-- nav -->
+  <div class="nav">
+    <button class="nav-i active"><span class="nav-ic">🏠</span><span class="nav-l">Главная</span></button>
+    <button class="nav-i"><span class="nav-ic">🔧</span><span class="nav-l">Слабые места</span></button>
+    <button class="nav-i"><span class="nav-ic">📋</span><span class="nav-l">Журнал</span></button>
+    <button class="nav-i"><span class="nav-ic">💬</span><span class="nav-l">Ассистент</span></button>
+  </div>
+
+  <div class="note">Прототип Dashboard v2 — числа реальные (Solaris II G4FG, 90 000 км). Это превью, не финал.</div>
+
+<script>
+  function tg(id){ document.getElementById(id).classList.toggle('open'); document.getElementById(id+'t').classList.toggle('open'); }
+</script>
+</body>
+</html>

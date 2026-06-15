@@ -2,4 +2,4 @@
   command = "npm install && npm run build"
 
 [deploy]
-  startCommand = "npm run preview -- --port ${PORT:-3000} --host"
+  startCommand = "node server.js"

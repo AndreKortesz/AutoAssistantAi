@@ -386,7 +386,7 @@ const WelcomeMessage = ({ car }) => (
 
 export default function AssistantScreen() {
   const navigate = useNavigate();
-  const { userCar, carDetails } = useCar();
+  const { userCar, carDetails, issuesData } = useCar();
   const car = useMemo(() => {
     if (!carDetails || !userCar) return null;
     const engine = carDetails.engines?.find(e => e.code === userCar.engineCode);
@@ -434,21 +434,49 @@ export default function AssistantScreen() {
     );
   }
 
-  const handleSend = (text) => {
+  // Контекст для заземления ассистента: реальные болячки из базы (без выдумок).
+  const buildCarContext = () => {
+    const issues = (issuesData?.systemic || []).slice(0, 14).map(i => ({
+      title: i.issue?.title || '',
+      severity: i.issue?.severity || '',
+      cause: i.issue?.cause?.primary || '',
+    }));
+    return {
+      car: `${car.brand} ${car.model} ${car.generation || ''} · ${car.engine}${car.transmission ? ` · ${car.transmission}` : ''}`.trim(),
+      mileage: car.mileage,
+      issues,
+    };
+  };
+
+  const handleSend = async (text) => {
     const messageText = text || inputValue.trim();
     if (!messageText) return;
 
-    // Добавляем сообщение пользователя
+    const history = messages.map(m => ({
+      role: m.type === 'user' ? 'user' : 'model',
+      text: m.type === 'user' ? m.text : (m.response?.text || ''),
+    }));
+
     setMessages(prev => [...prev, { type: 'user', text: messageText }]);
     setInputValue('');
     setIsTyping(true);
 
-    // Симулируем задержку ответа
-    setTimeout(() => {
-      const response = getAssistantResponse(messageText, car);
-      setMessages(prev => [...prev, { type: 'assistant', response }]);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageText, history, carContext: buildCarContext() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const text = res.ok && data.text
+        ? data.text
+        : (data.error || 'Не удалось получить ответ. Попробуйте ещё раз.');
+      setMessages(prev => [...prev, { type: 'assistant', response: { text } }]);
+    } catch (e) {
+      setMessages(prev => [...prev, { type: 'assistant', response: { text: 'Нет связи с ассистентом. Проверьте интернет и попробуйте снова.' } }]);
+    } finally {
       setIsTyping(false);
-    }, 800 + Math.random() * 700);
+    }
   };
 
   const handleKeyPress = (e) => {
