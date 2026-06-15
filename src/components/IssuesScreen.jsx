@@ -42,6 +42,7 @@ export default function IssuesScreen() {
     chronic: false,
     past: false,
   });
+  const [recallsOpen, setRecallsOpen] = useState(false);
   const [expandedIssue, setExpandedIssue] = useState(null);
 
   const toggleSection = (key) => {
@@ -131,24 +132,72 @@ export default function IssuesScreen() {
         </span>
       </div>
 
-      {/* VIN-проверка отзывных */}
-      <a
-        style={s.vin}
-        href="https://easy.gost.ru/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span style={s.vinIcon}><Icon name="shield" size={20} color={c.primary} /></span>
-        <div style={s.vinText}>
-          <div style={s.vinTitle}>Проверить отзывные по VIN</div>
-          <div style={s.vinSub}>
-            {issuesData.recalls.length > 0
-              ? `Для этого поколения известно ${issuesData.recalls.length} отзывных — сверьтесь, закрыты ли по вашему VIN`
-              : 'Сверьте, нет ли незакрытой отзывной по вашему VIN — ремонт по ней бесплатный'}
-          </div>
+      {/* Отзывные кампании и иски — из нашей базы */}
+      {(issuesData.recalls.length > 0 || issuesData.classActions.length > 0 || issuesData.tsb.length > 0) && (
+        <div style={s.legalCard}>
+          <button style={s.legalHead} onClick={() => setRecallsOpen(o => !o)}>
+            <span style={s.vinIcon}><Icon name="shield" size={20} color={c.primary} /></span>
+            <div style={s.vinText}>
+              <div style={s.vinTitle}>Отзывные кампании и иски</div>
+              <div style={s.vinSub}>{legalSummary(issuesData)}</div>
+            </div>
+            <span style={{ ...s.legalChev, transform: recallsOpen ? 'rotate(180deg)' : 'none' }}>
+              <Icon name="chevronDown" size={16} color={c.textTertiary} />
+            </span>
+          </button>
+
+          {recallsOpen && (
+            <div style={s.legalBody}>
+              {issuesData.recalls.length > 0 && (
+                <div style={s.legalGroup}>
+                  <div style={s.legalGroupTitle}>Отзывные кампании</div>
+                  {issuesData.recalls.map((r, i) => (
+                    <div key={i} style={s.legalRow}>
+                      <span style={s.legalFlag}>{r.country_flag || '🌐'}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={s.legalCountry}>
+                          {r.country} {r.year ? `(${r.year})` : ''}{r.recall_id ? ` · ${r.recall_id}` : ''}
+                        </div>
+                        <div style={s.legalDesc}>{r.description}</div>
+                      </div>
+                      {r.status && <span style={s.legalStatus}>{r.status}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {issuesData.classActions.length > 0 && (
+                <div style={s.legalGroup}>
+                  <div style={s.legalGroupTitle}>Коллективные иски</div>
+                  {issuesData.classActions.map((ca, i) => (
+                    <div key={i} style={s.legalRow}>
+                      <span style={s.legalFlag}>{ca.country_flag || '🌐'}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={s.legalCountry}>{ca.country} {ca.year_filed ? `(${ca.year_filed})` : ''}</div>
+                        <div style={s.legalDesc}>{ca.result || ca.case_name || ca.claim_summary?.slice(0, 120) || '—'}</div>
+                      </div>
+                      <span style={s.defectBadge(ca.status)}>{statusBadge(ca.status)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {issuesData.tsb.length > 0 && (
+                <div style={s.legalGroup}>
+                  <div style={s.legalGroupTitle}>Сервисные бюллетени (TSB)</div>
+                  {issuesData.tsb.map((t, i) => (
+                    <div key={i} style={s.legalRow}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={s.legalCountry}>{t.code} {t.date ? `(${t.date})` : ''}</div>
+                        <div style={s.legalDesc}>{t.title || t.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={s.legalNote}>Данные собраны из открытых источников (NHTSA, Росстандарт, Transport Canada и др.). Применимость к вашему VIN уточняйте у дилера.</div>
+            </div>
+          )}
         </div>
-        <span style={s.vinArrow}><Icon name="arrowRight" size={16} color={c.textTertiary} /></span>
-      </a>
+      )}
 
       {/* Сводка по severity */}
       <div style={s.summary}>
@@ -420,6 +469,20 @@ function EmptyText({ children }) {
   return <div style={s.emptyText}>{children}</div>;
 }
 
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+function legalSummary(data) {
+  const parts = [];
+  if (data.recalls.length) parts.push(`${data.recalls.length} ${plural(data.recalls.length, 'отзывная', 'отзывных', 'отзывных')}`);
+  if (data.classActions.length) parts.push(`${data.classActions.length} ${plural(data.classActions.length, 'иск', 'иска', 'исков')}`);
+  if (data.tsb.length) parts.push(`${data.tsb.length} TSB`);
+  return parts.join(' · ') + ' по этому поколению';
+}
+
 function statusBadge(status) {
   switch (status) {
     case 'won': return '✓ Выигран';
@@ -447,12 +510,22 @@ const s = {
   headerSubtitle: { fontSize: '13px', color: c.textSecondary, marginTop: '4px' },
   
   intro: { display: 'flex', gap: '12px', padding: '14px 16px', margin: '12px', background: c.primaryLight, borderRadius: '12px' },
-  vin: { display: 'flex', alignItems: 'center', gap: '12px', margin: '0 12px 12px', padding: '13px 14px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', textDecoration: 'none', cursor: 'pointer' },
+  legalCard: { margin: '0 12px 12px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', overflow: 'hidden' },
+  legalHead: { width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },
   vinIcon: { flexShrink: 0, display: 'flex' },
   vinText: { flex: 1, minWidth: 0 },
   vinTitle: { fontSize: '14px', fontWeight: '600', color: c.textPrimary },
   vinSub: { fontSize: '12px', color: c.textSecondary, lineHeight: '1.4', marginTop: '2px' },
-  vinArrow: { flexShrink: 0, display: 'flex' },
+  legalChev: { flexShrink: 0, display: 'flex', transition: 'transform 0.2s' },
+  legalBody: { padding: '4px 14px 14px' },
+  legalGroup: { marginBottom: '12px' },
+  legalGroupTitle: { fontSize: '11px', fontWeight: '600', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '6px 0 8px' },
+  legalRow: { display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '8px 0', borderTop: `1px solid ${c.border}` },
+  legalFlag: { fontSize: '16px', flexShrink: 0 },
+  legalCountry: { fontSize: '13px', fontWeight: '600', color: c.textPrimary },
+  legalDesc: { fontSize: '12px', color: c.textSecondary, lineHeight: '1.4', marginTop: '2px' },
+  legalStatus: { fontSize: '11px', color: c.textSecondary, flexShrink: 0, whiteSpace: 'nowrap' },
+  legalNote: { fontSize: '11px', color: c.textTertiary, lineHeight: '1.4', marginTop: '4px', fontStyle: 'italic' },
   introIcon: { fontSize: '18px', flexShrink: 0 },
   introText: { fontSize: '13px', color: c.textSecondary, lineHeight: '1.5' },
   
