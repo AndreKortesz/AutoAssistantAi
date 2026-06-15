@@ -131,6 +131,25 @@ export default function IssuesScreen() {
         </span>
       </div>
 
+      {/* VIN-проверка отзывных */}
+      <a
+        style={s.vin}
+        href="https://easy.gost.ru/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span style={s.vinIcon}><Icon name="shield" size={20} color={c.primary} /></span>
+        <div style={s.vinText}>
+          <div style={s.vinTitle}>Проверить отзывные по VIN</div>
+          <div style={s.vinSub}>
+            {issuesData.recalls.length > 0
+              ? `Для этого поколения известно ${issuesData.recalls.length} отзывных — сверьтесь, закрыты ли по вашему VIN`
+              : 'Сверьте, нет ли незакрытой отзывной по вашему VIN — ремонт по ней бесплатный'}
+          </div>
+        </div>
+        <span style={s.vinArrow}><Icon name="arrowRight" size={16} color={c.textTertiary} /></span>
+      </a>
+
       {/* Сводка по severity */}
       <div style={s.summary}>
         <div style={s.summaryItem}>
@@ -428,6 +447,12 @@ const s = {
   headerSubtitle: { fontSize: '13px', color: c.textSecondary, marginTop: '4px' },
   
   intro: { display: 'flex', gap: '12px', padding: '14px 16px', margin: '12px', background: c.primaryLight, borderRadius: '12px' },
+  vin: { display: 'flex', alignItems: 'center', gap: '12px', margin: '0 12px 12px', padding: '13px 14px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', textDecoration: 'none', cursor: 'pointer' },
+  vinIcon: { flexShrink: 0, display: 'flex' },
+  vinText: { flex: 1, minWidth: 0 },
+  vinTitle: { fontSize: '14px', fontWeight: '600', color: c.textPrimary },
+  vinSub: { fontSize: '12px', color: c.textSecondary, lineHeight: '1.4', marginTop: '2px' },
+  vinArrow: { flexShrink: 0, display: 'flex' },
   introIcon: { fontSize: '18px', flexShrink: 0 },
   introText: { fontSize: '13px', color: c.textSecondary, lineHeight: '1.5' },
   
