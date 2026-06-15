@@ -156,7 +156,7 @@ export default function Dashboard() {
       {/* ГЕРО-карточка */}
       <div style={s.hero}>
         <div style={s.heroTop}>
-          <CarSilhouette color={userCar.color} animate={animateOnce} width={92} height={50} />
+          <CarSilhouette color={userCar.color} bodyType={userCar.bodyType} animate={animateOnce} width={92} height={50} />
           <div style={s.heroInfo}>
             <div style={s.carName}>{carLabel}</div>
             <div style={s.carSub}>{engineLabel}{carDetails.generation ? ` · ${carDetails.generation}` : ''}</div>

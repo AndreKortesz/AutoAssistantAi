@@ -18,20 +18,72 @@
           "year_end": 2017,
           "data_file": "/data/issues/hyundai/solaris_rb/solaris_rb_final.json",
           "engines": [
-            { "code": "G4FA", "displacement": 1.4, "power_hp": 107, "fuel": "бензин", "turbo": false, "label": "1.4 MPI (107 л.с.)" },
-            { "code": "G4FC", "displacement": 1.6, "power_hp": 123, "fuel": "бензин", "turbo": false, "label": "1.6 MPI (123 л.с.)" }
+            {
+              "code": "G4FA",
+              "displacement": 1.4,
+              "power_hp": 107,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.4 MPI (107 л.с.)"
+            },
+            {
+              "code": "G4FC",
+              "displacement": 1.6,
+              "power_hp": 123,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.6 MPI (123 л.с.)"
+            }
           ],
           "transmissions": [
-            { "code": "M5CF1", "type": "МКПП", "gears": 5, "label": "Механика 5-ст (M5CF1)" },
-            { "code": "M6CF1", "type": "МКПП", "gears": 6, "label": "Механика 6-ст (M6CF1)" },
-            { "code": "A4CF1", "type": "АКПП", "gears": 4, "label": "Автомат 4-ст (A4CF1)" },
-            { "code": "A6GF1", "type": "АКПП", "gears": 6, "label": "Автомат 6-ст (A6GF1)" }
+            {
+              "code": "M5CF1",
+              "type": "МКПП",
+              "gears": 5,
+              "label": "Механика 5-ст (M5CF1)"
+            },
+            {
+              "code": "M6CF1",
+              "type": "МКПП",
+              "gears": 6,
+              "label": "Механика 6-ст (M6CF1)"
+            },
+            {
+              "code": "A4CF1",
+              "type": "АКПП",
+              "gears": 4,
+              "label": "Автомат 4-ст (A4CF1)"
+            },
+            {
+              "code": "A6GF1",
+              "type": "АКПП",
+              "gears": 6,
+              "label": "Автомат 6-ст (A6GF1)"
+            }
           ],
           "engine_transmission_compat": [
-            { "engine": "G4FA", "transmissions": ["M5CF1", "M6CF1", "A4CF1"] },
-            { "engine": "G4FC", "transmissions": ["M5CF1", "M6CF1", "A4CF1", "A6GF1"] }
+            {
+              "engine": "G4FA",
+              "transmissions": [
+                "M5CF1",
+                "M6CF1",
+                "A4CF1"
+              ]
+            },
+            {
+              "engine": "G4FC",
+              "transmissions": [
+                "M5CF1",
+                "M6CF1",
+                "A4CF1",
+                "A6GF1"
+              ]
+            }
           ],
-          "body_types": ["Седан", "Хэтчбек"]
+          "body_types": [
+            "Седан",
+            "Хэтчбек"
+          ]
         },
         {
           "id": "solaris_hc",
@@ -42,19 +94,63 @@
           "year_end": 2022,
           "data_file": "/data/issues/hyundai/solaris_hc/solaris_ii_final.json",
           "engines": [
-            { "code": "G4LC", "displacement": 1.4, "power_hp": 100, "fuel": "бензин", "turbo": false, "label": "1.4 Kappa (100 л.с.)" },
-            { "code": "G4FG", "displacement": 1.6, "power_hp": 123, "fuel": "бензин", "turbo": false, "label": "1.6 Gamma II (123 л.с.)" }
+            {
+              "code": "G4LC",
+              "displacement": 1.4,
+              "power_hp": 100,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.4 Kappa (100 л.с.)"
+            },
+            {
+              "code": "G4FG",
+              "displacement": 1.6,
+              "power_hp": 123,
+              "fuel": "бензин",
+              "turbo": false,
+              "label": "1.6 Gamma II (123 л.с.)"
+            }
           ],
           "transmissions": [
-            { "code": "M6CF1", "type": "МКПП", "gears": 6, "label": "Механика 6-ст (M6CF1)" },
-            { "code": "A6GF1", "type": "АКПП", "gears": 6, "label": "Автомат 6-ст (A6GF1)" },
-            { "code": "A6GF1-2", "type": "АКПП", "gears": 6, "label": "Автомат 6-ст обновлённый (A6GF1-2)" }
+            {
+              "code": "M6CF1",
+              "type": "МКПП",
+              "gears": 6,
+              "label": "Механика 6-ст (M6CF1)"
+            },
+            {
+              "code": "A6GF1",
+              "type": "АКПП",
+              "gears": 6,
+              "label": "Автомат 6-ст (A6GF1)"
+            },
+            {
+              "code": "A6GF1-2",
+              "type": "АКПП",
+              "gears": 6,
+              "label": "Автомат 6-ст обновлённый (A6GF1-2)"
+            }
           ],
           "engine_transmission_compat": [
-            { "engine": "G4LC", "transmissions": ["M6CF1", "A6GF1"] },
-            { "engine": "G4FG", "transmissions": ["M6CF1", "A6GF1", "A6GF1-2"] }
+            {
+              "engine": "G4LC",
+              "transmissions": [
+                "M6CF1",
+                "A6GF1"
+              ]
+            },
+            {
+              "engine": "G4FG",
+              "transmissions": [
+                "M6CF1",
+                "A6GF1",
+                "A6GF1-2"
+              ]
+            }
           ],
-          "body_types": ["Седан"]
+          "body_types": [
+            "Седан"
+          ]
         },
         {
           "id": "creta_gs",
@@ -64,8 +160,19 @@
           "year_start": 2016,
           "year_end": 2021,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -76,8 +183,19 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -88,9 +206,24 @@
           "year_start": 2015,
           "year_end": 2020,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "20_crdi", "displacement": 2.0, "label": "2.0 CRDi" },
-            { "code": "16_t_gdi", "displacement": 1.6, "label": "1.6 T-GDI" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "20_crdi",
+              "displacement": 2,
+              "label": "2.0 CRDi"
+            },
+            {
+              "code": "16_t_gdi",
+              "displacement": 1.6,
+              "label": "1.6 T-GDI"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -101,10 +234,29 @@
           "year_start": 2020,
           "year_end": 2024,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "16_t_gdi", "displacement": 1.6, "label": "1.6 T-GDI" },
-            { "code": "20_crdi", "displacement": 2.0, "label": "2.0 CRDi" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "16_t_gdi",
+              "displacement": 1.6,
+              "label": "1.6 T-GDI"
+            },
+            {
+              "code": "20_crdi",
+              "displacement": 2,
+              "label": "2.0 CRDi"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -123,8 +275,20 @@
           "year_start": 2011,
           "year_end": 2017,
           "engines": [
-            { "code": "14", "displacement": 1.4, "label": "1.4" },
-            { "code": "16", "displacement": 1.6, "label": "1.6" }
+            {
+              "code": "14",
+              "displacement": 1.4,
+              "label": "1.4"
+            },
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Хэтчбек"
           ]
         },
         {
@@ -135,8 +299,20 @@
           "year_start": 2017,
           "year_end": 2024,
           "engines": [
-            { "code": "14", "displacement": 1.4, "label": "1.4" },
-            { "code": "16", "displacement": 1.6, "label": "1.6" }
+            {
+              "code": "14",
+              "displacement": 1.4,
+              "label": "1.4"
+            },
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Хэтчбек"
           ]
         },
         {
@@ -147,9 +323,24 @@
           "year_start": 2015,
           "year_end": 2021,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "20_crdi", "displacement": 2.0, "label": "2.0 CRDi" },
-            { "code": "16_t_gdi", "displacement": 1.6, "label": "1.6 T-GDI" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "20_crdi",
+              "displacement": 2,
+              "label": "2.0 CRDi"
+            },
+            {
+              "code": "16_t_gdi",
+              "displacement": 1.6,
+              "label": "1.6 T-GDI"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -160,10 +351,29 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "16_t_gdi", "displacement": 1.6, "label": "1.6 T-GDI" },
-            { "code": "20_crdi", "displacement": 2.0, "label": "2.0 CRDi" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "16_t_gdi",
+              "displacement": 1.6,
+              "label": "1.6 T-GDI"
+            },
+            {
+              "code": "20_crdi",
+              "displacement": 2,
+              "label": "2.0 CRDi"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -174,9 +384,25 @@
           "year_start": 2012,
           "year_end": 2018,
           "engines": [
-            { "code": "14", "displacement": 1.4, "label": "1.4" },
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "16_crdi", "displacement": 1.6, "label": "1.6 CRDi" }
+            {
+              "code": "14",
+              "displacement": 1.4,
+              "label": "1.4"
+            },
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "16_crdi",
+              "displacement": 1.6,
+              "label": "1.6 CRDi"
+            }
+          ],
+          "body_types": [
+            "Хэтчбек",
+            "Универсал"
           ]
         },
         {
@@ -187,10 +413,30 @@
           "year_start": 2018,
           "year_end": 2024,
           "engines": [
-            { "code": "14_t_gdi", "displacement": 1.4, "label": "1.4 T-GDI" },
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "16_crdi", "displacement": 1.6, "label": "1.6 CRDi" }
+            {
+              "code": "14_t_gdi",
+              "displacement": 1.4,
+              "label": "1.4 T-GDI"
+            },
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "16_crdi",
+              "displacement": 1.6,
+              "label": "1.6 CRDi"
+            }
+          ],
+          "body_types": [
+            "Хэтчбек",
+            "Универсал"
           ]
         },
         {
@@ -201,9 +447,24 @@
           "year_start": 2019,
           "year_end": 2024,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "16_t_gdi", "displacement": 1.6, "label": "1.6 T-GDI" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "16_t_gdi",
+              "displacement": 1.6,
+              "label": "1.6 T-GDI"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -222,9 +483,24 @@
           "year_start": 2011,
           "year_end": 2017,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "35", "displacement": 3.5, "label": "3.5" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "35",
+              "displacement": 3.5,
+              "label": "3.5"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -235,9 +511,24 @@
           "year_start": 2017,
           "year_end": 2024,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "35", "displacement": 3.5, "label": "3.5" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "35",
+              "displacement": 3.5,
+              "label": "3.5"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -248,9 +539,24 @@
           "year_start": 2012,
           "year_end": 2018,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "22_d_4d", "displacement": 2.2, "label": "2.2 D-4D" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "22_d_4d",
+              "displacement": 2.2,
+              "label": "2.2 D-4D"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -261,9 +567,24 @@
           "year_start": 2018,
           "year_end": 2024,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "25_hybrid", "displacement": 2.5, "label": "2.5 Hybrid" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "25_hybrid",
+              "displacement": 2.5,
+              "label": "2.5 Hybrid"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -274,8 +595,19 @@
           "year_start": 2013,
           "year_end": 2018,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "18", "displacement": 1.8, "label": "1.8" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "18",
+              "displacement": 1.8,
+              "label": "1.8"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -286,9 +618,24 @@
           "year_start": 2018,
           "year_end": 2024,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "18_hybrid", "displacement": 1.8, "label": "1.8 Hybrid" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "18_hybrid",
+              "displacement": 1.8,
+              "label": "1.8 Hybrid"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -299,9 +646,24 @@
           "year_start": 2009,
           "year_end": 2024,
           "engines": [
-            { "code": "27", "displacement": 2.7, "label": "2.7" },
-            { "code": "40", "displacement": 4.0, "label": "4.0" },
-            { "code": "28_d_4d", "displacement": 2.8, "label": "2.8 D-4D" }
+            {
+              "code": "27",
+              "displacement": 2.7,
+              "label": "2.7"
+            },
+            {
+              "code": "40",
+              "displacement": 4,
+              "label": "4.0"
+            },
+            {
+              "code": "28_d_4d",
+              "displacement": 2.8,
+              "label": "2.8 D-4D"
+            }
+          ],
+          "body_types": [
+            "Внедорожник"
           ]
         }
       ]
@@ -320,9 +682,24 @@
           "year_start": 2013,
           "year_end": 2021,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "12_dig_t", "displacement": 1.2, "label": "1.2 DIG-T" },
-            { "code": "16_dci", "displacement": 1.6, "label": "1.6 dCi" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "12_dig_t",
+              "displacement": 1.2,
+              "label": "1.2 DIG-T"
+            },
+            {
+              "code": "16_dci",
+              "displacement": 1.6,
+              "label": "1.6 dCi"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -333,8 +710,19 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "13_dig_t", "displacement": 1.3, "label": "1.3 DIG-T" },
-            { "code": "15_e_power", "displacement": 1.5, "label": "1.5 e-Power" }
+            {
+              "code": "13_dig_t",
+              "displacement": 1.3,
+              "label": "1.3 DIG-T"
+            },
+            {
+              "code": "15_e_power",
+              "displacement": 1.5,
+              "label": "1.5 e-Power"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -345,10 +733,29 @@
           "year_start": 2013,
           "year_end": 2021,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "20_dci", "displacement": 2.0, "label": "2.0 dCi" },
-            { "code": "16_dci", "displacement": 1.6, "label": "1.6 dCi" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "20_dci",
+              "displacement": 2,
+              "label": "2.0 dCi"
+            },
+            {
+              "code": "16_dci",
+              "displacement": 1.6,
+              "label": "1.6 dCi"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -359,8 +766,19 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "15_e_power", "displacement": 1.5, "label": "1.5 e-Power" },
-            { "code": "15_vc_turbo", "displacement": 1.5, "label": "1.5 VC-Turbo" }
+            {
+              "code": "15_e_power",
+              "displacement": 1.5,
+              "label": "1.5 e-Power"
+            },
+            {
+              "code": "15_vc_turbo",
+              "displacement": 1.5,
+              "label": "1.5 VC-Turbo"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -371,8 +789,19 @@
           "year_start": 2014,
           "year_end": 2022,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -391,9 +820,24 @@
           "year_start": 2011,
           "year_end": 2017,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "22_skyactiv_d", "displacement": 2.2, "label": "2.2 Skyactiv-D" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "22_skyactiv_d",
+              "displacement": 2.2,
+              "label": "2.2 Skyactiv-D"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -404,9 +848,24 @@
           "year_start": 2017,
           "year_end": 2024,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "22_skyactiv_d", "displacement": 2.2, "label": "2.2 Skyactiv-D" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "22_skyactiv_d",
+              "displacement": 2.2,
+              "label": "2.2 Skyactiv-D"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -425,10 +884,29 @@
           "year_start": 2012,
           "year_end": 2021,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "24", "displacement": 2.4, "label": "2.4" },
-            { "code": "30", "displacement": 3.0, "label": "3.0" },
-            { "code": "22_di_d", "displacement": 2.2, "label": "2.2 DI-D" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "24",
+              "displacement": 2.4,
+              "label": "2.4"
+            },
+            {
+              "code": "30",
+              "displacement": 3,
+              "label": "3.0"
+            },
+            {
+              "code": "22_di_d",
+              "displacement": 2.2,
+              "label": "2.2 DI-D"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -439,8 +917,19 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "25", "displacement": 2.5, "label": "2.5" },
-            { "code": "24_phev", "displacement": 2.4, "label": "2.4 PHEV" }
+            {
+              "code": "25",
+              "displacement": 2.5,
+              "label": "2.5"
+            },
+            {
+              "code": "24_phev",
+              "displacement": 2.4,
+              "label": "2.4 PHEV"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -459,10 +948,29 @@
           "year_start": 2009,
           "year_end": 2017,
           "engines": [
-            { "code": "14", "displacement": 1.4, "label": "1.4" },
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "12_tsi", "displacement": 1.2, "label": "1.2 TSI" },
-            { "code": "14_tsi", "displacement": 1.4, "label": "1.4 TSI" }
+            {
+              "code": "14",
+              "displacement": 1.4,
+              "label": "1.4"
+            },
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "12_tsi",
+              "displacement": 1.2,
+              "label": "1.2 TSI"
+            },
+            {
+              "code": "14_tsi",
+              "displacement": 1.4,
+              "label": "1.4 TSI"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -473,8 +981,19 @@
           "year_start": 2017,
           "year_end": 2024,
           "engines": [
-            { "code": "16_mpi", "displacement": 1.6, "label": "1.6 MPI" },
-            { "code": "14_tsi", "displacement": 1.4, "label": "1.4 TSI" }
+            {
+              "code": "16_mpi",
+              "displacement": 1.6,
+              "label": "1.6 MPI"
+            },
+            {
+              "code": "14_tsi",
+              "displacement": 1.4,
+              "label": "1.4 TSI"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -485,9 +1004,24 @@
           "year_start": 2007,
           "year_end": 2016,
           "engines": [
-            { "code": "14_tsi", "displacement": 1.4, "label": "1.4 TSI" },
-            { "code": "20_tsi", "displacement": 2.0, "label": "2.0 TSI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" }
+            {
+              "code": "14_tsi",
+              "displacement": 1.4,
+              "label": "1.4 TSI"
+            },
+            {
+              "code": "20_tsi",
+              "displacement": 2,
+              "label": "2.0 TSI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -498,9 +1032,24 @@
           "year_start": 2016,
           "year_end": 2024,
           "engines": [
-            { "code": "14_tsi", "displacement": 1.4, "label": "1.4 TSI" },
-            { "code": "20_tsi", "displacement": 2.0, "label": "2.0 TSI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" }
+            {
+              "code": "14_tsi",
+              "displacement": 1.4,
+              "label": "1.4 TSI"
+            },
+            {
+              "code": "20_tsi",
+              "displacement": 2,
+              "label": "2.0 TSI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -519,11 +1068,35 @@
           "year_start": 2013,
           "year_end": 2020,
           "engines": [
-            { "code": "14_tsi", "displacement": 1.4, "label": "1.4 TSI" },
-            { "code": "18_tsi", "displacement": 1.8, "label": "1.8 TSI" },
-            { "code": "20_tsi", "displacement": 2.0, "label": "2.0 TSI" },
-            { "code": "16_tdi", "displacement": 1.6, "label": "1.6 TDI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" }
+            {
+              "code": "14_tsi",
+              "displacement": 1.4,
+              "label": "1.4 TSI"
+            },
+            {
+              "code": "18_tsi",
+              "displacement": 1.8,
+              "label": "1.8 TSI"
+            },
+            {
+              "code": "20_tsi",
+              "displacement": 2,
+              "label": "2.0 TSI"
+            },
+            {
+              "code": "16_tdi",
+              "displacement": 1.6,
+              "label": "1.6 TDI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Универсал"
           ]
         },
         {
@@ -534,9 +1107,25 @@
           "year_start": 2020,
           "year_end": 2024,
           "engines": [
-            { "code": "14_tsi", "displacement": 1.4, "label": "1.4 TSI" },
-            { "code": "20_tsi", "displacement": 2.0, "label": "2.0 TSI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" }
+            {
+              "code": "14_tsi",
+              "displacement": 1.4,
+              "label": "1.4 TSI"
+            },
+            {
+              "code": "20_tsi",
+              "displacement": 2,
+              "label": "2.0 TSI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Универсал"
           ]
         }
       ]
@@ -555,11 +1144,29 @@
           "year_start": 2011,
           "year_end": 2019,
           "engines": [
-            { "code": "N20", "label": "N20" },
-            { "code": "N55", "label": "N55" },
-            { "code": "B48", "label": "B48" },
-            { "code": "N47", "label": "N47" },
-            { "code": "B47", "label": "B47" }
+            {
+              "code": "N20",
+              "label": "N20"
+            },
+            {
+              "code": "N55",
+              "label": "N55"
+            },
+            {
+              "code": "B48",
+              "label": "B48"
+            },
+            {
+              "code": "N47",
+              "label": "N47"
+            },
+            {
+              "code": "B47",
+              "label": "B47"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -570,10 +1177,25 @@
           "year_start": 2019,
           "year_end": 2024,
           "engines": [
-            { "code": "B48", "label": "B48" },
-            { "code": "B58", "label": "B58" },
-            { "code": "B47", "label": "B47" },
-            { "code": "B57", "label": "B57" }
+            {
+              "code": "B48",
+              "label": "B48"
+            },
+            {
+              "code": "B58",
+              "label": "B58"
+            },
+            {
+              "code": "B47",
+              "label": "B47"
+            },
+            {
+              "code": "B57",
+              "label": "B57"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -584,10 +1206,25 @@
           "year_start": 2010,
           "year_end": 2016,
           "engines": [
-            { "code": "N20", "label": "N20" },
-            { "code": "N55", "label": "N55" },
-            { "code": "N63", "label": "N63" },
-            { "code": "N57", "label": "N57" }
+            {
+              "code": "N20",
+              "label": "N20"
+            },
+            {
+              "code": "N55",
+              "label": "N55"
+            },
+            {
+              "code": "N63",
+              "label": "N63"
+            },
+            {
+              "code": "N57",
+              "label": "N57"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -598,10 +1235,25 @@
           "year_start": 2016,
           "year_end": 2024,
           "engines": [
-            { "code": "B48", "label": "B48" },
-            { "code": "B58", "label": "B58" },
-            { "code": "B57", "label": "B57" },
-            { "code": "N63", "label": "N63" }
+            {
+              "code": "B48",
+              "label": "B48"
+            },
+            {
+              "code": "B58",
+              "label": "B58"
+            },
+            {
+              "code": "B57",
+              "label": "B57"
+            },
+            {
+              "code": "N63",
+              "label": "N63"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -612,9 +1264,21 @@
           "year_start": 2018,
           "year_end": 2024,
           "engines": [
-            { "code": "B58", "label": "B58" },
-            { "code": "N63", "label": "N63" },
-            { "code": "S63", "label": "S63" }
+            {
+              "code": "B58",
+              "label": "B58"
+            },
+            {
+              "code": "N63",
+              "label": "N63"
+            },
+            {
+              "code": "S63",
+              "label": "S63"
+            }
+          ],
+          "body_types": [
+            "Купе"
           ]
         }
       ]
@@ -633,10 +1297,25 @@
           "year_start": 2014,
           "year_end": 2021,
           "engines": [
-            { "code": "M274", "label": "M274" },
-            { "code": "M264", "label": "M264" },
-            { "code": "OM651", "label": "OM651" },
-            { "code": "OM654", "label": "OM654" }
+            {
+              "code": "M274",
+              "label": "M274"
+            },
+            {
+              "code": "M264",
+              "label": "M264"
+            },
+            {
+              "code": "OM651",
+              "label": "OM651"
+            },
+            {
+              "code": "OM654",
+              "label": "OM654"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -647,9 +1326,21 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "M254", "label": "M254" },
-            { "code": "M264", "label": "M264" },
-            { "code": "OM654", "label": "OM654" }
+            {
+              "code": "M254",
+              "label": "M254"
+            },
+            {
+              "code": "M264",
+              "label": "M264"
+            },
+            {
+              "code": "OM654",
+              "label": "OM654"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         }
       ]
@@ -668,9 +1359,24 @@
           "year_start": 2011,
           "year_end": 2015,
           "engines": [
-            { "code": "18_tfsi", "displacement": 1.8, "label": "1.8 TFSI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" },
-            { "code": "30_tdi", "displacement": 3.0, "label": "3.0 TDI" }
+            {
+              "code": "18_tfsi",
+              "displacement": 1.8,
+              "label": "1.8 TFSI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            },
+            {
+              "code": "30_tdi",
+              "displacement": 3,
+              "label": "3.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -681,9 +1387,24 @@
           "year_start": 2015,
           "year_end": 2024,
           "engines": [
-            { "code": "20_tfsi", "displacement": 2.0, "label": "2.0 TFSI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" },
-            { "code": "30_tdi", "displacement": 3.0, "label": "3.0 TDI" }
+            {
+              "code": "20_tfsi",
+              "displacement": 2,
+              "label": "2.0 TFSI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            },
+            {
+              "code": "30_tdi",
+              "displacement": 3,
+              "label": "3.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         },
         {
@@ -694,10 +1415,29 @@
           "year_start": 2011,
           "year_end": 2016,
           "engines": [
-            { "code": "18_tfsi", "displacement": 1.8, "label": "1.8 TFSI" },
-            { "code": "20_tfsi", "displacement": 2.0, "label": "2.0 TFSI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" },
-            { "code": "30_tdi", "displacement": 3.0, "label": "3.0 TDI" }
+            {
+              "code": "18_tfsi",
+              "displacement": 1.8,
+              "label": "1.8 TFSI"
+            },
+            {
+              "code": "20_tfsi",
+              "displacement": 2,
+              "label": "2.0 TFSI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            },
+            {
+              "code": "30_tdi",
+              "displacement": 3,
+              "label": "3.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Купе"
           ]
         },
         {
@@ -708,9 +1448,24 @@
           "year_start": 2016,
           "year_end": 2024,
           "engines": [
-            { "code": "20_tfsi", "displacement": 2.0, "label": "2.0 TFSI" },
-            { "code": "20_tdi", "displacement": 2.0, "label": "2.0 TDI" },
-            { "code": "30_tdi", "displacement": 3.0, "label": "3.0 TDI" }
+            {
+              "code": "20_tfsi",
+              "displacement": 2,
+              "label": "2.0 TFSI"
+            },
+            {
+              "code": "20_tdi",
+              "displacement": 2,
+              "label": "2.0 TDI"
+            },
+            {
+              "code": "30_tdi",
+              "displacement": 3,
+              "label": "3.0 TDI"
+            }
+          ],
+          "body_types": [
+            "Купе"
           ]
         }
       ]
@@ -729,9 +1484,24 @@
           "year_start": 2010,
           "year_end": 2021,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "15_dci", "displacement": 1.5, "label": "1.5 dCi" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "15_dci",
+              "displacement": 1.5,
+              "label": "1.5 dCi"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -742,9 +1512,24 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "15_dci", "displacement": 1.5, "label": "1.5 dCi" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "15_dci",
+              "displacement": 1.5,
+              "label": "1.5 dCi"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -755,8 +1540,19 @@
           "year_start": 2012,
           "year_end": 2022,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "12", "displacement": 1.2, "label": "1.2" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "12",
+              "displacement": 1.2,
+              "label": "1.2"
+            }
+          ],
+          "body_types": [
+            "Седан"
           ]
         }
       ]
@@ -775,11 +1571,35 @@
           "year_start": 2011,
           "year_end": 2018,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "16_ecoboost", "displacement": 1.6, "label": "1.6 EcoBoost" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "15_tdci", "displacement": 1.5, "label": "1.5 TDCi" },
-            { "code": "20_tdci", "displacement": 2.0, "label": "2.0 TDCi" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "16_ecoboost",
+              "displacement": 1.6,
+              "label": "1.6 EcoBoost"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "15_tdci",
+              "displacement": 1.5,
+              "label": "1.5 TDCi"
+            },
+            {
+              "code": "20_tdci",
+              "displacement": 2,
+              "label": "2.0 TDCi"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Хэтчбек"
           ]
         },
         {
@@ -790,8 +1610,19 @@
           "year_start": 2014,
           "year_end": 2024,
           "engines": [
-            { "code": "23_ecoboost", "displacement": 2.3, "label": "2.3 EcoBoost" },
-            { "code": "50_v8", "displacement": 5.0, "label": "5.0 V8" }
+            {
+              "code": "23_ecoboost",
+              "displacement": 2.3,
+              "label": "2.3 EcoBoost"
+            },
+            {
+              "code": "50_v8",
+              "displacement": 5,
+              "label": "5.0 V8"
+            }
+          ],
+          "body_types": [
+            "Купе"
           ]
         }
       ]
@@ -810,8 +1641,20 @@
           "year_start": 2011,
           "year_end": 2024,
           "engines": [
-            { "code": "16_8v", "displacement": 1.6, "label": "1.6 8V" },
-            { "code": "16_16v", "displacement": 1.6, "label": "1.6 16V" }
+            {
+              "code": "16_8v",
+              "displacement": 1.6,
+              "label": "1.6 8V"
+            },
+            {
+              "code": "16_16v",
+              "displacement": 1.6,
+              "label": "1.6 16V"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Хэтчбек"
           ]
         },
         {
@@ -822,8 +1665,20 @@
           "year_start": 2015,
           "year_end": 2024,
           "engines": [
-            { "code": "16", "displacement": 1.6, "label": "1.6" },
-            { "code": "18", "displacement": 1.8, "label": "1.8" }
+            {
+              "code": "16",
+              "displacement": 1.6,
+              "label": "1.6"
+            },
+            {
+              "code": "18",
+              "displacement": 1.8,
+              "label": "1.8"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Универсал"
           ]
         },
         {
@@ -834,8 +1689,19 @@
           "year_start": 2012,
           "year_end": 2024,
           "engines": [
-            { "code": "16_8v", "displacement": 1.6, "label": "1.6 8V" },
-            { "code": "16_16v", "displacement": 1.6, "label": "1.6 16V" }
+            {
+              "code": "16_8v",
+              "displacement": 1.6,
+              "label": "1.6 8V"
+            },
+            {
+              "code": "16_16v",
+              "displacement": 1.6,
+              "label": "1.6 16V"
+            }
+          ],
+          "body_types": [
+            "Универсал"
           ]
         },
         {
@@ -846,8 +1712,20 @@
           "year_start": 2007,
           "year_end": 2018,
           "engines": [
-            { "code": "16_8v", "displacement": 1.6, "label": "1.6 8V" },
-            { "code": "16_16v", "displacement": 1.6, "label": "1.6 16V" }
+            {
+              "code": "16_8v",
+              "displacement": 1.6,
+              "label": "1.6 8V"
+            },
+            {
+              "code": "16_16v",
+              "displacement": 1.6,
+              "label": "1.6 16V"
+            }
+          ],
+          "body_types": [
+            "Седан",
+            "Хэтчбек"
           ]
         }
       ]
@@ -866,9 +1744,24 @@
           "year_start": 2017,
           "year_end": 2024,
           "engines": [
-            { "code": "15", "displacement": 1.5, "label": "1.5" },
-            { "code": "15_turbo", "displacement": 1.5, "label": "1.5 Turbo" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" }
+            {
+              "code": "15",
+              "displacement": 1.5,
+              "label": "1.5"
+            },
+            {
+              "code": "15_turbo",
+              "displacement": 1.5,
+              "label": "1.5 Turbo"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -879,8 +1772,19 @@
           "year_start": 2020,
           "year_end": 2024,
           "engines": [
-            { "code": "15_turbo", "displacement": 1.5, "label": "1.5 Turbo" },
-            { "code": "20", "displacement": 2.0, "label": "2.0" }
+            {
+              "code": "15_turbo",
+              "displacement": 1.5,
+              "label": "1.5 Turbo"
+            },
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -891,8 +1795,19 @@
           "year_start": 2020,
           "year_end": 2024,
           "engines": [
-            { "code": "20_turbo", "displacement": 2.0, "label": "2.0 Turbo" },
-            { "code": "16_turbo", "displacement": 1.6, "label": "1.6 Turbo" }
+            {
+              "code": "20_turbo",
+              "displacement": 2,
+              "label": "2.0 Turbo"
+            },
+            {
+              "code": "16_turbo",
+              "displacement": 1.6,
+              "label": "1.6 Turbo"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -911,7 +1826,14 @@
           "year_start": 2020,
           "year_end": 2024,
           "engines": [
-            { "code": "15_turbo", "displacement": 1.5, "label": "1.5 Turbo" }
+            {
+              "code": "15_turbo",
+              "displacement": 1.5,
+              "label": "1.5 Turbo"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -922,8 +1844,19 @@
           "year_start": 2018,
           "year_end": 2024,
           "engines": [
-            { "code": "20", "displacement": 2.0, "label": "2.0" },
-            { "code": "24", "displacement": 2.4, "label": "2.4" }
+            {
+              "code": "20",
+              "displacement": 2,
+              "label": "2.0"
+            },
+            {
+              "code": "24",
+              "displacement": 2.4,
+              "label": "2.4"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -934,8 +1867,19 @@
           "year_start": 2022,
           "year_end": 2024,
           "engines": [
-            { "code": "20_turbo", "displacement": 2.0, "label": "2.0 Turbo" },
-            { "code": "15_turbo_phev", "displacement": 1.5, "label": "1.5 Turbo PHEV" }
+            {
+              "code": "20_turbo",
+              "displacement": 2,
+              "label": "2.0 Turbo"
+            },
+            {
+              "code": "15_turbo_phev",
+              "displacement": 1.5,
+              "label": "1.5 Turbo PHEV"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -954,7 +1898,14 @@
           "year_start": 2020,
           "year_end": 2024,
           "engines": [
-            { "code": "15_turbo", "displacement": 1.5, "label": "1.5 Turbo" }
+            {
+              "code": "15_turbo",
+              "displacement": 1.5,
+              "label": "1.5 Turbo"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -965,8 +1916,19 @@
           "year_start": 2019,
           "year_end": 2024,
           "engines": [
-            { "code": "15_turbo", "displacement": 1.5, "label": "1.5 Turbo" },
-            { "code": "20_turbo", "displacement": 2.0, "label": "2.0 Turbo" }
+            {
+              "code": "15_turbo",
+              "displacement": 1.5,
+              "label": "1.5 Turbo"
+            },
+            {
+              "code": "20_turbo",
+              "displacement": 2,
+              "label": "2.0 Turbo"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         },
         {
@@ -977,8 +1939,19 @@
           "year_start": 2015,
           "year_end": 2024,
           "engines": [
-            { "code": "20_turbo", "displacement": 2.0, "label": "2.0 Turbo" },
-            { "code": "20_turbo_diesel", "displacement": 2.0, "label": "2.0 Turbo Diesel" }
+            {
+              "code": "20_turbo",
+              "displacement": 2,
+              "label": "2.0 Turbo"
+            },
+            {
+              "code": "20_turbo_diesel",
+              "displacement": 2,
+              "label": "2.0 Turbo Diesel"
+            }
+          ],
+          "body_types": [
+            "Внедорожник"
           ]
         }
       ]
@@ -997,7 +1970,14 @@
           "year_start": 2019,
           "year_end": 2024,
           "engines": [
-            { "code": "15_turbo", "displacement": 1.5, "label": "1.5 Turbo" }
+            {
+              "code": "15_turbo",
+              "displacement": 1.5,
+              "label": "1.5 Turbo"
+            }
+          ],
+          "body_types": [
+            "Кроссовер"
           ]
         }
       ]
@@ -1016,7 +1996,14 @@
           "year_start": 2021,
           "year_end": 2024,
           "engines": [
-            { "code": "20_turbo", "displacement": 2.0, "label": "2.0 Turbo" }
+            {
+              "code": "20_turbo",
+              "displacement": 2,
+              "label": "2.0 Turbo"
+            }
+          ],
+          "body_types": [
+            "Внедорожник"
           ]
         },
         {
@@ -1027,7 +2014,14 @@
           "year_start": 2022,
           "year_end": 2024,
           "engines": [
-            { "code": "30_v6_turbo", "displacement": 3.0, "label": "3.0 V6 Turbo" }
+            {
+              "code": "30_v6_turbo",
+              "displacement": 3,
+              "label": "3.0 V6 Turbo"
+            }
+          ],
+          "body_types": [
+            "Внедорожник"
           ]
         }
       ]

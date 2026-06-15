@@ -91,6 +91,7 @@ export default function AddCarForm() {
     transmissionCode: '',
     year: '',
     mileage: '',
+    bodyType: '',
     color: '',
   });
 
@@ -142,6 +143,10 @@ export default function AddCarForm() {
   }, [catalog, formData.modelId]);
 
   const hasTransmissions = (currentModel?.transmissions?.length ?? 0) > 0;
+  const bodyTypes = currentModel?.body_types || [];
+  // если у модели один кузов — берём его автоматически; иначе ждём выбора
+  const effectiveBodyType = bodyTypes.length === 1 ? bodyTypes[0] : formData.bodyType;
+  const needsBodyChoice = bodyTypes.length > 1;
 
   const engines = useMemo(() => {
     if (!currentModel) return [];
@@ -177,7 +182,10 @@ export default function AddCarForm() {
     setFormData(prev => ({ ...prev, modelName: name, modelId: '', engineCode: '', transmissionCode: '', year: '' }));
   };
   const handleGeneration = (id) => {
-    setFormData(prev => ({ ...prev, modelId: id, engineCode: '', transmissionCode: '', year: '' }));
+    setFormData(prev => ({ ...prev, modelId: id, engineCode: '', transmissionCode: '', year: '', bodyType: '' }));
+  };
+  const handleBodyType = (bt) => {
+    setFormData(prev => ({ ...prev, bodyType: bt }));
   };
   const handleEngine = (code) => {
     setFormData(prev => ({ ...prev, engineCode: code, transmissionCode: '' }));
@@ -195,9 +203,13 @@ export default function AddCarForm() {
     setFormData(prev => ({ ...prev, color }));
   };
 
-  const requiredFields = hasTransmissions
-    ? [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.transmissionCode, formData.year, formData.mileage, formData.color]
-    : [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.year, formData.mileage, formData.color];
+  const requiredFields = [
+    formData.brandId, formData.modelName, formData.modelId, formData.engineCode,
+    ...(hasTransmissions ? [formData.transmissionCode] : []),
+    formData.year, formData.mileage,
+    ...(needsBodyChoice ? [formData.bodyType] : []),
+    formData.color,
+  ];
   const filledFields = requiredFields.filter(Boolean).length;
   const totalFields = requiredFields.length;
   const progress = (filledFields / totalFields) * 100;
@@ -211,6 +223,7 @@ export default function AddCarForm() {
       ...(formData.transmissionCode && { transmissionCode: formData.transmissionCode }),
       year: formData.year,
       mileage: formData.mileage,
+      ...(effectiveBodyType && { bodyType: effectiveBodyType }),
       color: formData.color,
     });
     if (ok) navigate('/dashboard');
@@ -291,11 +304,21 @@ export default function AddCarForm() {
         />
         <MileageInput value={formData.mileage} onChange={handleMileage} />
 
-        {formData.mileage && (
+        {formData.mileage && needsBodyChoice && (
+          <SelectField
+            label="Тип кузова"
+            value={formData.bodyType}
+            options={bodyTypes.map(bt => ({ id: bt, name: bt }))}
+            onChange={handleBodyType}
+            placeholder="Выберите кузов"
+          />
+        )}
+
+        {formData.mileage && (!needsBodyChoice || formData.bodyType) && (
           <div style={styles.field}>
             <label style={styles.label}>Цвет автомобиля</label>
             <div style={styles.colorPreview}>
-              <CarSilhouette color={formData.color || '#B8BCC2'} width={110} height={60} />
+              <CarSilhouette color={formData.color || '#B8BCC2'} bodyType={effectiveBodyType} width={120} height={64} />
             </div>
             <div style={styles.colorRow}>
               {CAR_COLORS.map(col => (
