@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoAssistantAi — Болячки Audi A1</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --background: #F7F8FA;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --primary: #1F4FD8;
+      --primary-light: rgba(31, 79, 216, 0.08);
+      --success: #2E9E6F;
+      --success-light: rgba(46, 158, 111, 0.08);
+      --success-border: rgba(46, 158, 111, 0.2);
+      --warning: #D97706;
+      --warning-light: rgba(217, 119, 6, 0.08);
+      --warning-border: rgba(217, 119, 6, 0.2);
+      --critical: #DC2626;
+      --critical-light: rgba(220, 38, 38, 0.08);
+      --critical-border: rgba(220, 38, 38, 0.2);
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-tertiary: #94A3B8;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      line-height: 1.5;
+      max-width: 420px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+    
+    /* Header */
+    .header {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .header-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    /* Intro */
+    .intro {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      margin: 12px;
+      background: var(--primary-light);
+      border-radius: 12px;
+    }
+    
+    .intro-icon {
+      font-size: 18px;
+    }
+    
+    .intro-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    /* Summary */
+    .summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 16px;
+      margin: 0 12px 12px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    
+    .summary-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .summary-value.critical {
+      color: var(--critical);
+    }
+    
+    .summary-value.warning {
+      color: var(--warning);
+    }
+    
+    .summary-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    .summary-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+    }
+    
+    /* Sections */
+    .sections {
+      padding: 0 12px;
+    }
+    
+    .section {
+      margin-bottom: 16px;
+    }
+    
+    .section-wrapper {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    
+    .section-wrapper.critical {
+      border-color: var(--critical-border);
+    }
+    
+    .section-wrapper.warning {
+      border-color: var(--warning-border);
+    }
+    
+    .section-wrapper.success {
+      border-color: var(--success-border);
+    }
+    
+    .section-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border: none;
+      cursor: pointer;
+      background: var(--background);
+    }
+    
+    .section-wrapper.critical .section-header {
+      background: var(--critical-light);
+    }
+    
+    .section-wrapper.warning .section-header {
+      background: var(--warning-light);
+    }
+    
+    .section-wrapper.success .section-header {
+      background: var(--success-light);
+    }
+    
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .section-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .section-dot.critical {
+      background: var(--critical);
+    }
+    
+    .section-dot.warning {
+      background: var(--warning);
+    }
+    
+    .section-dot.success {
+      background: var(--success);
+    }
+    
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .section-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .section-count {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 10px;
+      color: white;
+    }
+    
+    .section-count.critical {
+      background: var(--critical);
+    }
+    
+    .section-count.warning {
+      background: var(--warning);
+    }
+    
+    .section-count.success {
+      background: var(--success);
+    }
+    
+    .section-toggle {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s;
+    }
+    
+    .section-toggle.open {
+      transform: rotate(180deg);
+    }
+    
+    .section-content {
+      display: none;
+      padding: 12px;
+      background: var(--background);
+    }
+    
+    .section-content.open {
+      display: block;
+    }
+    
+    /* Issue cards */
+    .issue-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+    }
+    
+    .issue-card:last-child {
+      margin-bottom: 0;
+    }
+    
+    .issue-card.expanded {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(31, 79, 216, 0.15);
+    }
+    
+    .issue-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+    }
+    
+    .issue-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+    
+    .severity-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .severity-dot.critical {
+      background: var(--critical);
+    }
+    
+    .severity-dot.high {
+      background: var(--warning);
+    }
+    
+    .severity-dot.medium {
+      background: var(--primary);
+    }
+    
+    .severity-dot.low {
+      background: var(--success);
+    }
+    
+    .issue-header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .issue-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .issue-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .status-icons {
+      display: flex;
+      gap: 4px;
+      margin-right: 8px;
+    }
+    
+    .status-icon {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: var(--primary-light);
+      border-radius: 6px;
+    }
+    
+    .issue-toggle {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s;
+    }
+    
+    .issue-toggle.open {
+      transform: rotate(180deg);
+    }
+    
+    .issue-body {
+      display: none;
+      padding: 16px;
+      background: linear-gradient(to bottom, #FAFBFC, #FFFFFF);
+      border-top: 1px solid var(--border);
+    }
+    
+    .issue-body.open {
+      display: block;
+    }
+    
+    .issue-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0 0 14px;
+    }
+    
+    /* Quick metrics */
+    .quick-metrics {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    
+    .metric-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--background);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .metric-icon {
+      font-size: 14px;
+    }
+    
+    .metric-text {
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+    
+    /* Progress bar in issue */
+    .issue-progress {
+      margin-bottom: 14px;
+    }
+    
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    
+    .progress-title {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .progress-current {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--critical);
+    }
+    
+    .progress-bar {
+      position: relative;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+    }
+    
+    .progress-zone {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: var(--critical-light);
+      border-radius: 3px;
+    }
+    
+    .progress-marker {
+      position: absolute;
+      top: -2px;
+      width: 3px;
+      height: 10px;
+      background: var(--critical);
+      border-radius: 2px;
+      transform: translateX(-50%);
+    }
+    
+    /* CTA */
+    .issue-cta {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    
+    /* ===== VIN SECTION ===== */
+    .vin-section {
+      margin: 12px;
+      padding: 20px 16px;
+      background: linear-gradient(135deg, var(--primary-light), rgba(46, 158, 111, 0.05));
+      border: 1.5px dashed var(--primary);
+      border-radius: 16px;
+    }
+    
+    .vin-section.hidden {
+      display: none;
+    }
+    
+    .vin-title-big {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    
+    .vin-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    
+    .vin-benefits {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .vin-benefit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    
+    .vin-check {
+      color: var(--success);
+      font-weight: 600;
+    }
+    
+    .vin-input-section {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .vin-input-field {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      background: var(--card-bg);
+      text-transform: uppercase;
+    }
+    
+    .vin-input-field:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .vin-check-button {
+      padding: 12px 18px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .vin-note {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    
+    .vin-skip {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+    
+    /* ===== VIN MODAL ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    
+    .modal-overlay.show {
+      display: flex;
+    }
+    
+    .modal-content {
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      background: var(--card-bg);
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+    
+    .modal-success-icon {
+      font-size: 40px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    
+    .modal-car-info {
+      background: var(--background);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    
+    .modal-car-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .modal-car-row:last-child {
+      border-bottom: none;
+    }
+    
+    .modal-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .modal-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .modal-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+    
+    .modal-question-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    
+    .origin-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .origin-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .origin-option:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    
+    .origin-icon {
+      font-size: 24px;
+    }
+    
+    .origin-text-strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    
+    .origin-text-span {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .tip-box {
+      background: var(--warning-light);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    
+    .tip-box.show {
+      display: block;
+    }
+    
+    .tip-box-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    
+    .tip-box-list {
+      padding-left: 16px;
+      margin: 0;
+    }
+    
+    .tip-box-item {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+    
+    .modal-skip {
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: none;
+      font-size: 14px;
+      color: var(--text-tertiary);
+      cursor: pointer;
+    }
+    
+    /* ===== PERSONALIZED RESULTS ===== */
+    .personalized-section {
+      margin: 12px;
+      display: none;
+    }
+    
+    .personalized-section.show {
+      display: block;
+    }
+    
+    .result-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+    }
+    
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    
+    .result-header.warning {
+      background: var(--warning-light);
+    }
+    
+    .result-header.info {
+      background: var(--primary-light);
+    }
+    
+    .result-header.success {
+      background: var(--success-light);
+    }
+    
+    .result-header.neutral {
+      background: var(--background);
+    }
+    
+    .result-icon {
+      font-size: 18px;
+    }
+    
+    .result-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .result-body {
+      padding: 16px;
+    }
+    
+    .result-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0 0 12px;
+    }
+    
+    .result-text:last-child {
+      margin-bottom: 0;
+    }
+    
+    .rights-list {
+      margin-bottom: 16px;
+    }
+    
+    .rights-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    
+    .rights-num {
+      width: 24px;
+      height: 24px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    
+    .rights-item-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      margin: 0;
+      line-height: 1.5;
+    }
+    
+    .result-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    
+    .result-btn-secondary {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    
+    .import-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .import-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--background);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .part-vin-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--background);
+      border-radius: 8px;
+    }
+    
+    .part-name {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    
+    .part-number {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 12px 24px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+    }
+    
+    .nav-item.active {
+      background: var(--warning-light);
+    }
+    
+    .nav-icon {
+      font-size: 20px;
+    }
+    
+    .nav-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .nav-item.active .nav-label {
+      color: var(--warning);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1 class="header-title">Болячки Audi A1</h1>
+    <p class="header-subtitle">I (8X) • 2010–2015 • 1.4 TFSI (122 л.с.) • S-tronic</p>
+  </div>
+  
+  <!-- Intro -->
+  <div class="intro">
+    <span class="intro-icon">💡</span>
+    <span class="intro-text">Здесь собраны известные проблемы вашей модели. Это не приговор — просто информация, чтобы вы знали, на что обращать внимание.</span>
+  </div>
+  
+  <!-- Summary -->
+  <div class="summary">
+    <div class="summary-item">
+      <span class="summary-value">4</span>
+      <span class="summary-label">Всего болячек</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <span class="summary-value critical">2</span>
+      <span class="summary-label">Важных</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <span class="summary-value warning">2</span>
+      <span class="summary-label">Следить</span>
+    </div>
+  </div>
+  
+  <!-- Sections -->
+  <div class="sections">
+    
+    <!-- Critical section -->
+    <div class="section">
+      <div class="section-wrapper critical">
+        <button class="section-header" onclick="toggleSection(this)">
+          <div class="section-header-left">
+            <div class="section-dot critical"></div>
+            <span class="section-title">Требуют внимания</span>
+          </div>
+          <div class="section-header-right">
+            <span class="section-count critical">2</span>
+            <span class="section-toggle open">▼</span>
+          </div>
+        </button>
+        <div class="section-content open">
+          
+          <!-- Issue 1: Timing chain -->
+          <div class="issue-card expanded" id="issue-timing-chain">
+            <button class="issue-header" onclick="toggleIssue('issue-timing-chain')">
+              <div class="issue-header-left">
+                <div class="severity-dot critical"></div>
+                <div class="issue-header-info">
+                  <span class="issue-name">Растяжение цепи ГРМ</span>
+                  <span class="issue-meta">Двигатель • 60–120 тыс. км</span>
+                </div>
+              </div>
+              <div class="status-icons">
+                <span class="status-icon" title="Есть иски">⚖️</span>
+              </div>
+              <span class="issue-toggle open">▼</span>
+            </button>
+            <div class="issue-body open">
+              <p class="issue-description">Цепь ГРМ на моторах CAXA растягивается быстрее нормы. Треск на холодную — первый симптом. При игнорировании возможен загиб клапанов.</p>
+              
+              <div class="quick-metrics">
+                <div class="metric-item">
+                  <span class="metric-icon">📊</span>
+                  <span class="metric-text">~30% владельцев</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-icon">💰</span>
+                  <span class="metric-text">60–120 тыс. ₽</span>
+                </div>
+              </div>
+              
+              <div class="issue-progress">
+                <div class="progress-header">
+                  <span class="progress-title">Зона риска: 60–120 тыс. км</span>
+                  <span class="progress-current">Вы: ~87 000 км</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-zone" style="left: 30%; width: 30%;"></div>
+                  <div class="progress-marker" style="left: 43%;"></div>
+                </div>
+              </div>
+              
+              <div class="issue-cta">
+                <button class="btn btn-primary" onclick="location.href='audi-a1-issue-timing-chain.html'">Подробнее</button>
+                <button class="btn btn-secondary">📍 Найти сервис</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Issue 2: Oil consumption -->
+          <div class="issue-card" id="issue-oil">
+            <button class="issue-header" onclick="toggleIssue('issue-oil')">
+              <div class="issue-header-left">
+                <div class="severity-dot critical"></div>
+                <div class="issue-header-info">
+                  <span class="issue-name">Повышенный расход масла</span>
+                  <span class="issue-meta">Двигатель • 70–150 тыс. км</span>
+                </div>
+              </div>
+              <div class="status-icons">
+                <span class="status-icon" title="Есть иски">⚖️</span>
+              </div>
+              <span class="issue-toggle">▼</span>
+            </button>
+            <div class="issue-body">
+              <p class="issue-description">Конструктивная особенность поршневых колец на CAXA приводит к расходу масла более 1л/1000 км. Сначала стоит проверить клапан PCV — часто проблема в нём.</p>
+              
+              <div class="quick-metrics">
+                <div class="metric-item">
+                  <span class="metric-icon">📊</span>
+                  <span class="metric-text">~25% владельцев</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-icon">💰</span>
+                  <span class="metric-text">100–200 тыс. ₽</span>
+                </div>
+              </div>
+              
+              <div class="issue-progress">
+                <div class="progress-header">
+                  <span class="progress-title">Зона риска: 70–150 тыс. км</span>
+                  <span class="progress-current">Вы: ~87 000 км</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-zone" style="left: 35%; width: 40%;"></div>
+                  <div class="progress-marker" style="left: 43%;"></div>
+                </div>
+              </div>
+              
+              <div class="issue-cta">
+                <button class="btn btn-primary">Подробнее</button>
+                <button class="btn btn-secondary">📍 Найти сервис</button>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+    <!-- Warning section -->
+    <div class="section">
+      <div class="section-wrapper warning">
+        <button class="section-header" onclick="toggleSection(this)">
+          <div class="section-header-left">
+            <div class="section-dot warning"></div>
+            <span class="section-title">Следить за симптомами</span>
+          </div>
+          <div class="section-header-right">
+            <span class="section-count warning">2</span>
+            <span class="section-toggle">▼</span>
+          </div>
+        </button>
+        <div class="section-content">
+          
+          <!-- Issue 3: Turbo wastegate -->
+          <div class="issue-card" id="issue-turbo">
+            <button class="issue-header" onclick="toggleIssue('issue-turbo')">
+              <div class="issue-header-left">
+                <div class="severity-dot high"></div>
+                <div class="issue-header-info">
+                  <span class="issue-name">Отказ wastegate турбины</span>
+                  <span class="issue-meta">Турбина • 100–150 тыс. км</span>
+                </div>
+              </div>
+              <div class="status-icons">
+                <span class="status-icon" title="Есть иски">⚖️</span>
+              </div>
+              <span class="issue-toggle">▼</span>
+            </button>
+            <div class="issue-body">
+              <p class="issue-description">Актуатор wastegate подвержен коррозии, особенно в условиях реагентов на дорогах. Симптомы: свист турбины, аварийный режим, потеря мощности.</p>
+              
+              <div class="quick-metrics">
+                <div class="metric-item">
+                  <span class="metric-icon">📊</span>
+                  <span class="metric-text">~15% владельцев</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-icon">💰</span>
+                  <span class="metric-text">50–100 тыс. ₽</span>
+                </div>
+              </div>
+              
+              <div class="issue-progress">
+                <div class="progress-header">
+                  <span class="progress-title">Зона риска: 100–150 тыс. км</span>
+                  <span class="progress-current">Вы: ~87 000 км</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-zone" style="left: 50%; width: 25%;"></div>
+                  <div class="progress-marker" style="left: 43%;"></div>
+                </div>
+              </div>
+              
+              <div class="issue-cta">
+                <button class="btn btn-primary">Подробнее</button>
+                <button class="btn btn-secondary">📍 Найти сервис</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Issue 4: DSG clutch -->
+          <div class="issue-card" id="issue-dsg">
+            <button class="issue-header" onclick="toggleIssue('issue-dsg')">
+              <div class="issue-header-left">
+                <div class="severity-dot high"></div>
+                <div class="issue-header-info">
+                  <span class="issue-name">Износ сцепления DSG DQ200</span>
+                  <span class="issue-meta">Коробка • 60–120 тыс. км</span>
+                </div>
+              </div>
+              <span class="issue-toggle">▼</span>
+            </button>
+            <div class="issue-body">
+              <p class="issue-description">Сухое сцепление робота чувствительно к городской эксплуатации. Рывки при трогании, пробуксовка на 1–2 передаче — признаки износа.</p>
+              
+              <div class="quick-metrics">
+                <div class="metric-item">
+                  <span class="metric-icon">📊</span>
+                  <span class="metric-text">~35% владельцев</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-icon">💰</span>
+                  <span class="metric-text">90–170 тыс. ₽</span>
+                </div>
+              </div>
+              
+              <div class="issue-progress">
+                <div class="progress-header">
+                  <span class="progress-title">Зона риска: 60–120 тыс. км</span>
+                  <span class="progress-current">Вы: ~87 000 км</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-zone" style="left: 30%; width: 30%;"></div>
+                  <div class="progress-marker" style="left: 43%;"></div>
+                </div>
+              </div>
+              
+              <div class="issue-cta">
+                <button class="btn btn-primary">Подробнее</button>
+                <button class="btn btn-secondary">📍 Найти сервис</button>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- VIN Section -->
+  <div class="vin-section" id="vin-section">
+    <h3 class="vin-title-big">Уточнить данные по VIN</h3>
+    <p class="vin-desc">Введите VIN-номер, чтобы получить информацию именно для вашего автомобиля:</p>
+    <div class="vin-benefits">
+      <div class="vin-benefit"><span class="vin-check">✓</span> Проверить отзывные кампании по вашему VIN</div>
+      <div class="vin-benefit"><span class="vin-check">✓</span> Точный подбор запчастей под вашу комплектацию</div>
+      <div class="vin-benefit"><span class="vin-check">✓</span> Скачать шаблон претензии (если применимо)</div>
+      <div class="vin-benefit"><span class="vin-check">✓</span> Узнать ваши права по ЗоЗПП</div>
+    </div>
+    <div class="vin-input-section">
+      <input type="text" class="vin-input-field" id="vin-input" placeholder="Например: WAUZZZ8X1DA012345" maxlength="17">
+      <button class="vin-check-button" onclick="handleVinCheck()">Проверить</button>
+    </div>
+    <p class="vin-note">Это необязательно — приложение работает и без VIN. Но с ним информация будет точнее.</p>
+    <button class="vin-skip" onclick="hideVinSection()">Пропустить</button>
+  </div>
+  
+  <!-- VIN Modal -->
+  <div class="modal-overlay" id="vin-modal">
+    <div class="modal-content">
+      <div class="modal-handle"></div>
+      <div class="modal-success-icon">✅</div>
+      <h3 class="modal-title">VIN распознан</h3>
+      
+      <div class="modal-car-info">
+        <div class="modal-car-row">
+          <span class="modal-label">Модель</span>
+          <span class="modal-value">Audi A1 Sportback</span>
+        </div>
+        <div class="modal-car-row">
+          <span class="modal-label">Дата производства</span>
+          <span class="modal-value">Март 2013</span>
+        </div>
+        <div class="modal-car-row" style="border-bottom: none;">
+          <span class="modal-label">Страна сборки</span>
+          <span class="modal-value">Бельгия 🇧🇪</span>
+        </div>
+      </div>
+      
+      <div class="modal-divider"></div>
+      
+      <div class="modal-question">
+        <h4 class="modal-question-title">Как автомобиль попал в Россию?</h4>
+        <div class="origin-options">
+          <div class="origin-option" onclick="selectOrigin('official')">
+            <div class="origin-icon">🏢</div>
+            <div>
+              <strong class="origin-text-strong">Официально продан в России</strong>
+              <span class="origin-text-span">Первый владелец купил у официального дилера</span>
+            </div>
+          </div>
+          <div class="origin-option" onclick="selectOrigin('imported')">
+            <div class="origin-icon">✈️</div>
+            <div>
+              <strong class="origin-text-strong">Ввезён из-за рубежа</strong>
+              <span class="origin-text-span">Европа, США, Корея, ОАЭ и др.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tip-box" id="tip-box">
+        <h4 class="tip-box-title">💡 Как узнать?</h4>
+        <ul class="tip-box-list">
+          <li class="tip-box-item">ПТС: посмотрите графу «Страна вывоза» или первого собственника</li>
+          <li class="tip-box-item">Если первый владелец — юрлицо типа «Ауди Центр...» — скорее всего официальный</li>
+          <li class="tip-box-item">Если физлицо или «ИП Иванов» — вероятно привезён</li>
+        </ul>
+      </div>
+      
+      <button class="modal-skip" id="modal-skip-btn" onclick="handleDontKnow()">Не знаю / Пропустить</button>
+    </div>
+  </div>
+  
+  <!-- Personalized Results: Official -->
+  <div class="personalized-section" id="results-official">
+    <div class="result-card">
+      <div class="result-header warning">
+        <span class="result-icon">⚠️</span>
+        <h4 class="result-title">Ваш автомобиль в зоне риска</h4>
+      </div>
+      <div class="result-body">
+        <p class="result-text">Дата выпуска: <strong>март 2013</strong> — до модернизации натяжителя цепи ГРМ (2012+, но не все партии).</p>
+        <p class="result-text">Техбюллетень VAG по цепи ГРМ может быть применим к вашему VIN. Уточните у дилера.</p>
+      </div>
+    </div>
+    
+    <div class="result-card">
+      <div class="result-header info">
+        <span class="result-icon">⚖️</span>
+        <h4 class="result-title">Ваши права</h4>
+      </div>
+      <div class="result-body">
+        <p class="result-text">Автомобиль куплен у официального дилера — вы можете:</p>
+        <div class="rights-list">
+          <div class="rights-item">
+            <span class="rights-num">1</span>
+            <p class="rights-item-text">Требовать бесплатный ремонт по техбюллетеню (даже после окончания гарантии)</p>
+          </div>
+          <div class="rights-item">
+            <span class="rights-num">2</span>
+            <p class="rights-item-text">При отказе — претензия по ЗоЗПП ст. 18, 19 (существенный недостаток)</p>
+          </div>
+        </div>
+        <button class="result-btn">📄 Скачать шаблон претензии</button>
+        <button class="result-btn-secondary">📖 Подробнее о ваших правах</button>
+      </div>
+    </div>
+    
+    <div class="result-card">
+      <div class="result-header success">
+        <span class="result-icon">🔩</span>
+        <h4 class="result-title">Запчасти под ваш VIN</h4>
+      </div>
+      <div class="result-body">
+        <p class="result-text">Артикулы подобраны точно под вашу комплектацию:</p>
+        <div class="part-vin-item">
+          <span class="part-name">Комплект ГРМ (цепь + натяжитель)</span>
+          <span class="part-number">03C198229B</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Personalized Results: Imported -->
+  <div class="personalized-section" id="results-imported">
+    <div class="result-card">
+      <div class="result-header neutral">
+        <span class="result-icon">🌍</span>
+        <h4 class="result-title">Импортный автомобиль</h4>
+      </div>
+      <div class="result-body">
+        <p class="result-text">Автомобили, ввезённые из-за рубежа, <strong>не участвуют</strong> в российских отзывных кампаниях.</p>
+        <p class="result-text">Но вы можете проверить отзывные в стране происхождения:</p>
+        <div class="import-links">
+          <a href="#" class="import-link">🇩🇪 Проверить в Германии (KBA)</a>
+          <a href="#" class="import-link">🇺🇸 Проверить в США (NHTSA)</a>
+          <a href="#" class="import-link">🇪🇺 Проверить в Европе (RAPEX)</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="result-card">
+      <div class="result-header success">
+        <span class="result-icon">🔩</span>
+        <h4 class="result-title">Запчасти под ваш VIN</h4>
+      </div>
+      <div class="result-body">
+        <p class="result-text">Артикулы подобраны точно под вашу комплектацию:</p>
+        <div class="part-vin-item">
+          <span class="part-name">Комплект ГРМ (цепь + натяжитель)</span>
+          <span class="part-number">03C198229B</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button class="nav-item" onclick="location.href='audi-a1-dashboard.html'">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Главная</span>
+    </button>
+    <button class="nav-item active">
+      <span class="nav-icon">⚠️</span>
+      <span class="nav-label">Болячки</span>
+    </button>
+    <button class="nav-item">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Журнал</span>
+    </button>
+    <button class="nav-item">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">Ассистент</span>
+    </button>
+  </div>
+  
+  <script>
+    let showTip = false;
+    
+    function toggleSection(button) {
+      const toggle = button.querySelector('.section-toggle');
+      const content = button.nextElementSibling;
+      
+      toggle.classList.toggle('open');
+      content.classList.toggle('open');
+    }
+    
+    function toggleIssue(issueId) {
+      const card = document.getElementById(issueId);
+      const toggle = card.querySelector('.issue-toggle');
+      const body = card.querySelector('.issue-body');
+      
+      card.classList.toggle('expanded');
+      toggle.classList.toggle('open');
+      body.classList.toggle('open');
+    }
+    
+    function handleVinCheck() {
+      const vinInput = document.getElementById('vin-input');
+      if (vinInput.value.length >= 10) {
+        document.getElementById('vin-modal').classList.add('show');
+      }
+    }
+    
+    function hideVinSection() {
+      document.getElementById('vin-section').classList.add('hidden');
+    }
+    
+    function selectOrigin(origin) {
+      document.getElementById('vin-modal').classList.remove('show');
+      document.getElementById('vin-section').classList.add('hidden');
+      
+      if (origin === 'official') {
+        document.getElementById('results-official').classList.add('show');
+      } else {
+        document.getElementById('results-imported').classList.add('show');
+      }
+    }
+    
+    function handleDontKnow() {
+      if (!showTip) {
+        document.getElementById('tip-box').classList.add('show');
+        document.getElementById('modal-skip-btn').textContent = 'Всё равно не знаю';
+        showTip = true;
+      } else {
+        selectOrigin('imported');
+      }
+    }
+    
+    // Close modal on overlay click
+    document.getElementById('vin-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('show');
+      }
+    });
+    
+    // VIN input formatting
+    document.getElementById('vin-input').addEventListener('input', function(e) {
+      this.value = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, '');
+    });
+  </script>
+</body>
+</html>

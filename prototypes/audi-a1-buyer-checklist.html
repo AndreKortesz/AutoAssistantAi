@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoAssistantAi — Чеклист покупателя Audi A1</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --background: #F7F8FA;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --primary: #1F4FD8;
+      --primary-light: rgba(31, 79, 216, 0.08);
+      --success: #2E9E6F;
+      --success-light: rgba(46, 158, 111, 0.08);
+      --success-border: rgba(46, 158, 111, 0.2);
+      --warning: #D97706;
+      --warning-light: rgba(217, 119, 6, 0.08);
+      --warning-border: rgba(217, 119, 6, 0.2);
+      --critical: #DC2626;
+      --critical-light: rgba(220, 38, 38, 0.08);
+      --critical-border: rgba(220, 38, 38, 0.2);
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-tertiary: #94A3B8;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      line-height: 1.5;
+      max-width: 420px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    
+    /* Header */
+    .header {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .back-button {
+      background: none;
+      border: none;
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .share-button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 24px 20px;
+      background: linear-gradient(135deg, var(--primary) 0%, #2563EB 100%);
+      color: white;
+    }
+    
+    .hero-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    
+    .hero-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    
+    .hero-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 16px;
+    }
+    
+    .hero-stats {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .hero-stat-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    .hero-stat-label {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    
+    /* Progress bar */
+    .progress-section {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .progress-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .progress-count {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--success);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    /* Intro */
+    .intro {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      margin: 12px;
+      background: var(--primary-light);
+      border-radius: 12px;
+    }
+    
+    .intro-icon {
+      font-size: 18px;
+    }
+    
+    .intro-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    /* Section */
+    .section {
+      margin: 0 12px 16px;
+    }
+    
+    .section-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--background);
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+    
+    .section-header.critical {
+      background: var(--critical-light);
+    }
+    
+    .section-header.warning {
+      background: var(--warning-light);
+    }
+    
+    .section-header.success {
+      background: var(--success-light);
+    }
+    
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .section-icon {
+      font-size: 18px;
+    }
+    
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .section-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .section-count {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 10px;
+      color: white;
+    }
+    
+    .section-count.critical {
+      background: var(--critical);
+    }
+    
+    .section-count.warning {
+      background: var(--warning);
+    }
+    
+    .section-count.success {
+      background: var(--success);
+    }
+    
+    .section-toggle {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s;
+    }
+    
+    .section-toggle.open {
+      transform: rotate(180deg);
+    }
+    
+    .section-content {
+      display: none;
+      padding: 12px;
+    }
+    
+    .section-content.open {
+      display: block;
+    }
+    
+    /* Check items */
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      background: var(--background);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .check-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .check-item.checked {
+      opacity: 0.6;
+    }
+    
+    .check-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: white;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    
+    .check-checkbox.checked {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    
+    .check-content {
+      flex: 1;
+    }
+    
+    .check-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .check-item.checked .check-title {
+      text-decoration: line-through;
+      color: var(--text-tertiary);
+    }
+    
+    .check-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    
+    .check-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .check-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    
+    .check-tag.critical {
+      background: var(--critical-light);
+      border-color: var(--critical-border);
+      color: var(--critical);
+    }
+    
+    .check-tag.warning {
+      background: var(--warning-light);
+      border-color: var(--warning-border);
+      color: var(--warning);
+    }
+    
+    /* Red flags */
+    .red-flags {
+      margin: 0 12px 16px;
+    }
+    
+    .red-flags-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--critical);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .red-flag-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px;
+      background: var(--critical-light);
+      border: 1px solid var(--critical-border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+    
+    .red-flag-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .red-flag-icon {
+      font-size: 18px;
+    }
+    
+    .red-flag-content {
+      flex: 1;
+    }
+    
+    .red-flag-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .red-flag-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    /* Reliability summary */
+    .reliability {
+      margin: 0 12px 16px;
+      padding: 16px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    
+    .reliability-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    
+    .reliability-icon {
+      font-size: 20px;
+    }
+    
+    .reliability-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .reliability-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .reliability-item {
+      padding: 12px;
+      background: var(--background);
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .reliability-engine {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .reliability-score {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    
+    .reliability-score.good {
+      color: var(--success);
+    }
+    
+    .reliability-score.medium {
+      color: var(--warning);
+    }
+    
+    .reliability-hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Cost summary */
+    .cost-summary {
+      margin: 0 12px 16px;
+      padding: 16px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    
+    .cost-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    
+    .cost-icon {
+      font-size: 20px;
+    }
+    
+    .cost-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .cost-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .cost-item:last-child {
+      border-bottom: none;
+    }
+    
+    .cost-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .cost-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .cost-total {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 12px;
+      margin-top: 4px;
+      border-top: 2px solid var(--border);
+    }
+    
+    .cost-total-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .cost-total-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--critical);
+    }
+    
+    /* CTA */
+    .cta-section {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+    }
+    
+    .cta-button {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    
+    .cta-secondary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <button class="back-button">← Назад</button>
+    <button class="share-button">📤</button>
+  </div>
+  
+  <!-- Hero -->
+  <div class="hero">
+    <span class="hero-badge">🔍 Чеклист покупателя</span>
+    <h1 class="hero-title">Audi A1 I (8X)<br>2010–2015</h1>
+    <p class="hero-subtitle">Что проверять при покупке подержанного автомобиля</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-value">12</span>
+        <span class="hero-stat-label">пунктов проверки</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">4</span>
+        <span class="hero-stat-label">критичных</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value">~2ч</span>
+        <span class="hero-stat-label">на осмотр</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Progress -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-title">Прогресс осмотра</span>
+      <span class="progress-count" id="progress-count">0 из 12</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width: 0%;"></div>
+    </div>
+  </div>
+  
+  <!-- Intro -->
+  <div class="intro">
+    <span class="intro-icon">💡</span>
+    <span class="intro-text">Этот чеклист составлен на основе известных проблем Audi A1 I. Отмечайте пункты по мере проверки — прогресс сохранится.</span>
+  </div>
+  
+  <!-- Critical checks -->
+  <div class="section">
+    <div class="section-card">
+      <button class="section-header critical" onclick="toggleSection(this)">
+        <div class="section-header-left">
+          <span class="section-icon">🔴</span>
+          <span class="section-title">Критичные проверки</span>
+        </div>
+        <div class="section-header-right">
+          <span class="section-count critical">4</span>
+          <span class="section-toggle open">▼</span>
+        </div>
+      </button>
+      <div class="section-content open">
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Цепь ГРМ (1.2/1.4 TFSI)</div>
+            <div class="check-description">Запустить двигатель на холодную. Если слышен треск/лязг более 3 секунд — цепь растянута. Проверить VCDS: коррекция фаз >6° = замена.</div>
+            <div class="check-meta">
+              <span class="check-tag critical">💰 80 000 ₽ если плохо</span>
+              <span class="check-tag">60–120 тыс. км</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Сцепление DSG DQ200</div>
+            <div class="check-description">Тест-драйв: рывки при трогании, пробуксовка на 1–2 передаче? VCDS: износ сцепления >50% или ошибки P0841/P0730 = проблема.</div>
+            <div class="check-meta">
+              <span class="check-tag critical">💰 120 000 ₽ если плохо</span>
+              <span class="check-tag">60–120 тыс. км</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Расход масла (1.4 TFSI)</div>
+            <div class="check-description">Спросить о доливе масла между ТО. Более 1л на 1000 км — масложор. Дым на перегазовке — подтверждение.</div>
+            <div class="check-meta">
+              <span class="check-tag critical">💰 150 000 ₽ если плохо</span>
+              <span class="check-tag">70–150 тыс. км</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Пробег (подлинность)</div>
+            <div class="check-description">VCDS: сравнить пробег в разных блоках (двигатель, коробка, приборка). Разброс >5% = скрутка. Износ руля/педалей должен соответствовать.</div>
+            <div class="check-meta">
+              <span class="check-tag critical">🚨 Отказ от покупки</span>
+              <span class="check-tag">VCDS обязателен</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <!-- Important checks -->
+  <div class="section">
+    <div class="section-card">
+      <button class="section-header warning" onclick="toggleSection(this)">
+        <div class="section-header-left">
+          <span class="section-icon">🟠</span>
+          <span class="section-title">Важно проверить</span>
+        </div>
+        <div class="section-header-right">
+          <span class="section-count warning">4</span>
+          <span class="section-toggle">▼</span>
+        </div>
+      </button>
+      <div class="section-content">
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Турбина (1.2/1.4 TFSI)</div>
+            <div class="check-description">Проверить люфт крыльчатки, масло на впуске, свист при нагрузке. Осевой люфт = замена турбины.</div>
+            <div class="check-meta">
+              <span class="check-tag warning">💰 60 000 ₽ если плохо</span>
+              <span class="check-tag">100–150 тыс. км</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">EGR и DPF (1.6 TDI)</div>
+            <div class="check-description">VCDS: давление DPF >25 мбар = забит. Чёрный дым, потеря тяги = проблемы с EGR. Городская эксплуатация усугубляет.</div>
+            <div class="check-meta">
+              <span class="check-tag warning">💰 30–120 тыс. ₽</span>
+              <span class="check-tag">40–100 тыс. км</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Подвеска (сайлентблоки)</div>
+            <div class="check-description">На подъёмнике: люфт в рычагах, трещины на резине. Стуки на ямах — признак износа.</div>
+            <div class="check-meta">
+              <span class="check-tag">💰 20–40 тыс. ₽</span>
+              <span class="check-tag">50–80 тыс. км</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Тормозная система</div>
+            <div class="check-description">Измерить толщину дисков (мин. 20 мм). Вибрация педали = деформация. Колодки: мин. 3 мм.</div>
+            <div class="check-meta">
+              <span class="check-tag">💰 20–35 тыс. ₽</span>
+              <span class="check-tag">60–100 тыс. км</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <!-- Standard checks -->
+  <div class="section">
+    <div class="section-card">
+      <button class="section-header success" onclick="toggleSection(this)">
+        <div class="section-header-left">
+          <span class="section-icon">🟢</span>
+          <span class="section-title">Стандартные проверки</span>
+        </div>
+        <div class="section-header-right">
+          <span class="section-count success">4</span>
+          <span class="section-toggle">▼</span>
+        </div>
+      </button>
+      <div class="section-content">
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Кузов и ЛКП</div>
+            <div class="check-description">Толщиномер: заводское покрытие 90–130 мкм. Проверить арки, пороги, капот на коррозию (тонкое ЛКП — особенность модели).</div>
+            <div class="check-meta">
+              <span class="check-tag">Толщиномер</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Электрика и скрипы</div>
+            <div class="check-description">Проверить работу всех кнопок, приборки, мультимедиа. Скрипы торпедо — типичная мелочь, не критично.</div>
+            <div class="check-meta">
+              <span class="check-tag">Комфорт</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Сервисная история</div>
+            <div class="check-description">Запросить чеки/заказ-наряды. Масло каждые 10к, масло DSG каждые 60к — хороший знак. Пробелы — повод насторожиться.</div>
+            <div class="check-meta">
+              <span class="check-tag">Документы</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="check-checkbox"></div>
+          <div class="check-content">
+            <div class="check-title">Год выпуска и двигатель</div>
+            <div class="check-description">Предпочтительнее: 2012+ (улучшенная цепь), 1.6 TDI для трассы, 1.4 TFSI для города с хорошим обслуживанием.</div>
+            <div class="check-meta">
+              <span class="check-tag">Рекомендация</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <!-- Red flags -->
+  <div class="red-flags">
+    <div class="red-flags-title">🚩 Красные флаги — отказ от покупки</div>
+    
+    <div class="red-flag-item">
+      <span class="red-flag-icon">⛔</span>
+      <div class="red-flag-content">
+        <div class="red-flag-title">Скрученный пробег</div>
+        <div class="red-flag-description">Разный пробег в блоках VCDS, новые педали/руль при «малом» пробеге, отсутствие сервисной истории.</div>
+      </div>
+    </div>
+    
+    <div class="red-flag-item">
+      <span class="red-flag-icon">⛔</span>
+      <div class="red-flag-content">
+        <div class="red-flag-title">Густое масло от стука</div>
+        <div class="red-flag-description">Если в двигателе 10W-60 вместо 5W-30 — скорее всего скрывают стук гидрокомпенсаторов или цепи.</div>
+      </div>
+    </div>
+    
+    <div class="red-flag-item">
+      <span class="red-flag-icon">⛔</span>
+      <div class="red-flag-content">
+        <div class="red-flag-title">Отключённые ошибки DSG</div>
+        <div class="red-flag-description">Проверять ВСЕ блоки в VCDS, не только двигатель. Ошибки могут быть стёрты, но не устранены.</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reliability -->
+  <div class="reliability">
+    <div class="reliability-header">
+      <span class="reliability-icon">📊</span>
+      <span class="reliability-title">Надёжность по двигателям</span>
+    </div>
+    <div class="reliability-grid">
+      <div class="reliability-item">
+        <div class="reliability-engine">1.2 TFSI</div>
+        <div class="reliability-score medium">6/10</div>
+        <div class="reliability-hint">Цепь — главный риск</div>
+      </div>
+      <div class="reliability-item">
+        <div class="reliability-engine">1.4 TFSI</div>
+        <div class="reliability-score medium">6.5/10</div>
+        <div class="reliability-hint">Цепь + масложор</div>
+      </div>
+      <div class="reliability-item">
+        <div class="reliability-engine">1.6 TDI</div>
+        <div class="reliability-score good">7.5/10</div>
+        <div class="reliability-hint">EGR/DPF в городе</div>
+      </div>
+      <div class="reliability-item">
+        <div class="reliability-engine">2012+</div>
+        <div class="reliability-score good">+0.5</div>
+        <div class="reliability-hint">Улучшенная цепь</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Cost summary -->
+  <div class="cost-summary">
+    <div class="cost-header">
+      <span class="cost-icon">💰</span>
+      <span class="cost-title">Возможные затраты после покупки</span>
+    </div>
+    
+    <div class="cost-item">
+      <span class="cost-label">Цепь ГРМ (если изношена)</span>
+      <span class="cost-value">60–120 тыс. ₽</span>
+    </div>
+    <div class="cost-item">
+      <span class="cost-label">Сцепление DSG (если изношено)</span>
+      <span class="cost-value">90–170 тыс. ₽</span>
+    </div>
+    <div class="cost-item">
+      <span class="cost-label">Сайлентблоки подвески</span>
+      <span class="cost-value">20–40 тыс. ₽</span>
+    </div>
+    <div class="cost-item">
+      <span class="cost-label">Тормоза (диски + колодки)</span>
+      <span class="cost-value">20–35 тыс. ₽</span>
+    </div>
+    
+    <div class="cost-total">
+      <span class="cost-total-label">Худший сценарий</span>
+      <span class="cost-total-value">до 365 тыс. ₽</span>
+    </div>
+  </div>
+  
+  <!-- CTA -->
+  <div class="cta-section">
+    <button class="cta-button">📤 Поделиться чеклистом</button>
+    <button class="cta-secondary">📄 Скачать PDF</button>
+  </div>
+  
+  <script>
+    let checkedCount = 0;
+    const totalChecks = 12;
+    
+    function toggleSection(button) {
+      const toggle = button.querySelector('.section-toggle');
+      const content = button.nextElementSibling;
+      
+      toggle.classList.toggle('open');
+      content.classList.toggle('open');
+    }
+    
+    function toggleCheck(item) {
+      const checkbox = item.querySelector('.check-checkbox');
+      
+      item.classList.toggle('checked');
+      checkbox.classList.toggle('checked');
+      
+      if (checkbox.classList.contains('checked')) {
+        checkbox.innerHTML = '✓';
+        checkedCount++;
+      } else {
+        checkbox.innerHTML = '';
+        checkedCount--;
+      }
+      
+      updateProgress();
+    }
+    
+    function updateProgress() {
+      const percent = (checkedCount / totalChecks) * 100;
+      document.getElementById('progress-fill').style.width = percent + '%';
+      document.getElementById('progress-count').textContent = checkedCount + ' из ' + totalChecks;
+    }
+  </script>
+</body>
+</html>

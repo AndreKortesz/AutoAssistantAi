@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoAssistantAi — Растяжение цепи ГРМ 1.4 TFSI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --background: #F7F8FA;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --primary: #1F4FD8;
+      --primary-light: rgba(31, 79, 216, 0.08);
+      --success: #2E9E6F;
+      --success-light: rgba(46, 158, 111, 0.08);
+      --warning: #D97706;
+      --warning-light: rgba(217, 119, 6, 0.08);
+      --critical: #DC2626;
+      --critical-light: rgba(220, 38, 38, 0.08);
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-tertiary: #94A3B8;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      line-height: 1.5;
+      max-width: 420px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      padding: 16px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .back-button {
+      background: none;
+      border: none;
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .header-title {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .more-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 20px;
+      background: var(--card-bg);
+      margin-bottom: 8px;
+    }
+    
+    .hero-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .severity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .severity-critical {
+      color: var(--critical);
+      background: var(--critical-light);
+    }
+    
+    .severity-high {
+      color: var(--warning);
+      background: var(--warning-light);
+    }
+    
+    .severity-medium {
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    
+    .severity-low {
+      color: var(--success);
+      background: var(--success-light);
+    }
+
+    .system-tag {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    
+    .car-info {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    
+    /* Статистика — 2 колонки */
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .stat-card {
+      padding: 14px;
+      background: var(--background);
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Распространённость */
+    .frequency-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    
+    .frequency-hint {
+      display: block;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+    
+    /* Recommendation Box */
+    .recommendation-box {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      margin-bottom: 8px;
+    }
+    
+    .recommendation-icon {
+      font-size: 20px;
+    }
+    
+    .recommendation-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .recommendation-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+    
+    .recommendation-conditions {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      padding-left: 16px;
+    }
+    
+    .recommendation-conditions li {
+      margin-bottom: 2px;
+    }
+    
+    /* Consequences Box */
+    .consequences-box {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--critical-light);
+      border-left: 4px solid var(--critical);
+      margin-bottom: 8px;
+    }
+    
+    .consequences-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--critical);
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .consequences-text {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    /* Section */
+    .section {
+      background: var(--card-bg);
+      margin-bottom: 8px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 16px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+    }
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .chevron {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s ease;
+    }
+    
+    .chevron.open {
+      transform: rotate(180deg);
+    }
+    
+    .section-content {
+      display: none;
+      padding: 0 20px 20px;
+    }
+    
+    .section-content.open {
+      display: block;
+    }
+    
+    /* Symptoms */
+    .symptom-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .symptom-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 10px;
+    }
+    
+    .symptom-icon {
+      font-size: 18px;
+    }
+    
+    .symptom-text {
+      flex: 1;
+    }
+    
+    .symptom-main {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: block;
+      margin-bottom: 2px;
+    }
+    
+    .symptom-detail {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    /* Progress bar */
+    .mileage-progress {
+      margin-top: 16px;
+    }
+    
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+    
+    .progress-bar {
+      position: relative;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: visible;
+    }
+    
+    .progress-zone {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: var(--critical-light);
+      border-radius: 4px;
+    }
+    
+    .progress-marker {
+      position: absolute;
+      top: -4px;
+      width: 4px;
+      height: 16px;
+      background: var(--critical);
+      border-radius: 2px;
+      transform: translateX(-50%);
+    }
+    
+    .progress-marker-label {
+      position: absolute;
+      top: 18px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--critical);
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    
+    /* Diagnosis */
+    .diagnosis-block {
+      margin-bottom: 16px;
+    }
+    
+    .diagnosis-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .diagnosis-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .diagnosis-icon {
+      font-size: 16px;
+    }
+    
+    .diagnosis-text {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    .diagnosis-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    /* OBD codes */
+    .obd-codes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .obd-code {
+      display: flex;
+      flex-direction: column;
+      padding: 10px 14px;
+      background: var(--background);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .code-value {
+      font-family: 'SF Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    .code-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    
+    /* Cause */
+    .cause-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    
+    .not-cause-box {
+      padding: 14px;
+      background: var(--background);
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+    }
+    
+    .not-cause-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 10px;
+    }
+    
+    .chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    
+    .chip-error {
+      background: var(--critical-light);
+      color: var(--critical);
+    }
+    
+    .chip-success {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    
+    .chip-warning {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    
+    .chip-default {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    
+    /* Solution tabs */
+    .solution-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .solution-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 12px 8px;
+      background: var(--background);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+    
+    .solution-tab.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    .solution-tab-hint {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-tertiary);
+    }
+    
+    .solution-content {
+      display: none;
+    }
+    
+    .solution-content.active {
+      display: block;
+    }
+    
+    .solution-card {
+      padding: 16px;
+      background: var(--background);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .solution-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    
+    .solution-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .solution-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    
+    .solution-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .solution-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .tools-list {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .tools-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    
+    .tools-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .tool-chip {
+      display: inline-block;
+      padding: 6px 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+    
+    .diy-warning {
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      background: var(--warning-light);
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+    
+    .diy-warning-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+    
+    /* Checklist */
+    .checklist {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    
+    .checklist-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    
+    .checklist-item:last-child {
+      border-bottom: none;
+    }
+    
+    .checklist-checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+      transition: all 0.2s ease;
+    }
+    
+    .checklist-checkbox.checked {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    
+    .checklist-label {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    .checklist-label.checked {
+      text-decoration: line-through;
+      color: var(--text-tertiary);
+    }
+    
+    /* Parts */
+    .part-card {
+      padding: 16px;
+      background: var(--background);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .part-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .part-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .part-revision {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 8px;
+      background: var(--success-light);
+      color: var(--success);
+      border-radius: 4px;
+    }
+    
+    .part-number {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .part-number-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .part-number-value {
+      font-family: 'SF Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .copy-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px;
+    }
+    
+    .part-manufacturer {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .part-price {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    
+    .price-range {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .price-usd {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    /* CTA buttons */
+    .cta-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    
+    .cta-button {
+      flex: 1;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    
+    .cta-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .cta-secondary {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    
+    /* Reviews */
+    .review-card {
+      padding: 14px;
+      background: var(--background);
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+    
+    .review-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .review-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .review-status {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--success);
+    }
+    
+    .review-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+    
+    /* Related issues */
+    .fix-together-hint {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    
+    .related-issue {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    
+    .related-title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .related-arrow {
+      color: var(--text-tertiary);
+    }
+    
+    /* Class Action & Recalls */
+    .legal-block {
+      margin-bottom: 16px;
+    }
+    
+    .legal-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .legal-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .legal-flag {
+      font-size: 18px;
+    }
+    
+    .legal-info {
+      flex: 1;
+    }
+    
+    .legal-country {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .legal-result {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .legal-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    
+    .legal-badge-won {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    
+    .legal-badge-pending {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    
+    /* Journal button */
+    .journal-button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 16px;
+      background: var(--card-bg);
+      border: 1.5px dashed var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--primary);
+      cursor: pointer;
+    }
+    
+    /* Footer */
+    .footer-sources {
+      padding: 16px 20px;
+      text-align: center;
+    }
+    
+    .footer-sources-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+    
+    .footer-sources-text {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+    
+    .bottom-space {
+      height: 100px;
+    }
+
+    /* Year note */
+    .year-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--success-light);
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+    
+    .year-note-icon {
+      font-size: 16px;
+    }
+    
+    .year-note-text {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    
+    /* Prevention */
+    .prevention-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .prevention-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: var(--background);
+      border-radius: 10px;
+    }
+    
+    .prevention-icon {
+      font-size: 16px;
+    }
+    
+    .prevention-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <button class="back-button">← Болячки</button>
+    <span class="header-title">Audi A1</span>
+    <button class="more-button">⋯</button>
+  </div>
+  
+  <!-- Hero Section -->
+  <div class="hero">
+    <div class="hero-top">
+      <span class="severity-badge severity-critical">🔴 Требует внимания</span>
+      <span class="system-tag">Двигатель → ГРМ</span>
+    </div>
+    
+    <h1 class="title">Растяжение цепи ГРМ</h1>
+    <p class="car-info">1.4 TFSI (CAXA) • 122 л.с.</p>
+    
+    <div class="stats">
+      <div class="stat-card">
+        <span class="stat-value">60–120 тыс.</span>
+        <span class="stat-label">Пробег проявления, км</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">
+          <span class="frequency-badge">~30%</span>
+        </span>
+        <span class="stat-label">Распространённость</span>
+        <span class="frequency-hint">У каждого третьего владельца</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recommendation -->
+  <div class="recommendation-box">
+    <span class="recommendation-icon">💡</span>
+    <div>
+      <span class="recommendation-title">Рекомендация</span>
+      <span class="recommendation-text">Рекомендуем не откладывать диагностику. При подтверждении — лучше добраться до сервиса на эвакуаторе, чтобы избежать дорогого ремонта.</span>
+    </div>
+  </div>
+  
+  <!-- Consequences -->
+  <div class="consequences-box">
+    <span class="recommendation-icon">⚠️</span>
+    <div>
+      <span class="consequences-title">Что может случиться</span>
+      <span class="consequences-text">При обрыве или перескоке цепи — встреча поршней с клапанами. Ремонт ГБЦ: 80–150 тыс. ₽. Замена двигателя: от 200 тыс. ₽.</span>
+    </div>
+  </div>
+  
+  <!-- Symptoms -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🔍 Симптомы</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <div class="symptom-list">
+        <div class="symptom-item">
+          <span class="symptom-icon">🔊</span>
+          <div class="symptom-text">
+            <span class="symptom-main">Треск или лязг при холодном пуске</span>
+            <span class="symptom-detail">Металлический звук в первые 3–10 секунд после запуска. Пропадает после прогрева.</span>
+          </div>
+        </div>
+        <div class="symptom-item">
+          <span class="symptom-icon">⚡</span>
+          <div class="symptom-text">
+            <span class="symptom-main">Check Engine на приборке</span>
+            <span class="symptom-detail">Загорается из-за рассинхронизации фаз газораспределения.</span>
+          </div>
+        </div>
+        <div class="symptom-item">
+          <span class="symptom-icon">📉</span>
+          <div class="symptom-text">
+            <span class="symptom-main">Нестабильная работа двигателя</span>
+            <span class="symptom-detail">Плавающие обороты, потеря мощности, иногда — вибрация.</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Mileage progress -->
+      <div class="mileage-progress">
+        <div class="progress-label">
+          <span>0 км</span>
+          <span>Зона риска</span>
+          <span>200 000 км</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-zone" style="left: 30%; width: 30%;"></div>
+          <div class="progress-marker" style="left: 43%;">
+            <span class="progress-marker-label">~87 000 км</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Diagnosis -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🩺 Диагностика</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <div class="diagnosis-block">
+        <div class="diagnosis-title">Как проверить</div>
+        <div class="diagnosis-item">
+          <span class="diagnosis-icon">💻</span>
+          <div>
+            <div class="diagnosis-text">VCDS / Вася-диагност: коррекция фаз ГРМ</div>
+            <div class="diagnosis-hint">Если отклонение >6° — цепь растянута, требуется замена</div>
+          </div>
+        </div>
+        <div class="diagnosis-item">
+          <span class="diagnosis-icon">👂</span>
+          <div>
+            <div class="diagnosis-text">На слух: треск при холодном запуске</div>
+            <div class="diagnosis-hint">Если звук длится дольше 3 секунд — признак износа</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="diagnosis-block">
+        <div class="diagnosis-title">OBD-коды</div>
+        <div class="obd-codes">
+          <div class="obd-code">
+            <span class="code-value">P0016</span>
+            <span class="code-desc">Рассинхронизация распредвала / коленвала (банк 1)</span>
+          </div>
+          <div class="obd-code">
+            <span class="code-value">P0008</span>
+            <span class="code-desc">Ошибка положения системы ГРМ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Cause -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🎯 Причина</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <p class="cause-text">Цепь ГРМ на моторах 1.4 TFSI (CAXA) имеет конструктивную особенность — натяжитель ранних версий не обеспечивает достаточного давления масла на холодную, что приводит к ускоренному растяжению цепи.</p>
+      
+      <p class="cause-text">Хорошая новость: с 2012 года VAG модернизировал натяжитель. На автомобилях 2012+ проблема встречается реже.</p>
+      
+      <div class="year-note">
+        <span class="year-note-icon">✅</span>
+        <span class="year-note-text">Если ваш A1 выпущен после 2012 года — риск ниже, но проверять всё равно стоит.</span>
+      </div>
+      
+      <div class="not-cause-box" style="margin-top: 16px;">
+        <span class="not-cause-title">❌ Часто путают с:</span>
+        <div>
+          <span class="chip chip-error">Гидрокомпенсаторы</span>
+          <span class="chip chip-error">Фазовращатель</span>
+          <span class="chip chip-error">Ремень навесных агрегатов</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Solution -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">✅ Решение</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      
+      <!-- Tabs -->
+      <div class="solution-tabs">
+        <button class="solution-tab active" onclick="switchTab('service')">
+          🔧 В сервисе
+          <span class="solution-tab-hint">рекомендуем</span>
+        </button>
+        <button class="solution-tab" onclick="switchTab('diy')">
+          🛠 Своими руками
+          <span class="solution-tab-hint">для опытных</span>
+        </button>
+      </div>
+      
+      <!-- Service tab -->
+      <div id="tab-service" class="solution-content active">
+        <div class="solution-card">
+          <div class="solution-header">
+            <span class="solution-title">Замена комплекта ГРМ</span>
+          </div>
+          <p class="solution-desc">Мастер заменит цепь, натяжитель, успокоители и помпу. Работа занимает 6–8 часов, так как требуется частичная разборка передней части двигателя.</p>
+          
+          <div class="solution-meta">
+            <div class="solution-meta-item">
+              <span>⏱</span>
+              <span>6–8 часов работы</span>
+            </div>
+            <div class="solution-meta-item">
+              <span>💰</span>
+              <span>40 000 – 80 000 ₽ за работу</span>
+            </div>
+            <div class="solution-meta-item">
+              <span>📍</span>
+              <span>Специализированный VAG-сервис</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- DIY tab -->
+      <div id="tab-diy" class="solution-content">
+        <div class="solution-card">
+          <div class="solution-header">
+            <span class="solution-title">Самостоятельная замена</span>
+            <span class="chip chip-warning">⚠️ Сложно</span>
+          </div>
+          <p class="solution-desc">Замена возможна без снятия двигателя, но требует опыта, специнструмента и много времени. Ошибка в установке фаз = капитальный ремонт.</p>
+          
+          <div class="solution-meta">
+            <div class="solution-meta-item">
+              <span>⏱</span>
+              <span>10–14 часов</span>
+            </div>
+            <div class="solution-meta-item">
+              <span>📊</span>
+              <span>Сложность: 5 из 5</span>
+            </div>
+          </div>
+          
+          <div class="tools-list">
+            <div class="tools-title">🔧 Понадобятся:</div>
+            <div class="tools-items">
+              <span class="tool-chip">Фиксатор распредвалов VAG T10252</span>
+              <span class="tool-chip">Фиксатор коленвала T10340</span>
+              <span class="tool-chip">Динамометрический ключ</span>
+              <span class="tool-chip">Набор Torx</span>
+              <span class="tool-chip">Съёмник шкива</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="diy-warning">
+          <span>⚠️</span>
+          <span class="diy-warning-text">Если нет опыта работы с ГРМ — настоятельно рекомендуем обратиться в сервис. Стоимость ошибки: 150–200 тыс. ₽ за ремонт двигателя.</span>
+        </div>
+      </div>
+      
+      <!-- Checklist -->
+      <div class="checklist">
+        <div class="checklist-title">📋 Ваш прогресс</div>
+        <div class="checklist-item" onclick="toggleCheck(this)">
+          <div class="checklist-checkbox"></div>
+          <span class="checklist-label">Проверить диагностикой (VCDS)</span>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this)">
+          <div class="checklist-checkbox"></div>
+          <span class="checklist-label">Купить комплект ГРМ</span>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this)">
+          <div class="checklist-checkbox"></div>
+          <span class="checklist-label">Записаться в сервис</span>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this)">
+          <div class="checklist-checkbox"></div>
+          <span class="checklist-label">Заменить — ошибок нет</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Parts -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🔩 Запчасти</span>
+      <span class="chevron open">▼</span>
+    </button>
+    <div class="section-content open">
+      <div class="part-card">
+        <div class="part-header">
+          <span class="part-name">Комплект ГРМ (цепь + натяжитель + успокоители)</span>
+        </div>
+        <div class="part-number">
+          <span class="part-number-label">Артикул:</span>
+          <span class="part-number-value">03C198229B</span>
+          <button class="copy-button" onclick="copyToClipboard('03C198229B')">📋</button>
+        </div>
+        <div class="part-manufacturer">INA / Febi (OEM-качество)</div>
+        <div class="part-price">
+          <span class="price-range">20 000 – 40 000 ₽</span>
+        </div>
+      </div>
+      
+      <div class="part-card">
+        <div class="part-header">
+          <span class="part-name">Водяной насос (помпа)</span>
+          <span class="part-revision">менять заодно</span>
+        </div>
+        <div class="part-number">
+          <span class="part-number-label">Артикул:</span>
+          <span class="part-number-value">03C121008B</span>
+          <button class="copy-button" onclick="copyToClipboard('03C121008B')">📋</button>
+        </div>
+        <div class="part-manufacturer">Graf / SKF</div>
+        <div class="part-price">
+          <span class="price-range">3 000 – 6 000 ₽</span>
+        </div>
+      </div>
+      
+      <!-- Dual CTA -->
+      <div class="cta-buttons">
+        <button class="cta-button cta-primary">🛒 Найти запчасти</button>
+        <button class="cta-button cta-secondary">📍 Найти сервис</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Prevention -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🛡️ Профилактика</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-content">
+      <div class="prevention-list">
+        <div class="prevention-item">
+          <span class="prevention-icon">🛢️</span>
+          <span class="prevention-text">Масло каждые 7–10 тыс. км (не 15 тыс. как в регламенте)</span>
+        </div>
+        <div class="prevention-item">
+          <span class="prevention-icon">💻</span>
+          <span class="prevention-text">VCDS-проверка коррекции фаз каждые 30 тыс. км</span>
+        </div>
+        <div class="prevention-item">
+          <span class="prevention-icon">🔄</span>
+          <span class="prevention-text">Превентивная замена на 80 000 км (до появления симптомов)</span>
+        </div>
+        <div class="prevention-item">
+          <span class="prevention-icon">🌡️</span>
+          <span class="prevention-text">Прогрев перед поездкой — не крутить сразу на холодную</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Class Actions & Recalls -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">⚖️ Юридическая информация</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-content">
+      <div class="legal-block">
+        <div class="legal-title">📋 Отзывные кампании</div>
+        <div class="legal-item">
+          <span class="legal-flag">🇩🇪</span>
+          <div class="legal-info">
+            <div class="legal-country">Германия — TSB (техбюллетень)</div>
+            <div class="legal-result">Рекомендация дилерам проверять цепь на ТО</div>
+          </div>
+          <span class="legal-badge legal-badge-pending">Активен</span>
+        </div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">В России официальных отзывных по цепи ГРМ не проводилось.</p>
+      </div>
+      
+      <div class="legal-block">
+        <div class="legal-title">⚖️ Коллективные иски</div>
+        <div class="legal-item">
+          <span class="legal-flag">🇺🇸</span>
+          <div class="legal-info">
+            <div class="legal-country">США — VW/Audi Timing Chain Lawsuit</div>
+            <div class="legal-result">Продление гарантии до 100k миль, компенсация до $1,200</div>
+          </div>
+          <span class="legal-badge legal-badge-won">Выигран</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reviews -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">💬 Отзывы владельцев</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-content">
+      <div class="review-card">
+        <div class="review-header">
+          <span class="review-meta">A1 2011 • 95 000 км</span>
+          <span class="review-status">✓ Проблема решена</span>
+        </div>
+        <p class="review-text">Треск появился на 85 тысячах. Сначала думал — гидрики. Оказалось — цепь растянулась на 8°. Поменял комплектом с помпой за 65 тысяч, машина как новая.</p>
+      </div>
+      
+      <div class="review-card">
+        <div class="review-header">
+          <span class="review-meta">A1 2013 • 110 000 км</span>
+          <span class="review-status">✓ Профилактика</span>
+        </div>
+        <p class="review-text">Поменял превентивно на 80к, хотя звуков не было. Старая цепь визуально была в норме, но на VCDS уже 5° отклонения. Не жалею — теперь езжу спокойно.</p>
+      </div>
+      
+      <div class="review-card">
+        <div class="review-header">
+          <span class="review-meta">A1 2010 • 72 000 км</span>
+          <span class="review-status">⚠️ Урок</span>
+        </div>
+        <p class="review-text">Игнорировал треск полгода — «само пройдёт». Не прошло. Цепь перескочила, загнуло 2 клапана. Ремонт ГБЦ + цепь = 120 тысяч. Не повторяйте мою ошибку.</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Related issues -->
+  <div class="section">
+    <button class="section-header" onclick="toggleSection(this)">
+      <span class="section-title">🔗 Проверить заодно</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="section-content">
+      <p class="fix-together-hint">Эти узлы часто требуют внимания на том же пробеге:</p>
+      
+      <div class="related-issue">
+        <span class="severity-badge severity-high">🟠</span>
+        <span class="related-title">Клапан вентиляции картера (PCV)</span>
+        <span class="related-arrow">→</span>
+      </div>
+      <div class="related-issue">
+        <span class="severity-badge severity-high">🟠</span>
+        <span class="related-title">Повышенный расход масла</span>
+        <span class="related-arrow">→</span>
+      </div>
+      <div class="related-issue">
+        <span class="severity-badge severity-medium">🔵</span>
+        <span class="related-title">Термостат системы охлаждения</span>
+        <span class="related-arrow">→</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Journal button -->
+  <div style="padding: 0 20px;">
+    <button class="journal-button">📝 Добавить в журнал обслуживания</button>
+  </div>
+  
+  <!-- Footer -->
+  <div class="footer-sources">
+    <div class="footer-sources-title">Источники информации</div>
+    <div class="footer-sources-text">Данные собраны на основе анализа 150+ отзывов владельцев Audi A1, технических бюллетеней VAG, форумов Drive2.ru, Audi-club.ru и Reddit r/Audi. Последнее обновление: январь 2026.</div>
+  </div>
+  
+  <div class="bottom-space"></div>
+  
+  <script>
+    function toggleSection(button) {
+      const chevron = button.querySelector('.chevron');
+      const content = button.nextElementSibling;
+      
+      chevron.classList.toggle('open');
+      content.classList.toggle('open');
+    }
+    
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert('Скопировано: ' + text);
+    }
+    
+    function switchTab(tab) {
+      document.querySelectorAll('.solution-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.solution-content').forEach(c => c.classList.remove('active'));
+      
+      if (tab === 'service') {
+        document.querySelectorAll('.solution-tab')[0].classList.add('active');
+        document.getElementById('tab-service').classList.add('active');
+      } else {
+        document.querySelectorAll('.solution-tab')[1].classList.add('active');
+        document.getElementById('tab-diy').classList.add('active');
+      }
+    }
+    
+    function toggleCheck(item) {
+      const checkbox = item.querySelector('.checklist-checkbox');
+      const label = item.querySelector('.checklist-label');
+      
+      checkbox.classList.toggle('checked');
+      label.classList.toggle('checked');
+      
+      if (checkbox.classList.contains('checked')) {
+        checkbox.innerHTML = '✓';
+      } else {
+        checkbox.innerHTML = '';
+      }
+    }
+  </script>
+</body>
+</html>

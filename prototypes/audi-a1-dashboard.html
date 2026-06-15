@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoAssistantAi — Audi A1 Главная</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --background: #F7F8FA;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --primary: #1F4FD8;
+      --primary-light: rgba(31, 79, 216, 0.08);
+      --success: #2E9E6F;
+      --success-light: rgba(46, 158, 111, 0.08);
+      --success-border: rgba(46, 158, 111, 0.2);
+      --warning: #D97706;
+      --warning-light: rgba(217, 119, 6, 0.08);
+      --warning-border: rgba(217, 119, 6, 0.2);
+      --critical: #DC2626;
+      --critical-light: rgba(220, 38, 38, 0.08);
+      --critical-border: rgba(220, 38, 38, 0.2);
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-tertiary: #94A3B8;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      line-height: 1.5;
+      max-width: 420px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+    
+    /* Header */
+    .header {
+      padding: 12px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .header-logo {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    
+    .header-center {
+      text-align: center;
+    }
+    
+    .car-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .car-details {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .header-mileage {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    /* Health Card */
+    .health-card {
+      margin: 12px;
+      padding: 20px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .health-main {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .health-circle-container {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+    
+    .health-circle {
+      transform: rotate(-90deg);
+    }
+    
+    .health-value-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .health-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+    
+    .health-value-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    .health-info {
+      flex: 1;
+    }
+    
+    .health-status {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .health-meaning {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    
+    .health-trend {
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .comparison {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-align: center;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    
+    /* Mileage row */
+    .mileage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      margin: 0 12px 12px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    
+    .mileage-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .mileage-check {
+      color: var(--success);
+    }
+    
+    .mileage-text {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    .mileage-accuracy {
+      font-size: 13px;
+      color: var(--success);
+      font-weight: 500;
+    }
+    
+    /* Issues summary collapsible */
+    .issues-summary {
+      margin: 0 12px 12px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--critical-border);
+      overflow: hidden;
+    }
+    
+    .issues-summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--critical-light);
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      text-align: left;
+    }
+    
+    .issues-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .issues-summary-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--critical);
+      border-radius: 50%;
+    }
+    
+    .issues-summary-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .issues-summary-toggle {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s;
+    }
+    
+    .issues-summary-toggle.open {
+      transform: rotate(180deg);
+    }
+    
+    .issues-summary-content {
+      display: none;
+      padding: 12px 16px;
+    }
+    
+    .issues-summary-content.open {
+      display: block;
+    }
+    
+    .issues-summary-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .issues-summary-item:last-child {
+      border-bottom: none;
+    }
+    
+    .issues-summary-label {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    .issues-summary-impact {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--critical);
+    }
+    
+    /* Systems grid */
+    .systems-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin: 0 12px 16px;
+    }
+    
+    .system-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 14px 8px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .system-card.critical {
+      background: var(--critical-light);
+      border-color: var(--critical-border);
+    }
+    
+    .system-card.warning {
+      background: var(--warning-light);
+      border-color: var(--warning-border);
+    }
+    
+    .system-card.success {
+      background: var(--success-light);
+      border-color: var(--success-border);
+    }
+    
+    .system-value {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    
+    .system-value.critical {
+      color: var(--critical);
+    }
+    
+    .system-value.warning {
+      color: var(--warning);
+    }
+    
+    .system-value.success {
+      color: var(--success);
+    }
+    
+    .system-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    
+    /* Section */
+    .section {
+      margin: 0 12px 16px;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .section-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .section-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+    
+    .section-badge.critical {
+      background: var(--critical-light);
+      color: var(--critical);
+    }
+    
+    .section-badge.warning {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    
+    .section-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    
+    /* Alert cards */
+    .alert-card {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid;
+      margin-bottom: 10px;
+    }
+    
+    .alert-card:last-child {
+      margin-bottom: 0;
+    }
+    
+    .alert-card.critical {
+      background: var(--critical-light);
+      border-color: var(--critical-border);
+    }
+    
+    .alert-card.warning {
+      background: var(--warning-light);
+      border-color: var(--warning-border);
+    }
+    
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .alert-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .alert-dot.critical {
+      background: var(--critical);
+    }
+    
+    .alert-dot.warning {
+      background: var(--warning);
+    }
+    
+    .alert-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .alert-impact {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .alert-impact.critical {
+      color: var(--critical);
+    }
+    
+    .alert-impact.warning {
+      color: var(--warning);
+    }
+    
+    .alert-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0 0 12px 0;
+    }
+    
+    .alert-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .alert-cost {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .alert-button {
+      background: none;
+      border: 1.5px solid;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .alert-button.critical {
+      color: var(--critical);
+      border-color: var(--critical);
+    }
+    
+    .alert-button.warning {
+      color: var(--warning);
+      border-color: var(--warning);
+    }
+    
+    /* Maintenance section */
+    .maintenance-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .maintenance-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .maintenance-item:last-child {
+      border-bottom: none;
+    }
+    
+    .maintenance-status {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .maintenance-status.done {
+      background: var(--success-light);
+    }
+    
+    .maintenance-status.due {
+      background: var(--warning-light);
+    }
+    
+    .maintenance-status.overdue {
+      background: var(--critical-light);
+    }
+    
+    .maintenance-info {
+      flex: 1;
+    }
+    
+    .maintenance-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .maintenance-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    
+    .maintenance-action {
+      text-align: right;
+    }
+    
+    .maintenance-when {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .maintenance-when.done {
+      color: var(--success);
+    }
+    
+    .maintenance-when.due {
+      color: var(--warning);
+    }
+    
+    .maintenance-when.overdue {
+      color: var(--critical);
+    }
+    
+    .maintenance-km {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    
+    /* Next 10k section */
+    .next-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .next-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .next-icon {
+      font-size: 20px;
+    }
+    
+    .next-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .next-range {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-left: auto;
+    }
+    
+    .next-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .next-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--background);
+      border-radius: 10px;
+    }
+    
+    .next-item-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .next-item-dot.warning {
+      background: var(--warning);
+    }
+    
+    .next-item-dot.primary {
+      background: var(--primary);
+    }
+    
+    .next-item-info {
+      flex: 1;
+    }
+    
+    .next-item-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .next-item-type {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    
+    .next-item-km {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 12px 24px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 12px;
+    }
+    
+    .nav-item.active {
+      background: var(--primary-light);
+    }
+    
+    .nav-icon {
+      font-size: 20px;
+    }
+    
+    .nav-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .nav-item.active .nav-label {
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">AAA</div>
+    <div class="header-center">
+      <div class="car-name">Audi A1</div>
+      <div class="car-details">1.4 TFSI (122 л.с.) • S-tronic</div>
+    </div>
+    <div class="header-mileage">~87 000 км</div>
+  </div>
+  
+  <!-- Health Card -->
+  <div class="health-card">
+    <div class="health-main">
+      <!-- Circle -->
+      <div class="health-circle-container">
+        <svg class="health-circle" width="100" height="100">
+          <circle cx="50" cy="50" r="43" fill="none" stroke="#E2E8F0" stroke-width="7"/>
+          <circle cx="50" cy="50" r="43" fill="none" stroke="#2E9E6F" stroke-width="7" 
+                  stroke-linecap="round"
+                  stroke-dasharray="270.18"
+                  stroke-dashoffset="70.25"/>
+        </svg>
+        <div class="health-value-container">
+          <div class="health-value">74</div>
+          <div class="health-value-label">из 100</div>
+        </div>
+      </div>
+      
+      <!-- Info -->
+      <div class="health-info">
+        <div class="health-status" style="color: var(--success);">Хорошее состояние</div>
+        <div class="health-meaning">Можно ездить спокойно. Следите за рекомендациями.</div>
+        <div class="health-trend" style="color: var(--success);">
+          ↑ Состояние улучшилось за месяц
+        </div>
+      </div>
+    </div>
+    
+    <div class="comparison">Лучше, чем у 62% автомобилей Audi A1 с таким же пробегом</div>
+  </div>
+  
+  <!-- Mileage row -->
+  <div class="mileage-row">
+    <div class="mileage-left">
+      <span class="mileage-check">✓</span>
+      <span class="mileage-text">Пробег ~87 000 км</span>
+    </div>
+    <span class="mileage-accuracy">Точность высокая</span>
+  </div>
+  
+  <!-- Issues summary -->
+  <div class="issues-summary">
+    <button class="issues-summary-header" onclick="toggleIssuesSummary()">
+      <div class="issues-summary-left">
+        <div class="issues-summary-dot"></div>
+        <span class="issues-summary-title">Что снижает индекс (–26%)</span>
+      </div>
+      <span class="issues-summary-toggle" id="issues-toggle">▼</span>
+    </button>
+    <div class="issues-summary-content" id="issues-content">
+      <div class="issues-summary-item">
+        <span class="issues-summary-label">Цепь ГРМ требует проверки</span>
+        <span class="issues-summary-impact">–12%</span>
+      </div>
+      <div class="issues-summary-item">
+        <span class="issues-summary-label">Сайлентблоки подвески</span>
+        <span class="issues-summary-impact">–8%</span>
+      </div>
+      <div class="issues-summary-item">
+        <span class="issues-summary-label">Тормозные диски (износ)</span>
+        <span class="issues-summary-impact">–6%</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Systems grid -->
+  <div class="systems-grid">
+    <div class="system-card warning">
+      <span class="system-value warning">58</span>
+      <span class="system-label">Двигатель</span>
+    </div>
+    <div class="system-card warning">
+      <span class="system-value warning">65</span>
+      <span class="system-label">Ходовая</span>
+    </div>
+    <div class="system-card success">
+      <span class="system-value success">78</span>
+      <span class="system-label">Коробка</span>
+    </div>
+    <div class="system-card success">
+      <span class="system-value success">82</span>
+      <span class="system-label">Кузов</span>
+    </div>
+    <div class="system-card warning">
+      <span class="system-value warning">68</span>
+      <span class="system-label">Тормоза</span>
+    </div>
+  </div>
+  
+  <!-- Требует внимания (износ) -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Требует внимания</h2>
+      <span class="section-badge critical">3</span>
+    </div>
+    
+    <div class="alert-card critical">
+      <div class="alert-header">
+        <div class="alert-dot critical"></div>
+        <span class="alert-title">Цепь ГРМ</span>
+        <span class="alert-impact critical">–12%</span>
+      </div>
+      <p class="alert-description">Ваш пробег (87 тыс.) в зоне риска (60–120 тыс.). Рекомендуем проверить коррекцию фаз через VCDS.</p>
+      <div class="alert-footer">
+        <span class="alert-cost">Диагностика: 2–3 тыс. ₽</span>
+        <button class="alert-button critical" onclick="location.href='audi-a1-issue-timing-chain.html'">Проверить</button>
+      </div>
+    </div>
+    
+    <div class="alert-card warning">
+      <div class="alert-header">
+        <div class="alert-dot warning"></div>
+        <span class="alert-title">Сайлентблоки подвески</span>
+        <span class="alert-impact warning">–8%</span>
+      </div>
+      <p class="alert-description">Типичный износ на 50–80 тыс. км. Если слышите стуки на ямах — стоит проверить на подъёмнике.</p>
+      <div class="alert-footer">
+        <span class="alert-cost">Замена: 20–40 тыс. ₽</span>
+        <button class="alert-button warning">Подробнее</button>
+      </div>
+    </div>
+    
+    <div class="alert-card warning">
+      <div class="alert-header">
+        <div class="alert-dot warning"></div>
+        <span class="alert-title">Тормозные диски</span>
+        <span class="alert-impact warning">–6%</span>
+      </div>
+      <p class="alert-description">Ресурс оригинальных дисков 60–100 тыс. км. Если есть вибрация при торможении — пора менять.</p>
+      <div class="alert-footer">
+        <span class="alert-cost">Замена: 20–35 тыс. ₽</span>
+        <button class="alert-button warning">Подробнее</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Регламент ТО -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Регламент ТО</h2>
+      <button class="section-link">Всё ТО</button>
+    </div>
+    
+    <div class="maintenance-card">
+      <div class="maintenance-item">
+        <div class="maintenance-status done">✅</div>
+        <div class="maintenance-info">
+          <div class="maintenance-title">Замена масла ДВС</div>
+          <div class="maintenance-meta">Каждые 10 000 км • 5W-30 VW 504.00</div>
+        </div>
+        <div class="maintenance-action">
+          <div class="maintenance-when done">Сделано</div>
+          <div class="maintenance-km">85 000 км</div>
+        </div>
+      </div>
+      
+      <div class="maintenance-item">
+        <div class="maintenance-status due">⏰</div>
+        <div class="maintenance-info">
+          <div class="maintenance-title">Замена свечей зажигания</div>
+          <div class="maintenance-meta">Каждые 30 000 км • Иридиевые NGK</div>
+        </div>
+        <div class="maintenance-action">
+          <div class="maintenance-when due">Скоро</div>
+          <div class="maintenance-km">через 3 000 км</div>
+        </div>
+      </div>
+      
+      <div class="maintenance-item">
+        <div class="maintenance-status done">✅</div>
+        <div class="maintenance-info">
+          <div class="maintenance-title">Масло DSG</div>
+          <div class="maintenance-meta">Каждые 60 000 км</div>
+        </div>
+        <div class="maintenance-action">
+          <div class="maintenance-when done">Сделано</div>
+          <div class="maintenance-km">80 000 км</div>
+        </div>
+      </div>
+      
+      <div class="maintenance-item">
+        <div class="maintenance-status overdue">⚠️</div>
+        <div class="maintenance-info">
+          <div class="maintenance-title">Тормозная жидкость</div>
+          <div class="maintenance-meta">Каждые 2 года • DOT 4</div>
+        </div>
+        <div class="maintenance-action">
+          <div class="maintenance-when overdue">Просрочено</div>
+          <div class="maintenance-km">+6 месяцев</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Следующие 10 000 км -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Следующие 10 000 км</h2>
+    </div>
+    
+    <div class="next-card">
+      <div class="next-header">
+        <span class="next-icon">🔮</span>
+        <span class="next-title">Прогноз</span>
+        <span class="next-range">87–97 тыс. км</span>
+      </div>
+      
+      <div class="next-list">
+        <div class="next-item">
+          <div class="next-item-dot warning"></div>
+          <div class="next-item-info">
+            <div class="next-item-title">Клапан PCV</div>
+            <div class="next-item-type">Износ • Двигатель</div>
+          </div>
+          <span class="next-item-km">~90 тыс.</span>
+        </div>
+        
+        <div class="next-item">
+          <div class="next-item-dot primary"></div>
+          <div class="next-item-info">
+            <div class="next-item-title">Замена масла ДВС</div>
+            <div class="next-item-type">Регламент ТО</div>
+          </div>
+          <span class="next-item-km">95 тыс.</span>
+        </div>
+        
+        <div class="next-item">
+          <div class="next-item-dot primary"></div>
+          <div class="next-item-info">
+            <div class="next-item-title">Замена свечей</div>
+            <div class="next-item-type">Регламент ТО</div>
+          </div>
+          <span class="next-item-km">90 тыс.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button class="nav-item active">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Главная</span>
+    </button>
+    <button class="nav-item" onclick="location.href='audi-a1-issues-list.html'">
+      <span class="nav-icon">⚠️</span>
+      <span class="nav-label">Болячки</span>
+    </button>
+    <button class="nav-item">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Журнал</span>
+    </button>
+    <button class="nav-item">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">Ассистент</span>
+    </button>
+  </div>
+  
+  <script>
+    function toggleIssuesSummary() {
+      const toggle = document.getElementById('issues-toggle');
+      const content = document.getElementById('issues-content');
+      
+      toggle.classList.toggle('open');
+      content.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>
