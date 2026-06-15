@@ -99,24 +99,89 @@ function mileageBase(mileage) {
  * - Болячки, отмеченные пользователем как «уже сделано» (fixedIssueIds), не снимают
  * - Никогда не 0 и не 100: clamp 40-95
  */
+const SEVERITY_WEIGHTS = { critical: 3, high: 1.5, medium: 0.7, low: 0.3 };
+
+// Единый источник правды: сколько баллов снимает болячка с учётом категории.
+// past/future/chronic/fixed — 0. upcoming — половина.
+export function weightFor(issue, cat) {
+  if (cat === 'past' || cat === 'future' || cat === 'chronic') return 0;
+  let w = SEVERITY_WEIGHTS[issue.issue?.severity] ?? 0.3;
+  if (cat === 'upcoming') w = w / 2;
+  return w;
+}
+
 export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds = []) {
   const fixed = new Set(fixedIssueIds);
   let score = mileageBase(currentMileage);
-
-  const weights = { critical: 3, high: 1.5, medium: 0.7, low: 0.3 };
-
   for (const issue of issues) {
     if (fixed.has(issue.id)) continue;
-    const cat = classifyIssueByMileage(issue, currentMileage);
-    if (cat === 'past' || cat === 'future' || cat === 'chronic') continue;
-
-    let weight = weights[issue.issue?.severity] ?? 0.3;
-    if (cat === 'upcoming') weight = weight / 2;
-
-    score -= weight;
+    score -= weightFor(issue, classifyIssueByMileage(issue, currentMileage));
   }
-
   return Math.max(40, Math.min(95, Math.round(score)));
+}
+
+// Группировка issue.system → 4 системы UI. Кузов НЕ показываем (решение владельца),
+// но болячки кузова/электрики/салона остаются в ОБЩЕМ индексе.
+const SYSTEM_MAP = {
+  engine: 'engine', cooling: 'engine', fuel: 'engine', exhaust: 'engine',
+  transmission: 'transmission',
+  suspension: 'suspension', steering: 'suspension',
+  brakes: 'brakes',
+};
+
+export const UI_SYSTEMS = [
+  { key: 'engine', label: 'Двигатель' },
+  { key: 'suspension', label: 'Ходовая' },
+  { key: 'transmission', label: 'Коробка' },
+  { key: 'brakes', label: 'Тормоза' },
+];
+
+// Индекс по одной системе (та же формула, на подмножестве болячек).
+// Возвращает null, если у системы нет данных — тогда показываем «—», не выдумываем «95».
+export function calculateSystemHealth(issues, systemKey, currentMileage = 0, fixedIssueIds = []) {
+  const subset = (issues || []).filter(i => SYSTEM_MAP[i.issue?.system] === systemKey);
+  if (subset.length === 0) return { score: null, count: 0, active: 0 };
+  const fixed = new Set(fixedIssueIds);
+  let score = mileageBase(currentMileage);
+  let active = 0;
+  for (const issue of subset) {
+    if (fixed.has(issue.id)) continue;
+    const w = weightFor(issue, classifyIssueByMileage(issue, currentMileage));
+    if (w > 0) active++;
+    score -= w;
+  }
+  return { score: Math.max(40, Math.min(95, Math.round(score))), count: subset.length, active };
+}
+
+// Грубая оценка «крепче N% ровесников» — ЧЕСТНО из данных пользователя,
+// не из выдуманной статистики парка. Основа: индекс состояния + пробег-к-возрасту
+// (типичный РФ-пробег ~15 000 км/год). Это оценка, не опрос реальных владельцев.
+export function estimatePeerPercentile(healthIndex, mileage, year) {
+  const now = new Date().getFullYear();
+  const age = Math.max(1, now - (parseInt(year) || now));
+  const kmPerYear = (mileage || 0) / age;
+  const BASELINE = 15000;
+  // меньше пробег на год возраста → выше; больше → ниже
+  let mileageAdj = (BASELINE - kmPerYear) / BASELINE;       // меньше пробег → +, больше → −
+  mileageAdj = Math.max(-0.4, Math.min(0.4, mileageAdj));
+  const idxNorm = (Math.max(40, Math.min(95, healthIndex)) - 40) / 55;  // 0..1
+  const pct = 0.65 * idxNorm + 0.35 * (0.5 + mileageAdj);   // вклад состояния + пробега
+  return Math.round(Math.max(35, Math.min(85, pct * 100)));
+}
+
+// «обновлено N назад» из ISO-таймстампа
+export function formatRelativeTime(iso) {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (isNaN(then)) return null;
+  const days = Math.floor((Date.now() - then) / 86400000);
+  if (days <= 0) return 'сегодня';
+  if (days === 1) return 'вчера';
+  if (days < 7) return `${days} дн. назад`;
+  if (days < 30) { const w = Math.floor(days / 7); return `${w} нед. назад`; }
+  if (days < 365) { const m = Math.floor(days / 30); return `${m} мес. назад`; }
+  const y = Math.floor(days / 365);
+  return `${y} г. назад`;
 }
 
 /**

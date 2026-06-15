@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 
 import { CarProvider, useCar } from './contexts/CarContext'
 import * as userCarService from './services/userCarService'
+import Icon from './components/Icon'
 
 // Ловит любую ошибку React-tree, чтобы вместо белого экрана пользователь
 // увидел внятное сообщение и мог перезагрузить страницу.
@@ -80,27 +81,28 @@ const BottomNav = () => {
   const location = useLocation()
   
   const navItems = [
-    { path: '/dashboard', icon: '🏠', label: 'Главная' },
-    { path: '/issues', icon: '⚠️', label: 'Болячки' },
-    { path: '/journal', icon: '📋', label: 'Журнал' },
-    { path: '/assistant', icon: '💬', label: 'Ассистент' },
+    { path: '/dashboard', icon: 'home', label: 'Главная' },
+    { path: '/issues', icon: 'wrench', label: 'Слабые места' },
+    { path: '/journal', icon: 'clipboard', label: 'Журнал' },
+    { path: '/assistant', icon: 'chat', label: 'Ассистент' },
   ]
-  
+
   return (
     <div style={styles.bottomNav}>
-      {navItems.map(item => (
-        <button
-          key={item.path}
-          style={{
-            ...styles.navItem,
-            ...(location.pathname === item.path ? styles.navItemActive : {}),
-          }}
-          onClick={() => navigate(item.path)}
-        >
-          <span style={styles.navIcon}>{item.icon}</span>
-          <span style={styles.navLabel}>{item.label}</span>
-        </button>
-      ))}
+      {navItems.map(item => {
+        const active = location.pathname === item.path
+        return (
+          <button
+            key={item.path}
+            style={{ ...styles.navItem, ...(active ? styles.navItemActive : {}) }}
+            onClick={() => navigate(item.path)}
+            aria-label={item.label}
+          >
+            <Icon name={item.icon} size={20} color={active ? colors.primary : colors.textSecondary} />
+            <span style={{ ...styles.navLabel, ...(active ? { color: colors.primary } : {}) }}>{item.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
