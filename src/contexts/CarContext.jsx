@@ -78,9 +78,10 @@ export function CarProvider({ children }) {
   }, [loadUserCar]);
 
   const updateMileage = useCallback(async (mileage) => {
-    const ok = userCarService.updateUserCar({ mileage: parseInt(mileage) });
+    const stamp = new Date().toISOString();
+    const ok = userCarService.updateUserCar({ mileage: parseInt(mileage), mileageUpdatedAt: stamp });
     if (ok) {
-      setUserCar(prev => prev ? { ...prev, mileage: parseInt(mileage) } : null);
+      setUserCar(prev => prev ? { ...prev, mileage: parseInt(mileage), mileageUpdatedAt: stamp } : null);
     }
     return ok;
   }, []);

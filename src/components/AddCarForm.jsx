@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import * as dataService from '../services/dataService';
+import { CAR_COLORS } from '../services/userCarService';
+import CarSilhouette from './CarSilhouette';
 
 // AutoAssistantAi — Форма добавления автомобиля
 // Каскадные селекты: марка → модель → поколение → двигатель → коробка → год → пробег
@@ -89,6 +91,7 @@ export default function AddCarForm() {
     transmissionCode: '',
     year: '',
     mileage: '',
+    color: '',
   });
 
   useEffect(() => {
@@ -188,10 +191,13 @@ export default function AddCarForm() {
   const handleMileage = (mileage) => {
     setFormData(prev => ({ ...prev, mileage }));
   };
+  const handleColor = (color) => {
+    setFormData(prev => ({ ...prev, color }));
+  };
 
   const requiredFields = hasTransmissions
-    ? [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.transmissionCode, formData.year, formData.mileage]
-    : [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.year, formData.mileage];
+    ? [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.transmissionCode, formData.year, formData.mileage, formData.color]
+    : [formData.brandId, formData.modelName, formData.modelId, formData.engineCode, formData.year, formData.mileage, formData.color];
   const filledFields = requiredFields.filter(Boolean).length;
   const totalFields = requiredFields.length;
   const progress = (filledFields / totalFields) * 100;
@@ -205,6 +211,7 @@ export default function AddCarForm() {
       ...(formData.transmissionCode && { transmissionCode: formData.transmissionCode }),
       year: formData.year,
       mileage: formData.mileage,
+      color: formData.color,
     });
     if (ok) navigate('/dashboard');
     else alert('Не удалось сохранить данные. Попробуйте ещё раз.');
@@ -283,6 +290,30 @@ export default function AddCarForm() {
           disabled={hasTransmissions ? !formData.transmissionCode : !formData.engineCode}
         />
         <MileageInput value={formData.mileage} onChange={handleMileage} />
+
+        {formData.mileage && (
+          <div style={styles.field}>
+            <label style={styles.label}>Цвет автомобиля</label>
+            <div style={styles.colorPreview}>
+              <CarSilhouette color={formData.color || '#B8BCC2'} width={110} height={60} />
+            </div>
+            <div style={styles.colorRow}>
+              {CAR_COLORS.map(col => (
+                <button
+                  key={col}
+                  type="button"
+                  aria-label={`Цвет ${col}`}
+                  onClick={() => handleColor(col)}
+                  style={{
+                    ...styles.colorDot,
+                    background: col,
+                    ...(formData.color === col ? styles.colorDotActive : {}),
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         <div style={{ height: '120px' }} />
       </div>
 
@@ -327,6 +358,10 @@ const styles = {
   mileageInput: { width: '100%', padding: '14px 50px 14px 16px', fontSize: '16px', color: colors.textPrimary, background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '12px', outline: 'none', fontFamily: 'inherit' },
   mileageUnit: { position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: colors.textTertiary },
   hint: { fontSize: '12px', color: colors.textTertiary },
+  colorPreview: { display: 'flex', justifyContent: 'center', padding: '12px 0 4px' },
+  colorRow: { display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', paddingTop: '4px' },
+  colorDot: { width: '34px', height: '34px', borderRadius: '50%', border: '2px solid rgba(0,0,0,0.08)', cursor: 'pointer', padding: 0, outline: 'none' },
+  colorDotActive: { border: `3px solid ${colors.primary}`, transform: 'scale(1.1)' },
   submitButton: { position: 'fixed', bottom: '24px', left: '24px', right: '24px', padding: '16px', fontSize: '16px', fontWeight: '600', color: '#FFFFFF', background: colors.primary, border: 'none', borderRadius: '12px', cursor: 'pointer' },
   submitButtonDisabled: { background: colors.border, color: colors.textTertiary, cursor: 'not-allowed' },
 };

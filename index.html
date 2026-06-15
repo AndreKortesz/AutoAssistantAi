@@ -22,6 +22,14 @@
       #root {
         min-height: 100vh;
       }
+      /* Анимация «оживления» силуэта на главной */
+      @keyframes aaaCarIn { 0% { transform: translateX(-40px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+      @keyframes aaaShine { 0% { transform: translateX(-60px) skewX(-18deg); opacity: 0; } 30% { opacity: .9; } 60% { opacity: 0; } 100% { transform: translateX(200px) skewX(-18deg); opacity: 0; } }
+      .aaa-car-in { animation: aaaCarIn .7s cubic-bezier(.22,1,.36,1) both; }
+      .aaa-shine { animation: aaaShine 1.1s ease-in .6s both; }
+      @media (prefers-reduced-motion: reduce) {
+        .aaa-car-in, .aaa-shine { animation: none !important; }
+      }
     </style>
   </head>
   <body>

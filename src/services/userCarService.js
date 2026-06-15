@@ -19,11 +19,16 @@ const VALID_FIELDS = [
   'year',            // год выпуска (число)
   'mileage',         // пробег (число, км)
   'bodyType',        // Седан, Хэтчбек
-  'addedAt',         // ISO timestamp
+  'color',           // цвет силуэта (из палитры CAR_COLORS)
+  'addedAt',         // ISO timestamp добавления
+  'mileageUpdatedAt',// ISO timestamp последнего обновления пробега
 ];
 
 const MAX_VIN_LENGTH = 17;
 const MAX_MILEAGE = 999999;
+
+// Палитра цветов авто (для силуэта). Только эти значения допустимы.
+export const CAR_COLORS = ['#E8EAED', '#B8BCC2', '#5A5E66', '#23262C', '#B83228', '#2B4C8C', '#2E5E48'];
 
 /**
  * Валидация и санитизация данных машины
@@ -62,7 +67,19 @@ function validateCarData(data) {
   
   if (clean.bodyType && typeof clean.bodyType !== 'string') return null;
   if (clean.bodyType && clean.bodyType.length > 50) return null;
-  
+
+  // Цвет — только из утверждённой палитры
+  if (clean.color !== undefined && !CAR_COLORS.includes(clean.color)) {
+    delete clean.color;
+  }
+
+  // ISO timestamp — мягкая проверка (строка разумной длины)
+  if (clean.mileageUpdatedAt !== undefined) {
+    if (typeof clean.mileageUpdatedAt !== 'string' || clean.mileageUpdatedAt.length > 40) {
+      delete clean.mileageUpdatedAt;
+    }
+  }
+
   return clean;
 }
 
@@ -77,7 +94,10 @@ export function saveUserCar(data) {
   }
   
   validated.addedAt = validated.addedAt || new Date().toISOString();
-  
+  if (validated.mileage !== undefined && !validated.mileageUpdatedAt) {
+    validated.mileageUpdatedAt = validated.addedAt;
+  }
+
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(validated));
     return true;
