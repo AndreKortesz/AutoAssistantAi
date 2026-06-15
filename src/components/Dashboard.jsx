@@ -151,7 +151,6 @@ export default function Dashboard() {
           <div style={s.logo}>AAA</div>
           <span style={s.topbarTitle}>Мой гараж</span>
         </div>
-        <Icon name="bell" size={20} color={c.textTertiary} />
       </div>
 
       {/* ГЕРО-карточка */}
@@ -186,7 +185,6 @@ export default function Dashboard() {
                 </svg>
                 <div style={s.ringCenter}>
                   <div style={{ ...s.ringVal, color: c.textPrimary }}>{healthIndex}</div>
-                  <div style={s.ringMax}>из {MAX_INDEX} макс.</div>
                 </div>
                 {pop && <div style={s.ringPop} className="aaa-pop-up">+{pop}</div>}
               </div>
