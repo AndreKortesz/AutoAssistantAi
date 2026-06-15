@@ -13,6 +13,7 @@ import {
   getLinkedTSB,
   calculateHealthIndex,
 } from '../utils/issueHelpers';
+import Icon from './Icon';
 
 const c = {
   bg: '#F7F8FA',
@@ -128,7 +129,7 @@ export default function IssueDetailScreen() {
       <div style={s.container}>
         <Header onBack={() => navigate('/issues')} />
         <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><Icon name="search" size={44} color={c.textTertiary} /></div>
           <h2 style={{ color: c.textPrimary, marginBottom: '8px' }}>Болячка не найдена</h2>
           <p style={{ color: c.textSecondary }}>Возможно, она была удалена или не относится к вашей конфигурации</p>
         </div>
@@ -231,7 +232,7 @@ export default function IssueDetailScreen() {
 
       {/* Юридический статус */}
       {(recalls.length > 0 || classActions.length > 0 || tsbs.length > 0 || ds.is_acknowledged || ds.fix_in_production?.description) && (
-        <Section title="📋 Признано производителем">
+        <Section title="Признано производителем">
           {ds.is_acknowledged && (
             <div style={s.legalBlock}>
               <div style={s.legalAck}>
@@ -241,7 +242,7 @@ export default function IssueDetailScreen() {
           )}
           {classActions.length > 0 && (
             <div style={s.legalBlock}>
-              <div style={s.legalTitle}>⚖️ Коллективные иски</div>
+              <div style={s.legalTitle}>Коллективные иски</div>
               {classActions.map((ca, i) => (
                 <div key={i} style={s.legalItem}>
                   <span style={s.legalFlag}>{ca.country_flag || '🌐'}</span>
@@ -256,7 +257,7 @@ export default function IssueDetailScreen() {
           )}
           {recalls.length > 0 && (
             <div style={s.legalBlock}>
-              <div style={s.legalTitle}>📋 Отзывные кампании</div>
+              <div style={s.legalTitle}>Отзывные кампании</div>
               {recalls.map((r, i) => (
                 <div key={i} style={s.legalItem}>
                   <span style={s.legalFlag}>{r.country_flag || '🌐'}</span>
@@ -274,7 +275,7 @@ export default function IssueDetailScreen() {
           )}
           {tsbs.length > 0 && (
             <div style={s.legalBlock}>
-              <div style={s.legalTitle}>📄 Сервисные бюллетени (TSB)</div>
+              <div style={s.legalTitle}>Сервисные бюллетени (TSB)</div>
               {tsbs.map((t, i) => (
                 <div key={i} style={s.legalItem}>
                   <div style={{ flex: 1 }}>
@@ -287,7 +288,7 @@ export default function IssueDetailScreen() {
           )}
           {ds.fix_in_production?.description && (
             <div style={s.legalBlock}>
-              <div style={s.legalTitle}>🏭 Исправлено в производстве</div>
+              <div style={s.legalTitle}>Исправлено в производстве</div>
               <div style={s.legalDescription}>
                 {ds.fix_in_production.date ? `${ds.fix_in_production.date}: ` : ''}{ds.fix_in_production.description}
               </div>
@@ -298,7 +299,7 @@ export default function IssueDetailScreen() {
 
       {/* Симптомы */}
       {issue.issue?.symptoms?.length > 0 && (
-        <Section title="🩺 Симптомы" expanded={expanded.symptoms} onToggle={() => toggle('symptoms')}>
+        <Section title="Симптомы" expanded={expanded.symptoms} onToggle={() => toggle('symptoms')}>
           <div style={s.symptomsList}>
             {issue.issue.symptoms.map((sy, i) => (
               <div key={i} style={s.symptomItem}>
@@ -328,7 +329,7 @@ export default function IssueDetailScreen() {
 
       {/* Причина */}
       {issue.issue?.cause && (
-        <Section title="🔍 Почему это происходит" expanded={expanded.cause} onToggle={() => toggle('cause')}>
+        <Section title="Почему это происходит" expanded={expanded.cause} onToggle={() => toggle('cause')}>
           {issue.issue.cause.primary && (
             <p style={s.causeText}>{issue.issue.cause.primary}</p>
           )}
@@ -353,7 +354,7 @@ export default function IssueDetailScreen() {
 
       {/* Решение */}
       {solutions.length > 0 && (
-        <Section title="🛠 Решение" expanded={expanded.solution} onToggle={() => toggle('solution')}>
+        <Section title="Решение" expanded={expanded.solution} onToggle={() => toggle('solution')}>
           {/* Tabs */}
           <div style={s.tabs}>
             <button
@@ -379,30 +380,30 @@ export default function IssueDetailScreen() {
                 {activeTab === 'diy' ? (
                   <>
                     {currentSol.diy_difficulty && (
-                      <Metric icon="🎯" label="Сложность" value={difficultyLabel(currentSol.diy_difficulty)} />
+                      <Metric icon="difficulty" label="Сложность" value={difficultyLabel(currentSol.diy_difficulty)} />
                     )}
                     {currentSol.diy_time_hours && (
-                      <Metric icon="⏱" label="Время" value={`${currentSol.diy_time_hours} ч`} />
+                      <Metric icon="time"label="Время" value={`${currentSol.diy_time_hours} ч`} />
                     )}
                   </>
                 ) : (
                   <>
                     {currentSol.service_time_hours && (
-                      <Metric icon="⏱" label="Время в сервисе" value={`${currentSol.service_time_hours} ч`} />
+                      <Metric icon="time"label="Время в сервисе" value={`${currentSol.service_time_hours} ч`} />
                     )}
                     {currentSol.labor_cost && (
-                      <Metric icon="💰" label="Работа" value={formatPrice(currentSol.labor_cost)} />
+                      <Metric icon="cost" label="Работа" value={formatPrice(currentSol.labor_cost)} />
                     )}
                   </>
                 )}
                 {currentSol.effectiveness && (
-                  <Metric icon="✅" label="Эффективность" value={effectivenessLabel(currentSol.effectiveness)} />
+                  <Metric icon="effect" label="Эффективность" value={effectivenessLabel(currentSol.effectiveness)} />
                 )}
               </div>
 
               {currentSol.diy_warning && activeTab === 'diy' && (
                 <div style={s.warning}>
-                  <strong>⚠️ Внимание:</strong> {currentSol.diy_warning}
+                  <strong>Внимание:</strong> {currentSol.diy_warning}
                 </div>
               )}
 
@@ -423,7 +424,7 @@ export default function IssueDetailScreen() {
 
       {/* Запчасти */}
       {issue.parts?.length > 0 && (
-        <Section title="🔧 Запчасти" expanded={expanded.parts} onToggle={() => toggle('parts')}>
+        <Section title="Запчасти" expanded={expanded.parts} onToggle={() => toggle('parts')}>
           {issue.parts.map((part, i) => (
             <PartCard key={i} part={part} />
           ))}
@@ -441,7 +442,7 @@ export default function IssueDetailScreen() {
       {/* Отзывы владельцев */}
       {issue.owner_reports?.length > 0 && (
         <Section
-          title={`💬 Опыт владельцев (${issue.owner_reports.length})`}
+          title={`Опыт владельцев (${issue.owner_reports.length})`}
           expanded={expanded.reviews}
           onToggle={() => toggle('reviews')}
         >
@@ -508,9 +509,11 @@ function Section({ title, expanded = true, onToggle, children }) {
 }
 
 function Metric({ icon, label, value }) {
+  const map = { difficulty: 'target', time: 'clock', cost: 'wallet', effect: 'check' };
+  const iconName = map[icon] || icon;
   return (
     <div style={s.metric}>
-      <span style={s.metricIcon}>{icon}</span>
+      <span style={s.metricIcon}><Icon name={iconName} size={18} color={c.textSecondary} /></span>
       <div>
         <div style={s.metricValue}>{value}</div>
         <div style={s.metricLabel}>{label}</div>

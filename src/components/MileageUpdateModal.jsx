@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Icon from './Icon';
 
 // AutoAssistantAi — Компонент мягкого уточнения пробега
 // Не требует точного числа, работает с диапазонами
@@ -95,7 +96,9 @@ const MileageUpdateModal = ({
       <div style={styles.modal} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div style={styles.header}>
-          <div style={styles.headerIcon}>📍</div>
+          <div style={{ ...styles.headerIcon, display: 'flex', justifyContent: 'center' }}>
+            <Icon name="pin" size={32} color={colors.primary} />
+          </div>
           <h2 style={styles.title}>Уточним пробег?</h2>
           {lastUpdated && (
             <p style={styles.subtitle}>
@@ -106,7 +109,7 @@ const MileageUpdateModal = ({
         
         {/* Пояснение */}
         <div style={styles.hint}>
-          <span style={styles.hintIcon}>💡</span>
+          <span style={styles.hintIcon}><Icon name="bulb" size={16} color={colors.primary} /></span>
           <span style={styles.hintText}>
             Точный пробег не обязателен — диапазона достаточно для расчётов
           </span>

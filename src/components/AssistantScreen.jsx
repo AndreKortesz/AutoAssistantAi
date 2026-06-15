@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
+import Icon from './Icon';
+import CarSilhouette from './CarSilhouette';
 
 // AutoAssistantAi — AI Ассистент
 // Чат с диагностикой и подсказками
@@ -41,7 +43,7 @@ const formatMileage = (mileage) => {
 const promptCategories = [
   {
     id: 'symptoms',
-    icon: '🔍',
+    icon: 'search',
     title: 'Диагностика',
     prompts: [
       'Стучит при повороте руля',
@@ -53,7 +55,7 @@ const promptCategories = [
   },
   {
     id: 'maintenance',
-    icon: '🔧',
+    icon: 'wrench',
     title: 'Обслуживание',
     prompts: [
       'Когда менять цепь ГРМ?',
@@ -64,7 +66,7 @@ const promptCategories = [
   },
   {
     id: 'parts',
-    icon: '📦',
+    icon: 'package',
     title: 'Запчасти',
     prompts: [
       'Какие колодки лучше поставить?',
@@ -74,7 +76,7 @@ const promptCategories = [
   },
   {
     id: 'errors',
-    icon: '⚠️',
+    icon: 'alert',
     title: 'Ошибки',
     prompts: [
       'Расшифруй ошибку P0171',
@@ -84,7 +86,7 @@ const promptCategories = [
   },
   {
     id: 'buying',
-    icon: '🚗',
+    icon: 'shield',
     title: 'При покупке',
     prompts: [
       'На что смотреть при покупке?',
@@ -93,116 +95,6 @@ const promptCategories = [
     ],
   },
 ];
-
-// Симулированные ответы ассистента
-const getAssistantResponse = (userMessage, car) => {
-  const msg = userMessage.toLowerCase();
-  
-  // Стук при повороте руля
-  if (msg.includes('стук') && msg.includes('руля') || msg.includes('стучит') && msg.includes('поворот')) {
-    return {
-      text: `Для вашего ${car.brand} ${car.model} с пробегом ${formatMileage(car.mileage)} км это типичный симптом.`,
-      causes: [
-        { name: 'Рулевая рейка (втулки)', probability: 60, costMin: 3000, costMax: 15000 },
-        { name: 'Рулевые наконечники', probability: 25, costMin: 2000, costMax: 5000 },
-        { name: 'Стойки стабилизатора', probability: 15, costMin: 2000, costMax: 4000 },
-      ],
-      canDrive: true,
-      recommendation: 'Рекомендую проверить на подъёмнике. Если рейка — можно поставить ремкомплект, это дешевле замены.',
-    };
-  }
-  
-  // Гудит на скорости
-  if (msg.includes('гуд') && (msg.includes('скорост') || msg.includes('поворот'))) {
-    return {
-      text: `Гул, который усиливается в поворотах — классический признак износа ступичного подшипника.`,
-      causes: [
-        { name: 'Ступичный подшипник (передний)', probability: 85, costMin: 2500, costMax: 6000 },
-        { name: 'Ступичный подшипник (задний)', probability: 10, costMin: 2500, costMax: 5000 },
-        { name: 'Шины (неравномерный износ)', probability: 5, costMin: 0, costMax: 20000 },
-      ],
-      canDrive: true,
-      warning: 'Не тяните с заменой — подшипник может заклинить на ходу.',
-      recommendation: 'Для Solaris рекомендую SKF или FAG вместо оригинала ILJIN — ходят дольше.',
-    };
-  }
-  
-  // Цепь ГРМ
-  if (msg.includes('цепь') || msg.includes('грм')) {
-    return {
-      text: `На моторе ${car.engine} цепь ГРМ обычно ходит 150-180 тыс. км. У вас ${formatMileage(car.mileage)} км — запас ещё есть.`,
-      info: [
-        { label: 'Типичный ресурс', value: '150 000 – 180 000 км' },
-        { label: 'Ваш пробег', value: `${formatMileage(car.mileage)} км` },
-        { label: 'Стоимость замены', value: '15 000 – 35 000 ₽' },
-      ],
-      symptoms: ['Дизельный звук на холодную', 'Ошибка по фазам ГРМ', 'Плавающие обороты'],
-      recommendation: 'Рекомендую проверить натяжитель на 120 тыс. км. Если есть посторонние звуки при запуске — не откладывайте диагностику.',
-    };
-  }
-  
-  // Масло
-  if (msg.includes('масло') && (msg.includes('какое') || msg.includes('лучше') || msg.includes('залить'))) {
-    return {
-      text: `Для ${car.engine} рекомендую масло 5W-40 или 5W-30 (API SN/SP).`,
-      options: [
-        { name: 'Shell Helix HX8 5W-40', price: '2 500 ₽', note: 'Оптимальный выбор' },
-        { name: 'Liqui Moly Top Tec 4100', price: '3 200 ₽', note: 'Премиум' },
-        { name: 'Лукойл Genesis 5W-40', price: '1 800 ₽', note: 'Бюджетный вариант' },
-      ],
-      recommendation: 'Интервал замены — каждые 10-12 тыс. км, в городском режиме лучше 8-10 тыс.',
-    };
-  }
-  
-  // Колодки
-  if (msg.includes('колодк')) {
-    return {
-      text: `Для ${car.brand} ${car.model} хорошо подходят:`,
-      options: [
-        { name: 'Sangsin SP1399', price: '1 800 ₽', note: 'Корейский OEM, отличный выбор' },
-        { name: 'TRW GDB3548', price: '2 400 ₽', note: 'Европейское качество' },
-        { name: 'Brembo P30052', price: '3 200 ₽', note: 'Премиум, для активной езды' },
-      ],
-      recommendation: 'Оригинал Hyundai/Mobis стоит ~2 500 ₽, но Sangsin — тот же завод, дешевле.',
-    };
-  }
-  
-  // Ошибка P0171
-  if (msg.includes('p0171')) {
-    return {
-      text: `Ошибка P0171 — бедная смесь (Bank 1). Двигатель получает меньше топлива, чем нужно.`,
-      causes: [
-        { name: 'Подсос воздуха', probability: 40, costMin: 500, costMax: 5000 },
-        { name: 'Грязный MAF-датчик', probability: 30, costMin: 500, costMax: 1500 },
-        { name: 'Топливный фильтр/насос', probability: 20, costMin: 2000, costMax: 8000 },
-        { name: 'Форсунки', probability: 10, costMin: 3000, costMax: 12000 },
-      ],
-      canDrive: true,
-      recommendation: 'Начните с простого: проверьте патрубки на трещины и почистите MAF очистителем. Часто это решает проблему за 500 ₽.',
-    };
-  }
-  
-  // На что смотреть при покупке
-  if (msg.includes('покупк') || msg.includes('смотреть')) {
-    return {
-      text: `При покупке ${car.brand} ${car.model} обратите внимание:`,
-      checkList: [
-        { item: 'Цепь ГРМ', check: 'Послушать на холодную — не должно быть дизельного звука' },
-        { item: 'Рулевая рейка', check: 'Покрутить руль на месте — не должно быть стуков' },
-        { item: 'Ступичные подшипники', check: 'Поднять машину, покачать колёса — люфт = замена' },
-        { item: 'Кузов', check: 'Проверить арки, пороги, низ дверей на ржавчину' },
-        { item: 'АКПП', check: 'Проверить уровень и цвет масла, не должно пахнуть горелым' },
-      ],
-      recommendation: 'Solaris — надёжная машина. Главное — не брать с убитой цепью ГРМ и проблемной АКПП.',
-    };
-  }
-  
-  // Дефолтный ответ
-  return {
-    text: `Хороший вопрос! Для точного ответа по вашему ${car.brand} ${car.model} (${car.engine}, ${formatMileage(car.mileage)} км) мне нужно чуть больше деталей. Можете описать симптом подробнее?`,
-    suggestions: ['Опишите звук или поведение', 'Когда появляется проблема?', 'Есть ли ошибки на панели?'],
-  };
-};
 
 // Компонент сообщения пользователя
 const UserMessage = ({ text }) => (
@@ -213,115 +105,12 @@ const UserMessage = ({ text }) => (
   </div>
 );
 
-// Компонент сообщения ассистента
+// Компонент сообщения ассистента — текст от Gemini (с переносами строк)
 const AssistantMessage = ({ response }) => (
   <div style={styles.assistantMessageContainer}>
-    <div style={styles.assistantAvatar}>🤖</div>
+    <div style={styles.assistantAvatar}><Icon name="bot" size={18} color={colors.primary} /></div>
     <div style={styles.assistantBubble}>
-      <p style={styles.assistantText}>{response.text}</p>
-      
-      {/* Причины с вероятностями */}
-      {response.causes && (
-        <div style={styles.causesSection}>
-          <div style={styles.sectionTitle}>📍 Вероятные причины:</div>
-          {response.causes.map((cause, i) => (
-            <div key={i} style={styles.causeCard}>
-              <div style={styles.causeHeader}>
-                <span style={styles.causeName}>{cause.name}</span>
-                <span style={styles.causeProbability}>{cause.probability}%</span>
-              </div>
-              <div style={styles.causeCost}>
-                {cause.costMin.toLocaleString('ru-RU')} – {cause.costMax.toLocaleString('ru-RU')} ₽
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Информация */}
-      {response.info && (
-        <div style={styles.infoSection}>
-          {response.info.map((item, i) => (
-            <div key={i} style={styles.infoRow}>
-              <span style={styles.infoLabel}>{item.label}</span>
-              <span style={styles.infoValue}>{item.value}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Симптомы */}
-      {response.symptoms && (
-        <div style={styles.symptomsSection}>
-          <div style={styles.sectionTitle}>🔔 Признаки износа:</div>
-          <div style={styles.symptomsTags}>
-            {response.symptoms.map((s, i) => (
-              <span key={i} style={styles.symptomTag}>{s}</span>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Варианты (масло, колодки) */}
-      {response.options && (
-        <div style={styles.optionsSection}>
-          {response.options.map((opt, i) => (
-            <div key={i} style={styles.optionCard}>
-              <div style={styles.optionHeader}>
-                <span style={styles.optionName}>{opt.name}</span>
-                <span style={styles.optionPrice}>{opt.price}</span>
-              </div>
-              {opt.note && <div style={styles.optionNote}>{opt.note}</div>}
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Чеклист */}
-      {response.checkList && (
-        <div style={styles.checkListSection}>
-          {response.checkList.map((item, i) => (
-            <div key={i} style={styles.checkItem}>
-              <div style={styles.checkItemHeader}>☑️ {item.item}</div>
-              <div style={styles.checkItemText}>{item.check}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Предупреждение */}
-      {response.warning && (
-        <div style={styles.warningBox}>
-          ⚠️ {response.warning}
-        </div>
-      )}
-      
-      {/* Можно ли ездить */}
-      {response.canDrive !== undefined && (
-        <div style={{
-          ...styles.driveStatus,
-          background: response.canDrive ? colors.successLight : colors.criticalLight,
-          color: response.canDrive ? colors.success : colors.critical,
-        }}>
-          {response.canDrive ? '✓ Можно ездить' : '⛔ Ехать нельзя'}
-        </div>
-      )}
-      
-      {/* Рекомендация */}
-      {response.recommendation && (
-        <div style={styles.recommendation}>
-          💡 {response.recommendation}
-        </div>
-      )}
-      
-      {/* Подсказки для уточнения */}
-      {response.suggestions && (
-        <div style={styles.suggestionsSection}>
-          {response.suggestions.map((s, i) => (
-            <span key={i} style={styles.suggestionTag}>{s}</span>
-          ))}
-        </div>
-      )}
+      <p style={{ ...styles.assistantText, whiteSpace: 'pre-wrap' }}>{response.text}</p>
     </div>
   </div>
 );
@@ -345,7 +134,7 @@ const QuickPrompts = ({ categories, onSelect, visible }) => {
             }}
             onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
           >
-            <span style={styles.categoryIcon}>{cat.icon}</span>
+            <span style={styles.categoryIcon}><Icon name={cat.icon} size={15} color={colors.textSecondary} /></span>
             <span style={styles.categoryTitle}>{cat.title}</span>
           </button>
         ))}
@@ -372,7 +161,7 @@ const QuickPrompts = ({ categories, onSelect, visible }) => {
 // Приветственное сообщение
 const WelcomeMessage = ({ car }) => (
   <div style={styles.welcome}>
-    <div style={styles.welcomeIcon}>🤖</div>
+    <div style={{ ...styles.welcomeIcon, display: 'flex', justifyContent: 'center' }}><Icon name="bot" size={44} color={colors.primary} /></div>
     <div style={styles.welcomeTitle}>Привет! Я ваш автоассистент</div>
     <div style={styles.welcomeText}>
       Знаю ваш {car.brand} {car.model} ({car.engine}) вдоль и поперёк.
@@ -420,7 +209,7 @@ export default function AssistantScreen() {
     return (
       <div style={styles.container}>
         <div style={styles.welcome}>
-          <div style={styles.welcomeIcon}>🚗</div>
+          <div style={{ ...styles.welcomeIcon, display: 'flex', justifyContent: 'center' }}><CarSilhouette color="#B8BCC2" width={110} height={60} /></div>
           <div style={styles.welcomeTitle}>Сначала добавьте автомобиль</div>
           <div style={styles.welcomeText}>Чтобы ассистент знал вашу машину и давал точные ответы</div>
           <button
@@ -496,14 +285,14 @@ export default function AssistantScreen() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <button style={styles.backButton}>←</button>
+        <button style={styles.backButton} onClick={() => navigate('/dashboard')} aria-label="Назад"><Icon name="arrowLeft" size={20} color={colors.textPrimary} /></button>
         <div style={styles.headerCenter}>
           <div style={styles.headerTitle}>Ассистент</div>
           <div style={styles.headerSubtitle}>
             {car.brand} {car.model} • {car.engine}
           </div>
         </div>
-        <button style={styles.newChatButton}>+</button>
+        <button style={styles.newChatButton} onClick={() => setMessages([])} aria-label="Новый чат"><Icon name="plus" size={20} color={colors.primary} /></button>
       </div>
 
       {/* Messages */}
@@ -518,7 +307,7 @@ export default function AssistantScreen() {
         
         {isTyping && (
           <div style={styles.typingIndicator}>
-            <div style={styles.assistantAvatar}>🤖</div>
+            <div style={styles.assistantAvatar}><Icon name="bot" size={18} color={colors.primary} /></div>
             <div style={styles.typingDots}>
               <span style={styles.dot}>●</span>
               <span style={{...styles.dot, animationDelay: '0.2s'}}>●</span>
@@ -561,8 +350,9 @@ export default function AssistantScreen() {
             }}
             onClick={() => handleSend()}
             disabled={!inputValue.trim()}
+            aria-label="Отправить"
           >
-            ➤
+            <Icon name="send" size={18} color="#FFFFFF" />
           </button>
         </div>
       </div>

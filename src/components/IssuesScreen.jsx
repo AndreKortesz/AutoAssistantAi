@@ -11,6 +11,8 @@ import {
   getLinkedRecalls,
   getLinkedClassActions,
 } from '../utils/issueHelpers';
+import Icon from './Icon';
+import CarSilhouette from './CarSilhouette';
 
 // AutoAssistantAi — Экран болячек
 // Группировка: текущие / предстоящие / прошедшие (по пробегу)
@@ -76,7 +78,7 @@ export default function IssuesScreen() {
     return (
       <div style={s.container}>
         <div style={s.emptyState}>
-          <div style={s.emptyIcon}>🚗</div>
+          <div style={{ ...s.emptyIcon, display: 'flex', justifyContent: 'center' }}><CarSilhouette color="#B8BCC2" width={110} height={60} /></div>
           <h2 style={s.emptyTitle}>Сначала добавьте автомобиль</h2>
           <p style={s.emptySubtitle}>
             Чтобы увидеть болячки именно вашей машины
@@ -100,7 +102,7 @@ export default function IssuesScreen() {
           <div style={s.headerSubtitle}>{carLabel}{engineLabel ? ` • ${engineLabel}` : ''}</div>
         </div>
         <div style={s.emptyState}>
-          <div style={s.emptyIcon}>📋</div>
+          <div style={{ ...s.emptyIcon, display: 'flex', justifyContent: 'center' }}><Icon name="clipboard" size={52} color={c.textTertiary} /></div>
           <h2 style={s.emptyTitle}>Данные собираются</h2>
           <p style={s.emptySubtitle}>
             Список типичных болячек для этой модели ещё не закончен. Подключим, как будет готово.
@@ -122,7 +124,7 @@ export default function IssuesScreen() {
 
       {/* Подсказка */}
       <div style={s.intro}>
-        <span style={s.introIcon}>💡</span>
+        <span style={s.introIcon}><Icon name="bulb" size={18} color={c.primary} /></span>
         <span style={s.introText}>
           Известные конструктивные дефекты для вашей конфигурации.
           Группируем по пробегу — что актуально сейчас, что впереди, что уже должно было проявиться.
@@ -315,8 +317,8 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
         </div>
         {(hasRecalls || hasClassActions) && (
           <div style={s.statusIcons}>
-            {hasClassActions && <div style={s.statusIcon} title="Коллективный иск">⚖️</div>}
-            {hasRecalls && <div style={s.statusIcon} title="Отзывная кампания">📋</div>}
+            {hasClassActions && <div style={s.statusIcon} title="Коллективный иск"><Icon name="scale" size={13} color={c.primary} /></div>}
+            {hasRecalls && <div style={s.statusIcon} title="Отзывная кампания"><Icon name="fileText" size={13} color={c.primary} /></div>}
           </div>
         )}
         <span style={s.issueToggle(expanded)}>▼</span>
@@ -334,7 +336,7 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
           <div style={s.defectStatus}>
             {hasClassActions && (
               <div style={s.defectBlock}>
-                <div style={s.defectBlockTitle}>⚖️ Коллективные иски</div>
+                <div style={s.defectBlockTitle}>Коллективные иски</div>
                 {classActions.map((ca, i) => (
                   <div key={i} style={s.defectItem}>
                     <span style={s.defectFlag}>{ca.country_flag || '🌐'}</span>
@@ -349,7 +351,7 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
             )}
             {hasRecalls && (
               <div style={s.defectBlock}>
-                <div style={s.defectBlockTitle}>📋 Отзывные кампании</div>
+                <div style={s.defectBlockTitle}>Отзывные кампании</div>
                 {recalls.map((r, i) => (
                   <div key={i} style={s.defectItem}>
                     <span style={s.defectFlag}>{r.country_flag || '🌐'}</span>
@@ -369,19 +371,19 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
         <div style={s.quickMetrics}>
           {peakKm && (
             <div style={s.metricItem}>
-              <span style={s.metricIcon}>📍</span>
+              <span style={s.metricIcon}><Icon name="pin" size={14} color={c.textSecondary} /></span>
               <span style={s.metricValue}>пик ~{formatMileage(peakKm)}</span>
             </div>
           )}
           {worstCost && (
             <div style={s.metricItem}>
-              <span style={s.metricIcon}>💰</span>
+              <span style={s.metricIcon}><Icon name="wallet" size={14} color={c.textSecondary} /></span>
               <span style={s.metricValue}>до {formatPrice(worstCost)}</span>
             </div>
           )}
           {issue.issue?.can_drive === false && (
             <div style={s.metricItem}>
-              <span style={s.metricIcon}>⛔</span>
+              <span style={s.metricIcon}><Icon name="ban" size={14} color={c.critical} /></span>
               <span style={s.metricValue}>ехать нельзя</span>
             </div>
           )}

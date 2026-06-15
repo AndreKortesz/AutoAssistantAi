@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCar } from '../contexts/CarContext';
 import * as journalService from '../services/journalService';
+import Icon from './Icon';
 
 // AutoAssistantAi — Журнал обслуживания
 // История записей + быстрое добавление
@@ -36,11 +37,11 @@ const formatMileage = (mileage) => {
 
 // Типы записей с иконками
 const recordTypes = {
-  maintenance: { icon: '🔧', label: 'ТО', color: colors.primary },
-  repair: { icon: '🛠', label: 'Ремонт', color: colors.warning },
-  consumables: { icon: '📦', label: 'Расходники', color: colors.textSecondary },
-  diagnostics: { icon: '🔍', label: 'Диагностика', color: colors.primary },
-  tires: { icon: '🛞', label: 'Шины', color: colors.textSecondary },
+  maintenance: { icon: 'wrench', label: 'ТО', color: colors.primary },
+  repair: { icon: 'wrench', label: 'Ремонт', color: colors.warning },
+  consumables: { icon: 'package', label: 'Расходники', color: colors.textSecondary },
+  diagnostics: { icon: 'search', label: 'Диагностика', color: colors.primary },
+  tires: { icon: 'disc', label: 'Шины', color: colors.textSecondary },
 };
 
 // Пресеты для быстрого выбора
@@ -97,7 +98,7 @@ const RecordCard = ({ record }) => {
   
   return (
     <div style={styles.recordCard}>
-      <div style={styles.recordIcon}>{typeConfig.icon}</div>
+      <div style={styles.recordIcon}><Icon name={typeConfig.icon} size={18} color={typeConfig.color} /></div>
       <div style={styles.recordContent}>
         <div style={styles.recordName}>{record.name}</div>
         <div style={styles.recordMeta}>
@@ -178,8 +179,9 @@ const AddRecordModal = ({ isOpen, onClose, onSave, currentMileage }) => {
           <button 
             style={styles.modalBack}
             onClick={() => step === 'form' ? setStep('select') : onClose()}
+            aria-label={step === 'form' ? 'Назад' : 'Закрыть'}
           >
-            {step === 'form' ? '←' : '✕'}
+            <Icon name={step === 'form' ? 'arrowLeft' : 'x'} size={20} color={colors.textPrimary} />
           </button>
           <span style={styles.modalTitle}>
             {step === 'select' ? 'Новая запись' : 'Детали'}
@@ -193,7 +195,7 @@ const AddRecordModal = ({ isOpen, onClose, onSave, currentMileage }) => {
             <>
               {/* OCR кнопка */}
               <button style={styles.ocrButton}>
-                <span style={styles.ocrIcon}>📷</span>
+                <span style={styles.ocrIcon}><Icon name="camera" size={22} color={colors.primary} /></span>
                 <span style={styles.ocrText}>Сфотографировать чек</span>
                 <span style={styles.ocrHint}>Заполним автоматически</span>
               </button>
@@ -211,7 +213,7 @@ const AddRecordModal = ({ isOpen, onClose, onSave, currentMileage }) => {
                     onClick={() => handlePresetSelect(preset)}
                   >
                     <span style={styles.presetIcon}>
-                      {recordTypes[preset.type].icon}
+                      <Icon name={recordTypes[preset.type].icon} size={16} color={colors.textSecondary} />
                     </span>
                     <span style={styles.presetName}>{preset.name}</span>
                   </button>
@@ -333,8 +335,8 @@ const AddRecordModal = ({ isOpen, onClose, onSave, currentMileage }) => {
                     />
                   </div>
 
-                  <button style={styles.photoButton}>
-                    📎 Прикрепить фото
+                  <button style={{ ...styles.photoButton, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <Icon name="clip" size={16} color={colors.textSecondary} /> Прикрепить фото
                   </button>
                 </>
               )}
@@ -442,7 +444,7 @@ export default function JournalScreen() {
       <div style={styles.content}>
         {groupedRecords.length === 0 ? (
           <div style={styles.empty}>
-            <div style={styles.emptyIcon}>📋</div>
+            <div style={{ ...styles.emptyIcon, display: 'flex', justifyContent: 'center' }}><Icon name="clipboard" size={52} color={colors.textTertiary} /></div>
             <div style={styles.emptyText}>Записей пока нет</div>
             <div style={styles.emptyHint}>Добавьте первую запись об обслуживании</div>
           </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Icon from './Icon';
 
 // AutoAssistantAi — Онбординг
 // Финальная версия с 4 слайдами
@@ -17,7 +18,7 @@ const colors = {
 const slides = [
   {
     id: 1,
-    icon: '🔮',
+    icon: 'sparkles',
     title: 'Знаем, когда сломается',
     subtitle: 'до того, как это случится',
     description: 'Понимайте состояние авто с первого взгляда. Мы знаем болячки вашей модели и предупредим за несколько тысяч км до проблемы.',
@@ -26,7 +27,7 @@ const slides = [
   },
   {
     id: 2,
-    icon: '💰',
+    icon: 'wallet',
     title: 'Не дадим переплатить',
     subtitle: 'за ремонт и запчасти',
     description: 'Честные цены на работы и запчасти. Где чинить, что купить, и что можно сделать самому.',
@@ -35,7 +36,7 @@ const slides = [
   },
   {
     id: 3,
-    icon: '📋',
+    icon: 'clipboard',
     title: 'Вся история',
     subtitle: 'в одном месте',
     description: 'Сфоткайте чек или накладную — распознаем и добавим. При продаже покажете покупателю полный журнал.',
@@ -44,7 +45,7 @@ const slides = [
   },
   {
     id: 4,
-    icon: '🤖',
+    icon: 'bot',
     title: 'AI-механик 24/7',
     subtitle: 'в вашем кармане',
     description: 'Опишите симптом — получите диагноз с вероятностями и ценами. Как друг, который разбирается в машинах.',
@@ -82,7 +83,7 @@ export default function Onboarding({ onComplete }) {
       {/* Контент слайда */}
       <div style={styles.slideContent}>
         <div style={styles.iconContainer}>
-          <span style={styles.icon}>{slide.icon}</span>
+          <Icon name={slide.icon} size={48} color={colors.primary} strokeWidth={1.6} />
         </div>
         
         <h1 style={styles.title}>{slide.title}</h1>
