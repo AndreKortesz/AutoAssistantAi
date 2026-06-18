@@ -26,6 +26,7 @@ const c = {
   successDark: '#0F6E56',
   amber: '#BA7517',
   amberLight: 'rgba(186, 117, 23, 0.10)',
+  critical: '#DC2626',
   textPrimary: '#1E293B',
   textSecondary: '#64748B',
   textTertiary: '#94A3B8',
@@ -33,12 +34,35 @@ const c = {
 
 const MAX_INDEX = 95;
 
-// Цвет/статус общего индекса
+const ASSISTANT_QUESTIONS = [
+  'Почему стучит на холодную?',
+  'Какое масло лить в мой мотор?',
+  'Когда менять ремень/цепь ГРМ?',
+  'Что значит ошибка P0011?',
+  'Почему растёт расход топлива?',
+  'Как часто менять тормозную жидкость?',
+  'Что за стук в подвеске на кочках?',
+  'Нужна ли замена антифриза сейчас?',
+  'Какие болячки у моего мотора?',
+];
+
+function CostRow({ color, label, value }) {
+  if (!value) return null;
+  return (
+    <div style={s.costRow}>
+      <span style={{ ...s.costDot, background: color }} />
+      <span style={s.costRowLabel}>{label}</span>
+      <span style={s.costRowVal}>{value.toLocaleString('ru-RU')} ₽</span>
+    </div>
+  );
+}
+
+// Цвет/статус общего индекса. ring — цвет дуги кольца, text — цвет статус-текста.
+// Зелёный для хорошо/норма, янтарь — внимание, красный — только при низком.
 function indexStatus(idx) {
-  if (idx >= 80) return { color: c.success, label: 'Хорошее состояние' };
-  if (idx >= 65) return { color: c.primary, label: 'Нормальное состояние' };
-  if (idx >= 50) return { color: c.amber, label: 'Стоит присмотреться' };
-  return { color: c.amber, label: 'Несколько мест внимания' };
+  if (idx >= 65) return { ring: c.success, text: c.successDark, label: idx >= 80 ? 'Хорошее состояние' : 'Нормальное состояние' };
+  if (idx >= 50) return { ring: c.amber, text: c.amber, label: 'Стоит присмотреться' };
+  return { ring: c.critical, text: c.critical, label: 'Несколько мест внимания' };
 }
 
 function systemStatusWord(score) {
@@ -53,6 +77,7 @@ export default function Dashboard() {
   const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed } = useCar();
   const [showMileageModal, setShowMileageModal] = useState(false);
   const [systemsOpen, setSystemsOpen] = useState(false);
+  const [costOpen, setCostOpen] = useState(false);
   const [pop, setPop] = useState(false); // анимация «+N» после «Я починил»
   const animatedRef = useRef(false);
 
@@ -114,6 +139,16 @@ export default function Dashboard() {
     () => estimatePeerPercentile(healthIndex, mileage, userCar?.year),
     [healthIndex, mileage, userCar]
   );
+
+  const budget = issuesData?.annual_budget?.scenarios?.average || null;
+
+  // случайный пример вопроса для ассистента (новый при каждом заходе);
+  // приоритетно подмешиваем вопрос про текущую болячку, если она есть
+  const exampleQuestion = useMemo(() => {
+    const pool = [...ASSISTANT_QUESTIONS];
+    if (priority?.issue?.title) pool.unshift(`Что значит «${priority.issue.title}»?`, `Стоит ли беспокоиться: ${priority.issue.title_short || priority.issue.title}?`);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }, [priority]);
 
   if (loading) return <div style={s.loading}>Загрузка...</div>;
 
@@ -178,7 +213,7 @@ export default function Dashboard() {
                   {/* засечка-потолок 95 */}
                   <circle cx="42" cy="42" r={R} fill="none" stroke={c.amber} strokeWidth="2"
                     strokeDasharray="1.5 4" opacity="0.6" />
-                  <circle cx="42" cy="42" r={R} fill="none" stroke={status.color} strokeWidth="6"
+                  <circle cx="42" cy="42" r={R} fill="none" stroke={status.ring} strokeWidth="6"
                     strokeLinecap="round" strokeDasharray={CIRC}
                     strokeDashoffset={CIRC * (1 - fillRatio)}
                     style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
@@ -189,7 +224,7 @@ export default function Dashboard() {
                 {pop && <div style={s.ringPop} className="aaa-pop-up">+{pop}</div>}
               </div>
               <div style={s.healthInfo}>
-                <div style={{ ...s.healthStatus, color: status.color }}>{status.label}</div>
+                <div style={{ ...s.healthStatus, color: status.text }}>{status.label}</div>
                 <div style={s.healthMean}>Для машины с таким пробегом — крепкий результат.</div>
               </div>
             </div>
@@ -200,6 +235,40 @@ export default function Dashboard() {
                 Крепче, чем у <b>~{peerPct}%</b> ровесников {carDetails.model_name} с похожим пробегом
               </div>
             </div>
+
+            {budget?.total > 0 && (
+              <div style={s.costWrap}>
+                <button style={s.costHead} onClick={() => setCostOpen(o => !o)}>
+                  <Icon name="wallet" size={18} color={c.textSecondary} />
+                  <span style={s.costTitle}>Прогноз расходов на год</span>
+                  <span style={s.costSum}>~{budget.total.toLocaleString('ru-RU')} ₽</span>
+                  <span style={{ ...s.costChev, transform: costOpen ? 'rotate(180deg)' : 'none' }}>
+                    <Icon name="chevronDown" size={16} color={c.textTertiary} />
+                  </span>
+                </button>
+                {costOpen && (
+                  <div style={s.costBody}>
+                    <div style={s.costBar}>
+                      {[
+                        { v: budget.regular_to, color: c.primary },
+                        { v: budget.wear_replacements, color: c.amber },
+                        { v: budget.contingency, color: c.textTertiary },
+                      ].map((seg, i) => seg.v > 0 && (
+                        <div key={i} style={{ width: `${(seg.v / budget.total) * 100}%`, background: seg.color, height: '100%' }} />
+                      ))}
+                    </div>
+                    <div style={s.costLegend}>
+                      <CostRow color={c.primary} label="Плановое ТО" value={budget.regular_to} />
+                      <CostRow color={c.amber} label="Расходники" value={budget.wear_replacements} />
+                      <CostRow color={c.textTertiary} label="Типичные ремонты" value={budget.contingency} />
+                    </div>
+                    <button style={s.costLink} onClick={() => navigate('/cost')}>
+                      Подробный расчёт <Icon name="arrowRight" size={14} color={c.primary} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
@@ -212,14 +281,20 @@ export default function Dashboard() {
       </div>
 
       {/* Спросить про мою машину (обводка) */}
-      <button style={s.askBtn} onClick={() => navigate('/assistant')}>
-        <Icon name="chat" size={20} color={c.primary} />
-        <div style={{ flex: 1 }}>
-          <div style={s.askTitle}>Спросить про мою машину</div>
-          <div style={s.askSub}>Ассистент знает вашу комплектацию</div>
+      <div style={s.askBtn}>
+        <div style={s.askTop} onClick={() => navigate('/assistant')}>
+          <Icon name="chat" size={20} color={c.primary} />
+          <div style={{ flex: 1 }}>
+            <div style={s.askTitle}>Спросить про мою машину</div>
+            <div style={s.askSub}>Ассистент — как друг, который разбирается в машинах</div>
+          </div>
+          <Icon name="arrowRight" size={16} color={c.textTertiary} />
         </div>
-        <Icon name="arrowRight" size={16} color={c.textTertiary} />
-      </button>
+        <button style={s.askChip} onClick={() => navigate('/assistant', { state: { prompt: exampleQuestion } })}>
+          <Icon name="sparkles" size={14} color={c.textTertiary} />
+          <span style={s.askChipText}>{exampleQuestion}</span>
+        </button>
+      </div>
 
       {hasData && (
         <>
@@ -403,9 +478,26 @@ const s = {
 
   noData: { fontSize: '13px', color: c.textSecondary, lineHeight: 1.5 },
 
-  askBtn: { width: 'calc(100% - 24px)', margin: '0 12px 14px', padding: '13px 16px', background: 'none', border: `1px solid ${c.border}`, borderRadius: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left', fontFamily: 'inherit' },
+  askBtn: { margin: '0 12px 14px', padding: '13px 16px', background: 'none', border: `1px solid ${c.border}`, borderRadius: '14px' },
+  askTop: { display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' },
   askTitle: { fontSize: '14px', fontWeight: '600', color: c.textPrimary },
   askSub: { fontSize: '12px', color: c.textTertiary, marginTop: '1px' },
+  askChip: { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', marginTop: '10px', padding: '10px 12px', background: c.bg, border: `1px solid ${c.border}`, borderRadius: '10px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },
+  askChipText: { fontSize: '13px', color: c.textSecondary },
+
+  costWrap: { marginTop: '12px' },
+  costHead: { width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0 0', borderTop: `1px solid ${c.border}`, borderLeft: 'none', borderRight: 'none', borderBottom: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit' },
+  costTitle: { flex: 1, fontSize: '13px', color: c.textPrimary, textAlign: 'left' },
+  costSum: { fontSize: '14px', fontWeight: '700', color: c.textPrimary },
+  costChev: { display: 'inline-flex', transition: 'transform 0.2s' },
+  costBody: { paddingTop: '12px' },
+  costBar: { display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', background: c.bg },
+  costLegend: { marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' },
+  costRow: { display: 'flex', alignItems: 'center', gap: '8px' },
+  costDot: { width: '8px', height: '8px', borderRadius: '2px', flexShrink: 0 },
+  costRowLabel: { flex: 1, fontSize: '13px', color: c.textSecondary },
+  costRowVal: { fontSize: '13px', fontWeight: '600', color: c.textPrimary },
+  costLink: { marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: c.primary, fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', padding: 0 },
 
   prioCard: { margin: '0 12px 12px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '16px', padding: '16px' },
   prioLabel: { fontSize: '11px', fontWeight: '600', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '10px' },

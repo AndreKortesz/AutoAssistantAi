@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import Icon from './Icon';
 import CarSilhouette from './CarSilhouette';
@@ -175,6 +175,7 @@ const WelcomeMessage = ({ car }) => (
 
 export default function AssistantScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userCar, carDetails, issuesData } = useCar();
   const car = useMemo(() => {
     if (!carDetails || !userCar) return null;
@@ -205,26 +206,9 @@ export default function AssistantScreen() {
     scrollToBottom();
   }, [messages]);
 
-  if (!car) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.welcome}>
-          <div style={{ ...styles.welcomeIcon, display: 'flex', justifyContent: 'center' }}><CarSilhouette color="#B8BCC2" width={110} height={60} /></div>
-          <div style={styles.welcomeTitle}>Сначала добавьте автомобиль</div>
-          <div style={styles.welcomeText}>Чтобы ассистент знал вашу машину и давал точные ответы</div>
-          <button
-            onClick={() => navigate('/add-car')}
-            style={{ marginTop: 16, padding: '12px 24px', background: colors.primary, color: '#FFFFFF', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
-          >
-            Добавить автомобиль
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // Контекст для заземления ассистента: реальные болячки из базы (без выдумок).
   const buildCarContext = () => {
+    if (!car) return {};
     const issues = (issuesData?.systemic || []).slice(0, 14).map(i => ({
       title: i.issue?.title || '',
       severity: i.issue?.severity || '',
@@ -282,6 +266,34 @@ export default function AssistantScreen() {
   const handlePromptSelect = (prompt) => {
     handleSend(prompt);
   };
+
+  // Вопрос, переданный с главной (чип-пример) — отправляем один раз при заходе.
+  const initialSentRef = useRef(false);
+  useEffect(() => {
+    const prompt = location.state?.prompt;
+    if (prompt && car && !initialSentRef.current) {
+      initialSentRef.current = true;
+      handleSend(prompt);
+    }
+  }, [location.state, car]);
+
+  if (!car) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.welcome}>
+          <div style={{ ...styles.welcomeIcon, display: 'flex', justifyContent: 'center' }}><CarSilhouette color="#B8BCC2" width={110} height={60} /></div>
+          <div style={styles.welcomeTitle}>Сначала добавьте автомобиль</div>
+          <div style={styles.welcomeText}>Чтобы ассистент знал вашу машину и давал точные ответы</div>
+          <button
+            onClick={() => navigate('/add-car')}
+            style={{ marginTop: 16, padding: '12px 24px', background: colors.primary, color: '#FFFFFF', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Добавить автомобиль
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const showQuickPrompts = messages.length === 0;
 

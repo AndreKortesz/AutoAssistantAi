@@ -216,7 +216,7 @@ export async function getIssuesForCar(modelId, filters = {}) {
     discardedRare: data.discarded_rare || [],
     metadata: data.metadata || {},
     annual_budget: data.annual_budget_15000km || null,
-    major_expenses: data.major_one_time_expenses || null,
+    major_expenses: data.major_one_time_expenses || [],
     key_insights: data.key_insights || null,
     hasData: data.hasData ?? true,
   };
