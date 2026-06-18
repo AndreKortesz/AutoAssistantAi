@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import React from 'react'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 
 import { CarProvider, useCar } from './contexts/CarContext'
 import * as userCarService from './services/userCarService'
@@ -114,39 +114,44 @@ const shouldShowNav = (pathname) => {
   return !noNavRoutes.includes(pathname)
 }
 
+// Сплэш на время загрузки машины из localStorage — нейтральный экран,
+// чтобы не мигал онбординг до того, как мы решили, куда вести пользователя.
+function Splash() {
+  return (
+    <div style={styles.splash}>
+      <div style={styles.splashLogo}>AAA</div>
+    </div>
+  )
+}
+
+// Что показывать на корневом маршруте «/». Решаем декларативно (без мигания):
+// пока грузимся — сплэш; новый пользователь — онбординг; вернувшийся —
+// сразу редирект на дашборд / добавление авто.
+function RootRoute({ onComplete }) {
+  const { userCar, loading } = useCar()
+  const hasCompletedOnboarding = userCarService.isOnboardingCompleted()
+
+  if (!hasCompletedOnboarding) return <Onboarding onComplete={onComplete} />
+  if (loading) return <Splash />
+  return <Navigate to={userCar ? '/dashboard' : '/add-car'} replace />
+}
+
 // Внутренний компонент роутинга, имеет доступ к контексту
 function AppRoutes() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { userCar, loading } = useCar()
-  
-  const hasCompletedOnboarding = userCarService.isOnboardingCompleted()
-  
+
   const handleOnboardingComplete = () => {
     userCarService.markOnboardingCompleted()
     navigate('/add-car')
   }
-  
-  // Редирект при первом запуске
-  useEffect(() => {
-    if (loading) return
-    if (location.pathname === '/') {
-      if (!hasCompletedOnboarding) {
-        // Остаёмся на онбординге
-      } else if (!userCar) {
-        navigate('/add-car')
-      } else {
-        navigate('/dashboard')
-      }
-    }
-  }, [location.pathname, hasCompletedOnboarding, userCar, loading, navigate])
 
   const showNav = shouldShowNav(location.pathname)
 
   return (
     <div style={styles.app}>
       <Routes>
-        <Route path="/" element={<Onboarding onComplete={handleOnboardingComplete} />} />
+        <Route path="/" element={<RootRoute onComplete={handleOnboardingComplete} />} />
         <Route path="/add-car" element={<AddCarForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/issues" element={<IssuesScreen />} />
@@ -175,6 +180,27 @@ const styles = {
   app: {
     minHeight: '100vh',
     background: colors.background,
+  },
+
+  splash: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: colors.background,
+  },
+  splashLogo: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '14px',
+    background: colors.primary,
+    color: '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: '700',
+    fontSize: '18px',
+    letterSpacing: '1px',
   },
   
   bottomNav: {
