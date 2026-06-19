@@ -109,7 +109,8 @@ app.post('/api/chat', async (req, res) => {
 // Остальное (index.html, JSON-данные) — без долгого кэша, чтобы деплой/правки данных подхватывались.
 app.use(express.static(DIST, {
   setHeaders: (res, filePath) => {
-    if (/[-.][0-9a-f]{8,}\.(js|css)$/i.test(filePath)) {
+    // Vite-хэш в имени: base64url-алфавит (буквы/цифры/-/_), напр. index-DK-Y4MrR.js
+    if (/-[A-Za-z0-9_-]{8,}\.(js|css)$|\.[0-9a-f]{8,}\.(js|css)$/.test(filePath)) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     } else if (filePath.endsWith('index.html')) {
       res.setHeader('Cache-Control', 'no-cache');

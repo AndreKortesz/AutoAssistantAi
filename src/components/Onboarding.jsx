@@ -76,7 +76,7 @@ export default function Onboarding({ onComplete }) {
     <div style={styles.container}>
       {/* Логотип */}
       <div style={styles.logoContainer}>
-        <div style={styles.logo}>AAA</div>
+        <img src="/branding/logo-mark.png" alt="AutoAssistantAi" style={styles.logo} />
         <div style={styles.logoText}>AutoAssistantAi</div>
       </div>
 
@@ -157,14 +157,9 @@ const styles = {
   logo: {
     width: '48px',
     height: '48px',
-    background: colors.primary,
     borderRadius: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#FFFFFF',
-    fontSize: '16px',
-    fontWeight: '700',
+    objectFit: 'cover',
+    display: 'block',
   },
 
   logoText: {
