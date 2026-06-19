@@ -170,6 +170,57 @@ export function estimatePeerPercentile(healthIndex, mileage, year) {
   return Math.round(Math.max(35, Math.min(85, pct * 100)));
 }
 
+// Кузов исключаем из раздела «Обслуживание» (решение владельца).
+export function isBodyRecord(r) {
+  return recordSystem(r) === 'body';
+}
+
+// Группировка болячек по ВАЖНOСTИ (для вкладки «Слабые места»).
+// Возвращает: safety (critical/high), planned (medium), minor (low),
+// upcoming (старт впереди ≤ horizon), past (позади). Кузов отфильтрован.
+export function groupByImportance(issues, currentMileage = 0, fixedIssueIds = [], horizonKm = 30000) {
+  const res = { safety: [], planned: [], minor: [], upcoming: [], past: [] };
+  for (const issue of issues || []) {
+    if (isBodyRecord(issue)) continue;
+    const cat = classifyIssueByMileage(issue, currentMileage);
+    if (cat === 'past') { res.past.push(issue); continue; }
+    if (cat === 'upcoming' || cat === 'future') {
+      const start = issue.mileage?.typical_start_km;
+      if (start != null && start - currentMileage <= horizonKm) res.upcoming.push(issue);
+      // дальше горизонта — только на «Карте», в список не пихаем
+      else if (start == null) res.upcoming.push(issue);
+      continue;
+    }
+    // current / chronic → активно сейчас, делим по severity
+    const sev = issue.issue?.severity;
+    if (sev === 'critical' || sev === 'high') res.safety.push(issue);
+    else if (sev === 'medium') res.planned.push(issue);
+    else res.minor.push(issue);
+  }
+  const order = { critical: 0, high: 1, medium: 2, low: 3 };
+  const sortSev = arr => arr.sort((a, b) => (order[a.issue?.severity] ?? 9) - (order[b.issue?.severity] ?? 9));
+  ['safety', 'planned', 'minor', 'upcoming'].forEach(k => sortSev(res[k]));
+  return res;
+}
+
+// Статус позиции износа/ТО по текущему пробегу.
+// → { state: 'overdue'|'now'|'soon'|'early', dueKm, remaining }
+export function wearStatus(record, currentMileage = 0, fixedIssueIds = []) {
+  const m = currentMileage || 0;
+  // если отмечено «уже сделал» — считаем недавно заменённым → рано
+  if (fixedIssueIds.includes(record.id)) return { state: 'early', dueKm: null, remaining: null };
+  const wr = wearRange(record);
+  const mi = record.mileage || {};
+  const low = wr?.min ?? mi.typical_start_km ?? mi.peak_km ?? null;
+  const high = wr?.max ?? mi.typical_end_km ?? mi.peak_km ?? low;
+  if (low == null) return { state: 'early', dueKm: null, remaining: null };
+  if (m > high + 20000) return { state: 'overdue', dueKm: high, remaining: m - high };
+  if (m >= low) return { state: 'now', dueKm: low, remaining: 0 };
+  const remaining = low - m;
+  if (remaining <= 15000) return { state: 'soon', dueKm: low, remaining };
+  return { state: 'early', dueKm: low, remaining };
+}
+
 // Название записи независимо от схемы файла:
 // systemic → issue.title; HC-ТО → position.name; HC-износ → part_info.name.
 export function recordTitle(r) {

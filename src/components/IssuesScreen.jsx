@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import {
-  groupIssuesByMileage,
+  groupByImportance,
   severityColor,
   severityLabel,
   formatPrice,
@@ -13,6 +13,8 @@ import {
 } from '../utils/issueHelpers';
 import Icon from './Icon';
 import CarSilhouette from './CarSilhouette';
+import MaintenanceTab from './MaintenanceTab';
+import MileageMapTab from './MileageMapTab';
 
 // AutoAssistantAi — Экран болячек
 // Группировка: текущие / предстоящие / прошедшие (по пробегу)
@@ -34,42 +36,55 @@ const c = {
 
 export default function IssuesScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userCar, carDetails, issuesData, loading, fixedIssueIds } = useCar();
 
-  const [expandedSections, setExpandedSections] = useState({
-    current: true,
-    upcoming: false,
-    chronic: false,
-    past: false,
-  });
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'issues'); // issues | service | map
+  const [openGroups, setOpenGroups] = useState({ safety: true, planned: true, minor: false, upcoming: false });
   const [recallsOpen, setRecallsOpen] = useState(false);
   const [expandedIssue, setExpandedIssue] = useState(null);
 
-  const toggleSection = (key) => {
-    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  const toggleGroup = (key) => setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleIssue = (id) => setExpandedIssue(expandedIssue === id ? null : id);
 
-  const toggleIssue = (id) => {
-    setExpandedIssue(expandedIssue === id ? null : id);
-  };
+  const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
-  // Группируем системные болячки по пробегу
+  // Группируем болячки по важности (кузов отфильтрован внутри)
   const grouped = useMemo(() => {
-    if (!issuesData) return { current: [], upcoming: [], past: [] };
-    const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
-    return groupIssuesByMileage(issuesData.systemic, mileage);
-  }, [issuesData, userCar]);
+    if (!issuesData) return { safety: [], planned: [], minor: [], upcoming: [], past: [] };
+    return groupByImportance(issuesData.systemic, mileage, fixedIssueIds);
+  }, [issuesData, mileage, fixedIssueIds]);
 
-  // Подсчёт по severity
-  const counts = useMemo(() => {
-    if (!issuesData) return { critical: 0, high: 0, medium: 0, low: 0 };
-    const result = { critical: 0, high: 0, medium: 0, low: 0 };
-    for (const issue of issuesData.systemic) {
-      const sev = issue.issue?.severity || 'low';
-      if (result[sev] !== undefined) result[sev]++;
-    }
-    return result;
-  }, [issuesData]);
+  const nowCount = grouped.safety.length + grouped.planned.length + grouped.minor.length;
+
+  const TABS = [
+    { id: 'issues', label: 'Слабые места' },
+    { id: 'service', label: 'ТО и расходники' },
+    { id: 'map', label: 'Карта' },
+  ];
+
+  const issueGroup = (key, type, title, list, intro) => (
+    <Section type={type} title={title} count={list.length} open={openGroups[key]} onToggle={() => toggleGroup(key)}>
+      {list.length === 0 ? (
+        <div style={s.okEmpty}><Icon name="check" size={16} color={c.success} /> Тут пока чисто — для вашего пробега ничего</div>
+      ) : (
+        <>
+          {intro && <div style={s.chronicIntro}>{intro}</div>}
+          {list.map(issue => (
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              expanded={expandedIssue === issue.id}
+              onToggle={() => toggleIssue(issue.id)}
+              onDetails={() => navigate(`/issues/${issue.id}`)}
+              recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
+              classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
+            />
+          ))}
+        </>
+      )}
+    </Section>
+  );
 
   if (loading) {
     return <div style={s.loading}>Загрузка...</div>;
@@ -117,19 +132,28 @@ export default function IssuesScreen() {
     <div style={s.container}>
       {/* Header */}
       <div style={s.header}>
-        <h1 style={s.headerTitle}>Что бывает у этой модели</h1>
+        <h1 style={s.headerTitle}>Обслуживание</h1>
         <div style={s.headerSubtitle}>
           {carLabel} • {engineLabel} • {formatMileage(userCar.mileage)}
         </div>
       </div>
 
-      {/* Подсказка */}
-      <div style={s.intro}>
-        <span style={s.introIcon}><Icon name="bulb" size={18} color={c.primary} /></span>
-        <span style={s.introText}>
-          Известные конструктивные дефекты для вашей конфигурации.
-          Группируем по пробегу — что актуально сейчас, что впереди, что уже должно было проявиться.
-        </span>
+      {/* Шапка C: спокойная фраза + сводка 3 чисел */}
+      <div style={s.calmCard}>
+        <div style={s.calmTop}>
+          <Icon name="shield" size={20} color={c.success} />
+          <div>
+            <div style={s.calmPhrase}>Для своего пробега — спокойно</div>
+            <div style={s.calmHint}>Известные слабые места модели, а не поломки вашей машины.</div>
+          </div>
+        </div>
+        <div style={s.calmNums}>
+          <span><b style={{ color: c.textPrimary }}>{nowCount}</b> сейчас</span>
+          <span style={s.calmDot}>·</span>
+          <span><b style={{ color: c.textPrimary }}>{grouped.upcoming.length}</b> впереди</span>
+          <span style={s.calmDot}>·</span>
+          <span style={{ color: c.success }}><b>{grouped.past.length}</b> пройдено</span>
+        </div>
       </div>
 
       {/* Отзывные кампании и иски — из нашей базы */}
@@ -199,136 +223,31 @@ export default function IssuesScreen() {
         </div>
       )}
 
-      {/* Сводка по severity */}
-      <div style={s.summary}>
-        <div style={s.summaryItem}>
-          <span style={{ ...s.summaryValue, color: c.critical }}>{counts.critical}</span>
-          <span style={s.summaryLabel}>Критично</span>
-        </div>
-        <div style={s.summaryDivider} />
-        <div style={s.summaryItem}>
-          <span style={{ ...s.summaryValue, color: c.warning }}>{counts.high}</span>
-          <span style={s.summaryLabel}>Серьёзно</span>
-        </div>
-        <div style={s.summaryDivider} />
-        <div style={s.summaryItem}>
-          <span style={{ ...s.summaryValue, color: c.primary }}>{counts.medium}</span>
-          <span style={s.summaryLabel}>Внимание</span>
-        </div>
-        <div style={s.summaryDivider} />
-        <div style={s.summaryItem}>
-          <span style={{ ...s.summaryValue, color: c.success }}>{counts.low}</span>
-          <span style={s.summaryLabel}>Незнач.</span>
-        </div>
+      {/* Вкладки раздела */}
+      <div style={s.tabbar}>
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            style={{ ...s.tab, ...(activeTab === t.id ? s.tabActive : {}) }}
+            onClick={() => setActiveTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* Секции */}
-      <div style={s.sections}>
-        <Section
-          type="critical"
-          title="Актуально сейчас"
-          count={grouped.current.length}
-          open={expandedSections.current}
-          onToggle={() => toggleSection('current')}
-        >
-          {grouped.current.length === 0 ? (
-            <EmptyText>На вашем пробеге пока ничего не должно проявиться</EmptyText>
-          ) : (
-            grouped.current.map(issue => (
-              <IssueCard
-                key={issue.id}
-                issue={issue}
-                expanded={expandedIssue === issue.id}
-                onToggle={() => toggleIssue(issue.id)}
-                onDetails={() => navigate(`/issues/${issue.id}`)}
-                recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
-                classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
-                isFixed={fixedIssueIds.includes(issue.id)}
-              />
-            ))
-          )}
-        </Section>
+      {/* Контент вкладок */}
+      {activeTab === 'issues' && (
+        <div style={s.sections}>
+          {issueGroup('safety', 'warning', 'Важно для безопасности и мотора', grouped.safety)}
+          {issueGroup('planned', 'default', 'Плановый ремонт и износ', grouped.planned)}
+          {issueGroup('minor', 'default', 'Мелочи · просто знать', grouped.minor)}
+          {grouped.upcoming.length > 0 && issueGroup('upcoming', 'info', 'Что может проявиться впереди', grouped.upcoming, 'Старт по пробегу ещё впереди — не сейчас, а на горизонте. Просто чтобы знать.')}
+        </div>
+      )}
 
-        <Section
-          type="warning"
-          title="Скоро может проявиться"
-          count={grouped.upcoming.length}
-          open={expandedSections.upcoming}
-          onToggle={() => toggleSection('upcoming')}
-        >
-          {grouped.upcoming.length === 0 ? (
-            <EmptyText>На вашем пробеге всё впереди — пока без новых рисков</EmptyText>
-          ) : (
-            grouped.upcoming.map(issue => (
-              <IssueCard
-                key={issue.id}
-                issue={issue}
-                expanded={expandedIssue === issue.id}
-                onToggle={() => toggleIssue(issue.id)}
-                onDetails={() => navigate(`/issues/${issue.id}`)}
-                recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
-                classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
-                isFixed={fixedIssueIds.includes(issue.id)}
-              />
-            ))
-          )}
-        </Section>
-
-        <Section
-          type="info"
-          title="Особенности этого поколения"
-          count={grouped.chronic.length}
-          open={expandedSections.chronic}
-          onToggle={() => toggleSection('chronic')}
-        >
-          {grouped.chronic.length === 0 ? (
-            <EmptyText>У этого поколения мы пока не отметили постоянных особенностей</EmptyText>
-          ) : (
-            <>
-              <div style={s.chronicIntro}>
-                Проявляются у этого поколения вне зависимости от пробега. Не требуют действий сейчас — просто хорошо знать.
-              </div>
-              {grouped.chronic.map(issue => (
-                <IssueCard
-                  key={issue.id}
-                  issue={issue}
-                  expanded={expandedIssue === issue.id}
-                  onToggle={() => toggleIssue(issue.id)}
-                  onDetails={() => navigate(`/issues/${issue.id}`)}
-                  recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
-                  classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
-                  isFixed={fixedIssueIds.includes(issue.id)}
-                />
-              ))}
-            </>
-          )}
-        </Section>
-
-        <Section
-          type="success"
-          title="Уже пройдено"
-          count={grouped.past.length}
-          open={expandedSections.past}
-          onToggle={() => toggleSection('past')}
-        >
-          {grouped.past.length === 0 ? (
-            <EmptyText>Пока нет болячек, которые остались позади</EmptyText>
-          ) : (
-            grouped.past.map(issue => (
-              <IssueCard
-                key={issue.id}
-                issue={issue}
-                expanded={expandedIssue === issue.id}
-                onToggle={() => toggleIssue(issue.id)}
-                onDetails={() => navigate(`/issues/${issue.id}`)}
-                recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
-                classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
-                isFixed={fixedIssueIds.includes(issue.id)}
-              />
-            ))
-          )}
-        </Section>
-      </div>
+      {activeTab === 'service' && <MaintenanceTab />}
+      {activeTab === 'map' && <MileageMapTab />}
     </div>
   );
 }
@@ -498,6 +417,21 @@ function statusBadge(status) {
 const s = {
   container: { background: c.bg, minHeight: '100vh', paddingBottom: '100px', fontFamily: 'Inter, system-ui, sans-serif' },
   loading: { padding: '40px', textAlign: 'center', color: c.textSecondary },
+
+  // Шапка C
+  calmCard: { margin: '12px', padding: '16px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '14px' },
+  calmTop: { display: 'flex', alignItems: 'flex-start', gap: '10px' },
+  calmPhrase: { fontSize: '15px', fontWeight: '600', color: c.success },
+  calmHint: { fontSize: '12px', color: c.textSecondary, lineHeight: '1.4', marginTop: '2px' },
+  calmNums: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${c.border}`, fontSize: '13px', color: c.textSecondary },
+  calmDot: { color: c.textTertiary },
+
+  // Таб-бар
+  tabbar: { display: 'flex', gap: '4px', margin: '0 12px 12px', padding: '4px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '12px' },
+  tab: { flex: 1, padding: '9px 6px', background: 'none', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: '600', color: c.textSecondary, cursor: 'pointer', fontFamily: 'inherit' },
+  tabActive: { background: c.primaryLight, color: c.primary },
+
+  okEmpty: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', fontSize: '13px', color: c.textSecondary },
   
   emptyState: { padding: '40px 20px', textAlign: 'center' },
   emptyIcon: { fontSize: '64px', marginBottom: '16px' },

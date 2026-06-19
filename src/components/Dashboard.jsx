@@ -378,7 +378,7 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <button style={s.nextAll} onClick={() => navigate('/maintenance')}>
+              <button style={s.nextAll} onClick={() => navigate('/issues', { state: { tab: 'service' } })}>
                 Весь регламент ТО
                 <Icon name="arrowRight" size={15} color={c.textSecondary} />
               </button>

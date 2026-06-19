@@ -84,7 +84,7 @@ const BottomNav = () => {
   
   const navItems = [
     { path: '/dashboard', icon: 'home', label: 'Главная' },
-    { path: '/issues', icon: 'wrench', label: 'Слабые места' },
+    { path: '/issues', icon: 'wrench', label: 'Обслуживание' },
     { path: '/journal', icon: 'clipboard', label: 'Журнал' },
     { path: '/assistant', icon: 'chat', label: 'Ассистент' },
   ]
