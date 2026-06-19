@@ -45,11 +45,23 @@ const CORE = [
 const EXTRA_PULL = { id: 'engine_pull', q: 'Как тянет при разгоне?', hint: 'Под нагрузкой', options: [
   { val: 'good', label: 'Бодро' }, { val: 'mid', label: 'Нормально' }, { val: 'bad', label: 'Вяло, потеря тяги' }] };
 
+// Подсказки «проверить самому» для механики «Не знаю».
+const TIPS = {
+  engine_cold_start: 'Заведите утром на холодную и послушайте первые 10 секунд: схватывает сразу и ровно — или троит, плавают обороты.',
+  oil_consumption: 'Проверьте уровень по щупу сейчас, отметьте, и сверьте через ~1000 км — есть ли заметная убыль.',
+  engine_noise: 'На прогретом моторе на холостых послушайте у открытого капота — нет ли цокота или стука.',
+  engine_pull: 'На свободной дороге разгонитесь с 60 до 100 — тянет бодро или вяло, с провалами.',
+  transmission: 'Прокатитесь спокойно и под газ: обратите внимание на толчки, рывки или «задумчивость» при переключениях.',
+};
+const SERVICE_TIP = 'При ближайшем визите в сервис попросите мастера проверить этот момент — обычно это быстро и недорого.';
+
 export default function OnboardingQuestions() {
   const navigate = useNavigate();
   const { userCar, carDetails, saveAnswers } = useCar();
   const [step, setStep] = useState(0);
   const [extraOpen, setExtraOpen] = useState(false); // решил ли «ответить ещё»
+  const [pending, setPending] = useState(null);      // вопрос, по которому открыты «3 пути» (после «Не знаю»)
+  const [openPath, setOpenPath] = useState(null);     // 'self' | 'service' — какая подсказка раскрыта
 
   // Вопрос по коробке — по типу трансмиссии машины.
   const transmissionQ = useMemo(() => {
@@ -72,8 +84,10 @@ export default function OnboardingQuestions() {
 
   const answer = (val) => {
     if (q) saveAnswers({ [q.id]: val });
-    next();
+    if (val === 'unknown') { setPending(q); setOpenPath(null); } // не штрафуем, предлагаем путь к ответу
+    else next();
   };
+  const continueFromPending = () => { setPending(null); setOpenPath(null); next(); };
   const next = () => {
     if (step + 1 < questions.length) setStep(step + 1);
     else if (!extraOpen && step + 1 >= CORE.length) setStep(CORE.length); // к развилке
@@ -87,7 +101,45 @@ export default function OnboardingQuestions() {
     <div style={s.container}>
       <button style={s.skipTop} onClick={finish} aria-label="Позже">Позже</button>
 
-      {atGate ? (
+      {pending ? (
+        <div style={s.card}>
+          <div style={s.q}>Как это узнать?</div>
+          <div style={s.hint}>На вторичке мало кто знает всё — это нормально. Этот момент не штрафует оценку, отметим, когда узнаете.</div>
+          <div style={s.options}>
+            <div>
+              <button style={s.pathBtn} onClick={() => setOpenPath(p => p === 'self' ? null : 'self')}>
+                <Icon name="search" size={20} color={c.primary} />
+                <div style={s.pathInfo}>
+                  <div style={s.pathTitle}>Проверить самому</div>
+                  <div style={s.pathSub}>Простой способ оценить</div>
+                </div>
+                <Icon name="chevronDown" size={16} color={c.t3} style={{ transform: openPath === 'self' ? 'rotate(180deg)' : 'none' }} />
+              </button>
+              {openPath === 'self' && <div style={s.tip}>{TIPS[pending.id]}</div>}
+            </div>
+            <div>
+              <button style={s.pathBtn} onClick={() => setOpenPath(p => p === 'service' ? null : 'service')}>
+                <Icon name="wrench" size={20} color={c.primary} />
+                <div style={s.pathInfo}>
+                  <div style={s.pathTitle}>Спросить в сервисе</div>
+                  <div style={s.pathSub}>Что попросить проверить</div>
+                </div>
+                <Icon name="chevronDown" size={16} color={c.t3} style={{ transform: openPath === 'service' ? 'rotate(180deg)' : 'none' }} />
+              </button>
+              {openPath === 'service' && <div style={s.tip}>{SERVICE_TIP}</div>}
+            </div>
+            <button style={s.pathBtn} onClick={() => navigate('/assistant')}>
+              <Icon name="chat" size={20} color={c.primary} />
+              <div style={s.pathInfo}>
+                <div style={s.pathTitle}>Спросить ассистента</div>
+                <div style={s.pathSub}>Задать вопрос про этот момент</div>
+              </div>
+              <Icon name="arrowRight" size={16} color={c.t3} />
+            </button>
+          </div>
+          <button style={s.ghostBtn} onClick={continueFromPending}>Напомнить позже</button>
+        </div>
+      ) : atGate ? (
         <div style={s.card}>
           <div style={s.gateIcon}><Icon name="check" size={28} color={c.success} /></div>
           <div style={s.q}>Спасибо! Уже понятнее.</div>
@@ -142,6 +194,11 @@ const s = {
   option: { display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '15px 16px', background: 'transparent', border: `1px solid ${c.border}`, borderRadius: '12px', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' },
   optionLabel: { fontSize: '15px', color: c.t1, fontWeight: '500' },
   unknownBtn: { marginTop: '18px', width: '100%', padding: '10px', background: 'none', border: 'none', color: c.t3, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' },
+  pathBtn: { display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '14px 16px', background: 'transparent', border: `1px solid ${c.border}`, borderRadius: '12px', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' },
+  pathInfo: { flex: 1, minWidth: 0 },
+  pathTitle: { fontSize: '15px', color: c.t1, fontWeight: '500' },
+  pathSub: { fontSize: '12px', color: c.t3, marginTop: '2px' },
+  tip: { fontSize: '13px', color: c.t2, lineHeight: 1.5, padding: '10px 14px 2px 14px' },
   gateIcon: { width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(29,158,117,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' },
   primaryBtn: { marginTop: '18px', width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: c.primary, color: '#fff', fontSize: '15px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
   ghostBtn: { marginTop: '10px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: 'transparent', color: c.t2, fontSize: '15px', cursor: 'pointer', fontFamily: 'inherit' },
