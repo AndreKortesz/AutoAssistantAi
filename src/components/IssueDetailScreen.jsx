@@ -64,9 +64,14 @@ export default function IssueDetailScreen() {
   const [expanded, setExpanded] = useState({
     symptoms: true,
     cause: true,
+    consequences: true,
     solution: true,
+    prevention: true,
+    diagnostic: false,
     parts: true,
-    reviews: false,
+    history: false,
+    reviews: true,
+    sources: false,
   });
 
   useEffect(() => {
@@ -142,6 +147,7 @@ export default function IssueDetailScreen() {
   const carInfo = issue.car || {};
   const engine = carInfo.engine?.code || '';
   const trans = carInfo.transmission?.code || '';
+  const fuel = carInfo.engine?.fuel_requirements || null;
   
   const ds = issue.defect_status || {};
   const recalls = mergeLegal(
@@ -188,6 +194,15 @@ export default function IssueDetailScreen() {
         {issue.issue?.severity_reason && (
           <div style={s.severityNote}>
             {issue.issue.severity_reason}
+          </div>
+        )}
+
+        {fuel?.quality_sensitivity_note && (
+          <div style={s.fuelNote}>
+            <Icon name="droplet" size={16} color={c.warning} style={{ flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <strong>Топливо{fuel.octane_recommended ? `: рекомендуется АИ-${fuel.octane_recommended}` : ''}.</strong> {fuel.quality_sensitivity_note}
+            </div>
           </div>
         )}
 
@@ -352,6 +367,22 @@ export default function IssueDetailScreen() {
         </Section>
       )}
 
+      {/* Что будет, если тянуть */}
+      {issue.consequences && (issue.consequences.description || issue.consequences.worst_case || issue.consequences.time_to_failure) && (
+        <Section title="Что будет, если тянуть" expanded={expanded.consequences} onToggle={() => toggle('consequences')}>
+          {issue.consequences.description && <p style={s.causeText}>{issue.consequences.description}</p>}
+          {issue.consequences.worst_case && (
+            <div style={s.conseqRow}><span style={s.conseqLabel}>Худший сценарий</span><span style={s.conseqVal}>{issue.consequences.worst_case}{issue.consequences.worst_case_cost_rub ? ` — ${formatPrice(issue.consequences.worst_case_cost_rub)}` : ''}</span></div>
+          )}
+          {issue.consequences.repair_if_ignored_cost_rub && (
+            <div style={s.conseqRow}><span style={s.conseqLabel}>Если запустить</span><span style={s.conseqVal}>{formatPrice(issue.consequences.repair_if_ignored_cost_rub)}</span></div>
+          )}
+          {issue.consequences.time_to_failure && (
+            <div style={s.conseqRow}><span style={s.conseqLabel}>Сколько можно ехать</span><span style={s.conseqVal}>{issue.consequences.time_to_failure}</span></div>
+          )}
+        </Section>
+      )}
+
       {/* Решение */}
       {solutions.length > 0 && (
         <Section title="Решение" expanded={expanded.solution} onToggle={() => toggle('solution')}>
@@ -422,6 +453,40 @@ export default function IssueDetailScreen() {
         </Section>
       )}
 
+      {/* Как избежать */}
+      {issue.prevention?.possible && (issue.prevention.recommendation || asArray(issue.prevention.actions).length > 0) && (
+        <Section title="Как избежать" expanded={expanded.prevention} onToggle={() => toggle('prevention')}>
+          {issue.prevention.recommendation && <p style={s.causeText}>{issue.prevention.recommendation}</p>}
+          {asArray(issue.prevention.actions).map((a, i) => (
+            <div key={i} style={s.preventItem}>
+              <span style={s.preventDot} />
+              <div style={s.preventText}>
+                {a.description}
+                {a.interval_km ? <span style={s.preventInterval}> · каждые {formatMileage(a.interval_km)}</span> : null}
+              </div>
+            </div>
+          ))}
+        </Section>
+      )}
+
+      {/* Как проверить самому */}
+      {issue.diagnostic && (issue.diagnostic.instruction || issue.diagnostic.visual_check) && (
+        <Section title="Как проверить самому" expanded={expanded.diagnostic} onToggle={() => toggle('diagnostic')}>
+          {issue.diagnostic.instruction && <p style={{ ...s.causeText, whiteSpace: 'pre-line' }}>{issue.diagnostic.instruction}</p>}
+          {issue.diagnostic.visual_check && (
+            <div style={s.diagBlock}><span style={s.diagLabel}>На что смотреть</span><div style={s.diagText}>{issue.diagnostic.visual_check}</div></div>
+          )}
+          {asArray(issue.diagnostic.tools_needed).length > 0 && (
+            <div style={s.toolsList}>
+              <div style={s.toolsTitle}>Инструменты</div>
+              <div style={s.toolsTags}>
+                {asArray(issue.diagnostic.tools_needed).map((t, i) => <span key={i} style={s.toolTag}>{t}</span>)}
+              </div>
+            </div>
+          )}
+        </Section>
+      )}
+
       {/* Запчасти */}
       {issue.parts?.length > 0 && (
         <Section title="Запчасти" expanded={expanded.parts} onToggle={() => toggle('parts')}>
@@ -460,6 +525,35 @@ export default function IssueDetailScreen() {
               <div style={s.reviewText}>{r.comment}</div>
               {r.source && <div style={s.reviewSource}>— {r.source}</div>}
             </div>
+          ))}
+        </Section>
+      )}
+
+      {/* По годам выпуска */}
+      {issue.history?.affected_years?.length > 0 && (
+        <Section title="По годам выпуска" expanded={expanded.history} onToggle={() => toggle('history')}>
+          <div style={s.conseqRow}>
+            <span style={s.conseqLabel}>Затронуты годы</span>
+            <span style={s.conseqVal}>{yearsRange(issue.history.affected_years)}</span>
+          </div>
+          {issue.history.safe_years?.length > 0 && (
+            <div style={s.conseqRow}>
+              <span style={s.conseqLabel}>Без проблемы</span>
+              <span style={{ ...s.conseqVal, color: c.success }}>{yearsRange(issue.history.safe_years)}</span>
+            </div>
+          )}
+          {issue.history.fixed_description && <p style={{ ...s.causeText, marginTop: '10px' }}>{issue.history.fixed_description}</p>}
+        </Section>
+      )}
+
+      {/* Источники */}
+      {issue.sources?.length > 0 && (
+        <Section title={`Источники (${issue.sources.length})`} expanded={expanded.sources} onToggle={() => toggle('sources')}>
+          {issue.sources.map((src, i) => (
+            <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" style={s.sourceRow}>
+              <span style={s.sourceName}>{src.author || src.type || 'Источник'}{src.date ? ` · ${src.date}` : ''}</span>
+              <Icon name="arrowRight" size={14} color={c.textTertiary} />
+            </a>
           ))}
         </Section>
       )}
@@ -533,11 +627,58 @@ function PartCard({ part, secondary }) {
         {part.part_number && <code style={s.partNumber}>{part.part_number}</code>}
       </div>
       {part.price && (
-        <div style={s.partPrice}>{formatPrice(part.price)}</div>
+        <div style={s.partPrice}>{formatPrice(part.price)}{part.price_usd ? <span style={s.partUsd}> · ${part.price_usd} в США</span> : null}</div>
       )}
       {part.reason && <div style={s.partReason}>{part.reason}</div>}
+
+      {part.revision_history?.length > 0 && (
+        <div style={s.partSub}>
+          <div style={s.partSubTitle}>Ревизии детали</div>
+          {part.revision_history.map((rv, i) => (
+            <div key={i} style={s.revRow}>
+              <code style={s.revPn}>{rv.part_number}</code>
+              <span style={{ ...s.revStatus, color: rv.status === 'проблемная' ? c.critical : rv.status === 'актуальная' ? c.success : c.textTertiary }}>{rv.status}</span>
+              {rv.note && <span style={s.revNote}>{rv.note}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {part.alternatives?.length > 0 && (
+        <div style={s.partSub}>
+          <div style={s.partSubTitle}>Хорошие аналоги</div>
+          {part.alternatives.map((a, i) => (
+            <div key={i} style={s.altRow}>
+              <span style={s.altManuf}>{a.manufacturer}</span>
+              {a.part_number && <code style={s.revPn}>{a.part_number}</code>}
+              {a.notes && <span style={s.revNote}>{a.notes}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {part.do_not_buy?.length > 0 && (
+        <div style={s.partSub}>
+          <div style={{ ...s.partSubTitle, color: c.critical }}>Не брать</div>
+          {part.do_not_buy.map((a, i) => (
+            <div key={i} style={s.altRow}>
+              <span style={s.altManuf}>{a.manufacturer}{a.part_number ? ` (${a.part_number})` : ''}</span>
+              {a.reason && <span style={s.revNote}>{a.reason}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+      {part.where_to_buy?.length > 0 && (
+        <div style={s.whereBuy}>Где купить: {part.where_to_buy.join(' · ')}</div>
+      )}
     </div>
   );
+}
+
+// Компактный диапазон годов: [2010,2011,...2017] → «2010–2017»
+function yearsRange(years) {
+  if (!years?.length) return '';
+  const sorted = [...years].sort((a, b) => a - b);
+  const min = sorted[0], max = sorted[sorted.length - 1];
+  return min === max ? `${min}` : `${min}–${max}`;
 }
 
 function difficultyLabel(d) {
@@ -648,6 +789,41 @@ const s = {
   partPrice: { fontSize: '14px', fontWeight: '600', color: c.success, marginTop: '4px' },
   partReason: { fontSize: '12px', color: c.textSecondary, marginTop: '4px', fontStyle: 'italic' },
   
+  // Fuel note
+  fuelNote: { display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '12px 14px', background: 'rgba(217, 119, 6, 0.08)', borderRadius: '8px', fontSize: '13px', color: c.textSecondary, lineHeight: '1.45', marginTop: '12px' },
+
+  // Consequences / history rows
+  conseqRow: { display: 'flex', justifyContent: 'space-between', gap: '12px', padding: '7px 0', borderBottom: `1px solid ${c.border}` },
+  conseqLabel: { fontSize: '13px', color: c.textTertiary, flexShrink: 0 },
+  conseqVal: { fontSize: '13px', fontWeight: '600', color: c.textPrimary, textAlign: 'right' },
+
+  // Prevention
+  preventItem: { display: 'flex', gap: '10px', alignItems: 'flex-start', marginTop: '8px' },
+  preventDot: { width: '6px', height: '6px', borderRadius: '50%', background: c.success, marginTop: '7px', flexShrink: 0 },
+  preventText: { fontSize: '13px', color: c.textPrimary, lineHeight: '1.45' },
+  preventInterval: { color: c.textTertiary },
+
+  // Diagnostic
+  diagBlock: { marginTop: '10px', padding: '10px 12px', background: c.bg, borderRadius: '8px' },
+  diagLabel: { fontSize: '12px', fontWeight: '600', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.5px' },
+  diagText: { fontSize: '13px', color: c.textSecondary, lineHeight: '1.45', marginTop: '4px' },
+
+  // Parts extra
+  partUsd: { fontSize: '12px', fontWeight: '400', color: c.textTertiary },
+  partSub: { marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${c.border}` },
+  partSubTitle: { fontSize: '11px', fontWeight: '600', color: c.textTertiary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' },
+  revRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', marginBottom: '5px' },
+  revPn: { fontSize: '11px', fontFamily: 'monospace', color: c.primary, background: c.primaryLight, padding: '2px 6px', borderRadius: '4px' },
+  revStatus: { fontSize: '12px', fontWeight: '600' },
+  revNote: { fontSize: '12px', color: c.textSecondary, flexBasis: '100%', lineHeight: '1.4' },
+  altRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', marginBottom: '5px' },
+  altManuf: { fontSize: '13px', fontWeight: '600', color: c.textPrimary },
+  whereBuy: { fontSize: '12px', color: c.textTertiary, marginTop: '10px', lineHeight: '1.4' },
+
+  // Sources
+  sourceRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${c.border}`, textDecoration: 'none' },
+  sourceName: { fontSize: '13px', color: c.primary },
+
   // Reviews
   reviewCard: { padding: '12px 14px', background: c.bg, borderRadius: '10px', marginBottom: '8px' },
   reviewMeta: { fontSize: '12px', color: c.textTertiary, marginBottom: '6px' },

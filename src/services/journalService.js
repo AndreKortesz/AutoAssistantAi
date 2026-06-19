@@ -76,19 +76,23 @@ export function markIssueFixed(issue, currentMileage) {
   if (records.some(r => r.kind === 'fixed_issue' && r.issueId === issue.id)) {
     return records;
   }
-  const isPermanent = issue?.mileage?.typical_end_km != null;
+  // Точный срок возврата болячки берём из данных (recurring_interval_km),
+  // иначе — ранжированная (typical_end_km!=null) считается постоянным фиксом,
+  // иначе — дефолт по системе (TTL ниже).
+  const isPermanent = issue?.recurring_interval_km == null && issue?.mileage?.typical_end_km != null;
   const record = {
     id: Date.now(),
     kind: 'fixed_issue',
     issueId: issue.id,
     type: 'repair',
-    name: issue.issue?.title || 'Болячка',
+    name: issue.issue?.title || issue.position?.name || issue.part_info?.name || 'Болячка',
     date: new Date().toISOString().slice(0, 10),
     mileage: currentMileage || 0,
     cost: 0,
     location: '',
     notes: '',
-    system: issue.issue?.system || null,
+    system: issue.issue?.system || issue.position?.system || issue.part_info?.system || null,
+    recurringKm: issue?.recurring_interval_km ?? null,
     isPermanent,
   };
   return addRecord(record);
@@ -106,7 +110,8 @@ export function unmarkIssueFixed(issueId) {
 // Хроническая — возвращается, если от mileage отметки прошло больше TTL по системе.
 function isFixRecordStillActive(record, currentMileage) {
   if (record.isPermanent) return true;
-  const ttl = DEFAULT_RECURRENCE_KM_BY_SYSTEM[record.system];
+  // точный срок возврата из данных имеет приоритет над дефолтом по системе
+  const ttl = record.recurringKm != null ? record.recurringKm : DEFAULT_RECURRENCE_KM_BY_SYSTEM[record.system];
   if (ttl == null) return true;
   const driven = (currentMileage || 0) - (record.mileage || 0);
   return driven < ttl;
