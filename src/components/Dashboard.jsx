@@ -11,6 +11,7 @@ import {
   formatPrice,
   formatRelativeTime,
   recordTitle,
+  estimateOwnership,
   UI_SYSTEMS,
 } from '../utils/issueHelpers';
 import MileageUpdateModal from './MileageUpdateModal';
@@ -34,6 +35,8 @@ const c = {
 };
 
 const MAX_INDEX = 95;
+
+const COST_COLORS = ['#1F4FD8', '#BA7517', '#1D9E75', '#7C5CD9', '#94A3B8'];
 
 const ASSISTANT_QUESTIONS = [
   'Почему стучит на холодную?',
@@ -141,7 +144,11 @@ export default function Dashboard() {
     [healthIndex, mileage, userCar]
   );
 
-  const budget = issuesData?.annual_budget?.scenarios?.average || null;
+  const ownership = useMemo(() => {
+    if (!issuesData) return null;
+    const eng = carDetails?.engines?.find(e => e.code === userCar?.engineCode) || null;
+    return estimateOwnership(issuesData.annual_budget, eng);
+  }, [issuesData, carDetails, userCar]);
 
   // случайный пример вопроса для ассистента (новый при каждом заходе);
   // приоритетно подмешиваем вопрос про текущую болячку, если она есть
@@ -237,12 +244,12 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {budget?.total > 0 && (
+            {ownership?.total > 0 && (
               <div style={s.costWrap}>
                 <button style={s.costHead} onClick={() => setCostOpen(o => !o)}>
                   <Icon name="wallet" size={18} color={c.textSecondary} />
-                  <span style={s.costTitle}>Прогноз расходов на год</span>
-                  <span style={s.costSum}>~{budget.total.toLocaleString('ru-RU')} ₽</span>
+                  <span style={s.costTitle}>Стоимость владения в год</span>
+                  <span style={s.costSum}>~{ownership.total.toLocaleString('ru-RU')} ₽</span>
                   <span style={{ ...s.costChev, transform: costOpen ? 'rotate(180deg)' : 'none' }}>
                     <Icon name="chevronDown" size={16} color={c.textTertiary} />
                   </span>
@@ -250,18 +257,14 @@ export default function Dashboard() {
                 {costOpen && (
                   <div style={s.costBody}>
                     <div style={s.costBar}>
-                      {[
-                        { v: budget.regular_to, color: c.primary },
-                        { v: budget.wear_replacements, color: c.amber },
-                        { v: budget.contingency, color: c.textTertiary },
-                      ].map((seg, i) => seg.v > 0 && (
-                        <div key={i} style={{ width: `${(seg.v / budget.total) * 100}%`, background: seg.color, height: '100%' }} />
+                      {ownership.items.map((it, i) => (
+                        <div key={it.key} style={{ width: `${(it.value / ownership.total) * 100}%`, background: COST_COLORS[i % COST_COLORS.length], height: '100%' }} />
                       ))}
                     </div>
                     <div style={s.costLegend}>
-                      <CostRow color={c.primary} label="Плановое ТО" value={budget.regular_to} />
-                      <CostRow color={c.amber} label="Расходники" value={budget.wear_replacements} />
-                      <CostRow color={c.textTertiary} label="Типичные ремонты" value={budget.contingency} />
+                      {ownership.items.map((it, i) => (
+                        <CostRow key={it.key} color={COST_COLORS[i % COST_COLORS.length]} label={it.label} value={it.value} />
+                      ))}
                     </div>
                     <button style={s.costLink} onClick={() => navigate('/cost')}>
                       Подробный расчёт <Icon name="arrowRight" size={14} color={c.primary} />

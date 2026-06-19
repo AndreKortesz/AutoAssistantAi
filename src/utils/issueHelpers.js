@@ -241,6 +241,59 @@ export function wearRange(r) {
   return null;
 }
 
+// Полная стоимость владения в год — ОЦЕНКА из допущений (не собранные факты).
+// Допущения вынесены в .assumptions, чтобы честно показать пользователю.
+export const OWNERSHIP_ASSUMPTIONS = {
+  annualKm: 15000,
+  fuelPriceRub: 60,       // АИ-95, ориентир ~2026
+  dieselPriceRub: 65,
+  tyreSetRub: 22000,      // комплект
+  tyreYears: 3,           // меняют раз в N лет
+  osagoRub: 10000,        // ОСАГО, ориентир (зависит от стажа/региона)
+  taxRegion: 'Москва',
+};
+
+// расход л/100км по объёму (оценка)
+function estFuelPer100(displacement, fuelType) {
+  const d = parseFloat(displacement) || 1.6;
+  let l = d <= 1.4 ? 7.5 : d <= 1.6 ? 8 : d <= 2.0 ? 9.5 : d <= 2.5 ? 11 : d <= 3.0 ? 12.5 : 14;
+  if (fuelType === 'дизель') l *= 0.8;
+  return l;
+}
+
+// транспортный налог/год по мощности (московские ставки, ₽/л.с.)
+function estTax(powerHp) {
+  const p = parseInt(powerHp) || 0;
+  if (!p) return null;
+  const rate = p <= 100 ? 12 : p <= 125 ? 25 : p <= 150 ? 35 : p <= 175 ? 45 : p <= 200 ? 50 : p <= 250 ? 65 : 150;
+  return Math.round(p * rate);
+}
+
+export function estimateOwnership(annualBudget, engine) {
+  const a = OWNERSHIP_ASSUMPTIONS;
+  const svc = annualBudget?.scenarios?.average || null;
+  const service = svc?.total ?? null;
+
+  const diesel = engine?.fuel === 'дизель';
+  const fuel = engine?.displacement
+    ? Math.round((a.annualKm / 100) * estFuelPer100(engine.displacement, engine?.fuel) * (diesel ? a.dieselPriceRub : a.fuelPriceRub))
+    : null;
+  const tax = estTax(engine?.power_hp);
+  const tyres = Math.round(a.tyreSetRub / a.tyreYears);
+  const insurance = a.osagoRub;
+
+  const items = [
+    { key: 'service', label: 'Обслуживание (ТО, расходники, ремонт)', value: service, kind: 'data' },
+    { key: 'fuel', label: 'Топливо', value: fuel, kind: 'est' },
+    { key: 'tax', label: 'Транспортный налог', value: tax, kind: 'est' },
+    { key: 'insurance', label: 'ОСАГО', value: insurance, kind: 'est' },
+    { key: 'tyres', label: 'Шины (комплект раз в 3 года)', value: tyres, kind: 'est' },
+  ].filter(i => i.value != null);
+
+  const total = items.reduce((s, i) => s + i.value, 0);
+  return { items, total, assumptions: a };
+}
+
 // «обновлено N назад» из ISO-таймстампа
 export function formatRelativeTime(iso) {
   if (!iso) return null;
