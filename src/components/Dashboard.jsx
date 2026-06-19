@@ -90,6 +90,7 @@ export default function Dashboard() {
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
   const answers = userCar?.onboardingAnswers || null;
+  const answeredCount = answers ? Object.keys(answers).length : 0;
 
   const healthIndex = useMemo(() => {
     if (!issuesData) return MAX_INDEX;
@@ -293,10 +294,17 @@ export default function Dashboard() {
                 <div style={s.pictureBar}>
                   <div style={{ ...s.pictureFill, width: `${picturePct}%` }} />
                 </div>
-                <button style={s.refineBtn} onClick={() => navigate('/checkup')}>
-                  <Icon name="sparkles" size={16} color={c.primary} />
-                  Уточнить за 1 минуту
-                </button>
+                {answeredCount === 0 ? (
+                  <button style={s.refineBtn} onClick={() => navigate('/checkup')}>
+                    <Icon name="sparkles" size={16} color={c.primary} />
+                    Уточнить за 1 минуту
+                  </button>
+                ) : (
+                  <button style={s.refineBtn} onClick={() => navigate('/issues')}>
+                    <Icon name="check" size={16} color={c.primary} />
+                    Отметить, что уже сделано
+                  </button>
+                )}
               </div>
             )}
 

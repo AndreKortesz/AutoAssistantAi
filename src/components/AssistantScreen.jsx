@@ -105,12 +105,60 @@ const UserMessage = ({ text }) => (
   </div>
 );
 
-// Компонент сообщения ассистента — текст от Gemini (с переносами строк)
+// Инлайн-жирный: «**текст**» → <strong>
+function inlineBold(text, keyBase) {
+  return text.split(/\*\*(.+?)\*\*/g).map((part, i) =>
+    i % 2 === 1 ? <strong key={`${keyBase}-${i}`}>{part}</strong> : part
+  );
+}
+
+// Лёгкий рендер markdown от Gemini: абзацы, маркированные и нумерованные списки, жирный.
+const MarkdownText = ({ text }) => {
+  const lines = (text || '').split('\n');
+  const blocks = [];
+  let list = null;
+  const flush = () => { if (list) { blocks.push(list); list = null; } };
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, '');
+    if (!line.trim()) { flush(); continue; }
+    const ol = line.match(/^\s*\d+\.\s+(.*)$/);
+    const ul = line.match(/^\s*[-*]\s+(.*)$/);
+    if (ol) {
+      if (!list || !list.ordered) { flush(); list = { ordered: true, items: [] }; }
+      list.items.push(ol[1]);
+    } else if (ul) {
+      if (!list || list.ordered) { flush(); list = { ordered: false, items: [] }; }
+      list.items.push(ul[1]);
+    } else {
+      flush();
+      blocks.push({ para: line.trim() });
+    }
+  }
+  flush();
+
+  return (
+    <>
+      {blocks.map((b, bi) => {
+        if (b.para !== undefined) {
+          return <p key={bi} style={styles.mdP}>{inlineBold(b.para, `p${bi}`)}</p>;
+        }
+        const items = b.items.map((it, ii) => (
+          <li key={ii} style={styles.mdLi}>{inlineBold(it, `l${bi}-${ii}`)}</li>
+        ));
+        return b.ordered
+          ? <ol key={bi} style={styles.mdList}>{items}</ol>
+          : <ul key={bi} style={styles.mdList}>{items}</ul>;
+      })}
+    </>
+  );
+};
+
+// Компонент сообщения ассистента — текст от Gemini (markdown → разметка)
 const AssistantMessage = ({ response }) => (
   <div style={styles.assistantMessageContainer}>
     <div style={styles.assistantAvatar}><Icon name="bot" size={18} color={colors.primary} /></div>
     <div style={styles.assistantBubble}>
-      <p style={{ ...styles.assistantText, whiteSpace: 'pre-wrap' }}>{response.text}</p>
+      <div style={styles.assistantText}><MarkdownText text={response.text} /></div>
     </div>
   </div>
 );
@@ -530,6 +578,9 @@ const styles = {
     lineHeight: 1.5,
     margin: 0,
   },
+  mdP: { fontSize: '14px', color: colors.textPrimary, lineHeight: 1.55, margin: '0 0 8px' },
+  mdList: { margin: '0 0 8px', paddingLeft: '20px' },
+  mdLi: { fontSize: '14px', color: colors.textPrimary, lineHeight: 1.5, marginBottom: '5px' },
 
   sectionTitle: {
     fontSize: '12px',
