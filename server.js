@@ -9,9 +9,12 @@
  *   запрет выдумывать артикулы/recall/цены (правило проекта).
  */
 const express = require('express');
+const compression = require('compression');
 const path = require('path');
 
 const app = express();
+// gzip всего ответа: данные модели ~828 КБ → ~114 КБ. Главный ускоритель загрузки.
+app.use(compression());
 app.use(express.json({ limit: '256kb' }));
 
 const DIST = path.join(__dirname, 'dist');
@@ -101,9 +104,22 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// статика фронтенда + SPA-fallback
-app.use(express.static(DIST));
-app.get('*', (req, res) => res.sendFile(path.join(DIST, 'index.html')));
+// статика фронтенда + SPA-fallback.
+// Хешированные ассеты (/assets/*-<hash>.js|css) иммутабельны → кэшируем на год.
+// Остальное (index.html, JSON-данные) — без долгого кэша, чтобы деплой/правки данных подхватывались.
+app.use(express.static(DIST, {
+  setHeaders: (res, filePath) => {
+    if (/[-.][0-9a-f]{8,}\.(js|css)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (filePath.endsWith('index.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  },
+}));
+app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.join(DIST, 'index.html'));
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`AutoAssistantAi server on :${PORT} (AI: ${KEY ? 'on' : 'off'})`));
