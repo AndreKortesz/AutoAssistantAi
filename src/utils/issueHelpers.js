@@ -184,9 +184,11 @@ export function pictureCompleteness({ answers = {}, issues = [], fixedIssueIds =
 }
 
 // Уровень зрелости по «% картины»: 1 предварительная → 2 уточняется → 3 точная.
+// Пороги: одни вопросы (макс 30%) + пробег (10%) = 40% → ещё предварительная;
+// в уровень 2 выводит отметка болячек (как в прототипе: 40% = ещё серое кольцо).
 export function maturityLevel(picturePct) {
   if (picturePct >= 80) return { level: 3, key: 'precise', label: 'Точная оценка' };
-  if (picturePct >= 25) return { level: 2, key: 'refining', label: 'Оценка уточняется' };
+  if (picturePct >= 50) return { level: 2, key: 'refining', label: 'Оценка уточняется' };
   return { level: 1, key: 'preliminary', label: 'Предварительная оценка' };
 }
 

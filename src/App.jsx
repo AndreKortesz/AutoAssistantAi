@@ -53,6 +53,7 @@ import JournalScreen from './components/JournalScreen'
 import AssistantScreen from './components/AssistantScreen'
 import MaintenanceScreen from './components/MaintenanceScreen'
 import CostScreen from './components/CostScreen'
+import OnboardingQuestions from './components/OnboardingQuestions'
 
 // Цветовая схема
 export const colors = {
@@ -110,7 +111,7 @@ const BottomNav = () => {
 }
 
 const shouldShowNav = (pathname) => {
-  const noNavRoutes = ['/', '/add-car']
+  const noNavRoutes = ['/', '/add-car', '/checkup']
   if (pathname.startsWith('/issues/')) return false
   return !noNavRoutes.includes(pathname)
 }
@@ -145,6 +146,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<RootRoute onComplete={handleOnboardingComplete} />} />
         <Route path="/add-car" element={<AddCarForm />} />
+        <Route path="/checkup" element={<OnboardingQuestions />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/issues" element={<IssuesScreen />} />
         <Route path="/issues/:issueId" element={<IssueDetailScreen />} />

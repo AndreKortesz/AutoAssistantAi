@@ -89,6 +89,16 @@ export function CarProvider({ children }) {
     return ok;
   }, []);
 
+  // Ответы на вопросы-ощущения (этап онбординга). Пишем в localStorage и
+  // тут же обновляем состояние, чтобы индекс зрелости пересчитался сразу.
+  const saveAnswers = useCallback((answers) => {
+    const ok = userCarService.saveOnboardingAnswers(answers);
+    if (ok) {
+      setUserCar(prev => prev ? { ...prev, onboardingAnswers: { ...(prev.onboardingAnswers || {}), ...answers } } : prev);
+    }
+    return ok;
+  }, []);
+
   const removeCar = useCallback(async () => {
     userCarService.deleteUserCar();
     setUserCar(null);
@@ -110,6 +120,7 @@ export function CarProvider({ children }) {
     fixedIssueIds,
     markIssueFixed,
     unmarkIssueFixed,
+    saveAnswers,
   };
 
   return <CarContext.Provider value={value}>{children}</CarContext.Provider>;

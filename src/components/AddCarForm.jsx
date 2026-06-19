@@ -226,7 +226,7 @@ export default function AddCarForm() {
       ...(effectiveBodyType && { bodyType: effectiveBodyType }),
       color: formData.color,
     });
-    if (ok) navigate('/dashboard');
+    if (ok) navigate('/checkup');
     else alert('Не удалось сохранить данные. Попробуйте ещё раз.');
   };
 

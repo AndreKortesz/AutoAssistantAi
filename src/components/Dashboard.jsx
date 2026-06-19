@@ -266,14 +266,18 @@ export default function Dashboard() {
                     <div style={{ ...s.healthStatus, color: status.text }}>{status.label}</div>
                     <div style={s.healthMean}>Для машины с таким пробегом — крепкий результат.</div>
                   </>
+                ) : maturity.level === 1 ? (
+                  <>
+                    <div style={{ ...s.healthStatus, color: c.textPrimary }}>Собираем картину</div>
+                    <div style={s.healthMean}>
+                      Предварительно — типично для {carDetails.model_name} на {Math.round(mileage / 1000)} тыс.
+                      Уточните детали, чтобы оценка стала вашей.
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div style={{ ...s.healthStatus, color: c.textSecondary }}>{maturity.label}</div>
-                    <div style={s.healthMean}>
-                      {maturity.level === 1
-                        ? 'Собираем картину вашей машины — отметьте, что уже знаете.'
-                        : 'Чем больше отметите, тем точнее оценка.'}
-                    </div>
+                    <div style={s.healthMean}>Чем больше отметите, тем точнее оценка.</div>
                   </>
                 )}
               </div>
@@ -289,9 +293,9 @@ export default function Dashboard() {
                 <div style={s.pictureBar}>
                   <div style={{ ...s.pictureFill, width: `${picturePct}%` }} />
                 </div>
-                <button style={s.refineBtn} onClick={() => navigate('/issues')}>
+                <button style={s.refineBtn} onClick={() => navigate('/checkup')}>
                   <Icon name="sparkles" size={16} color={c.primary} />
-                  Уточнить оценку
+                  Уточнить за 1 минуту
                 </button>
               </div>
             )}
