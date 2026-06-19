@@ -170,6 +170,26 @@ export function estimatePeerPercentile(healthIndex, mileage, year) {
   return Math.round(Math.max(35, Math.min(85, pct * 100)));
 }
 
+// Название записи независимо от схемы файла:
+// systemic → issue.title; HC-ТО → position.name; HC-износ → part_info.name.
+export function recordTitle(r) {
+  return r?.issue?.title || r?.issue?.title_short || r?.position?.name || r?.part_info?.name || 'Без названия';
+}
+
+// Система записи независимо от схемы (для группировки/иконок).
+export function recordSystem(r) {
+  return r?.issue?.system || r?.position?.system || r?.part_info?.system || null;
+}
+
+// wear_interval_km бывает числом или {min,max}. Нормализуем к {min,max}.
+export function wearRange(r) {
+  const w = r?.wear_interval_km;
+  if (w == null) return null;
+  if (typeof w === 'number') return { min: w, max: w };
+  if (typeof w === 'object' && (w.min != null || w.max != null)) return { min: w.min ?? w.max, max: w.max ?? w.min };
+  return null;
+}
+
 // «обновлено N назад» из ISO-таймстампа
 export function formatRelativeTime(iso) {
   if (!iso) return null;

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
-import { formatMileage } from '../utils/issueHelpers';
+import { formatMileage, recordTitle } from '../utils/issueHelpers';
 import Icon from './Icon';
 
 // Простой экран регламента ТО: что и когда менять, из собранных данных модели.
@@ -31,7 +31,7 @@ export default function MaintenanceScreen() {
     const seen = new Set();
     const list = [];
     for (const r of issuesData.maintenance) {
-      const title = r.issue?.title || r.id;
+      const title = recordTitle(r);
       if (seen.has(title)) continue;
       seen.add(title);
       const interval = r.maintenance_interval_km;

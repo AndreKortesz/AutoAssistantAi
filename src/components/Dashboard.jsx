@@ -10,6 +10,7 @@ import {
   formatMileage,
   formatPrice,
   formatRelativeTime,
+  recordTitle,
   UI_SYSTEMS,
 } from '../utils/issueHelpers';
 import MileageUpdateModal from './MileageUpdateModal';
@@ -123,7 +124,7 @@ export default function Dashboard() {
       if (!interval) continue;
       const next = Math.ceil(mileage / interval) * interval;
       if (next > mileage && next <= mileage + 10000) {
-        items.push({ id: m.id, title: m.issue?.title || 'ТО', type: 'Регламент ТО', km: next, icon: 'droplet' });
+        items.push({ id: m.id, title: recordTitle(m), type: 'Регламент ТО', km: next, icon: 'droplet' });
       }
     }
     for (const i of grouped.upcoming) {
