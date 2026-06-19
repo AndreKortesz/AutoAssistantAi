@@ -237,7 +237,7 @@ export default function AddCarForm() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <img src="/branding/logo-mark.png" alt="AutoAssistantAi" style={styles.logo} />
+        <img src="/branding/logo-mark-light.png" alt="AutoAssistantAi" style={styles.logo} />
         <div>
           <h1 style={styles.title}>Добавьте ваш автомобиль</h1>
           <p style={styles.subtitle}>Чем точнее данные — тем полезнее рекомендации</p>
@@ -363,7 +363,7 @@ const styles = {
     fontFamily: 'Inter, system-ui, sans-serif',
   },
   header: { display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '24px' },
-  logo: { width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover', display: 'block', flexShrink: 0 },
+  logo: { width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover', display: 'block', flexShrink: 0, border: '1px solid rgba(15,23,42,0.06)', boxShadow: '0 1px 4px rgba(15,23,42,0.08)' },
   title: { fontSize: '20px', fontWeight: '700', color: colors.textPrimary, margin: '0 0 4px' },
   subtitle: { fontSize: '14px', color: colors.textSecondary, margin: 0 },
   progressContainer: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' },

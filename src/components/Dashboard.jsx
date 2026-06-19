@@ -191,7 +191,7 @@ export default function Dashboard() {
       {/* Шапка «Мой гараж» */}
       <div style={s.topbar}>
         <div style={s.topbarLeft}>
-          <img src="/branding/logo-mark.png" alt="AutoAssistantAi" style={s.logo} />
+          <img src="/branding/logo-mark-light.png" alt="AutoAssistantAi" style={s.logo} />
           <span style={s.topbarTitle}>Мой гараж</span>
         </div>
       </div>
@@ -454,7 +454,7 @@ const s = {
 
   topbar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' },
   topbarLeft: { display: 'flex', alignItems: 'center', gap: '10px' },
-  logo: { width: '30px', height: '30px', borderRadius: '8px', objectFit: 'cover', display: 'block' },
+  logo: { width: '30px', height: '30px', borderRadius: '8px', objectFit: 'cover', display: 'block', border: '1px solid rgba(15,23,42,0.06)', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' },
   topbarTitle: { fontSize: '15px', fontWeight: '600', color: c.textPrimary },
 
   hero: { margin: '0 12px 12px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '18px', padding: '16px 18px' },
