@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import { recordTitle, recordSystem, isBodyRecord, severityColor } from '../utils/issueHelpers';
+import Icon from './Icon';
 
 // Вкладка «Карта»: вертикальный таймлайн «дорога вперёд» по пробегу.
 const c = {
