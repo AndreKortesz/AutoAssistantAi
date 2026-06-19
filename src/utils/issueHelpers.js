@@ -224,7 +224,7 @@ export function wearStatus(record, currentMileage = 0, fixedIssueIds = []) {
 // Название записи независимо от схемы файла:
 // systemic → issue.title; HC-ТО → position.name; HC-износ → part_info.name.
 export function recordTitle(r) {
-  return r?.issue?.title || r?.issue?.title_short || r?.position?.name || r?.part_info?.name || 'Без названия';
+  return r?.issue?.title || r?.issue?.title_short || r?.position?.name || r?.part_info?.name || r?.title || 'Без названия';
 }
 
 // Система записи независимо от схемы (для группировки/иконок).

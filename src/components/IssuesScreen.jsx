@@ -8,6 +8,7 @@ import {
   formatPrice,
   formatMileage,
   frequencyText,
+  recordTitle,
   getLinkedRecalls,
   getLinkedClassActions,
 } from '../utils/issueHelpers';
@@ -34,18 +35,26 @@ const c = {
   textTertiary: '#94A3B8',
 };
 
+// severity → цвет точки: critical красный, high янтарь, остальное серое
+function sevColor(sev) {
+  if (sev === 'critical') return '#E24B4A';
+  if (sev === 'high') return '#BA7517';
+  return '#CBD5E1';
+}
+function systemLabelRu(sys) {
+  const map = { engine: 'Двигатель', transmission: 'Коробка', suspension: 'Подвеска', steering: 'Рулевое', brakes: 'Тормоза', cooling: 'Охлаждение', fuel: 'Топливная', exhaust: 'Выхлоп', electrical: 'Электрика', interior: 'Салон', climate: 'Климат', ignition: 'Зажигание' };
+  return map[sys] || '';
+}
+
 export default function IssuesScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const { userCar, carDetails, issuesData, loading, fixedIssueIds } = useCar();
 
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'issues'); // issues | service | map
-  const [openGroups, setOpenGroups] = useState({ safety: true, planned: true, minor: false, upcoming: false });
+  const [openGroups, setOpenGroups] = useState({}); // {} = дефолт (первая непустая раскрыта)
+  const [seeAllGroups, setSeeAllGroups] = useState({});
   const [recallsOpen, setRecallsOpen] = useState(false);
-  const [expandedIssue, setExpandedIssue] = useState(null);
-
-  const toggleGroup = (key) => setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
-  const toggleIssue = (id) => setExpandedIssue(expandedIssue === id ? null : id);
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
@@ -55,7 +64,18 @@ export default function IssuesScreen() {
     return groupByImportance(issuesData.systemic, mileage, fixedIssueIds);
   }, [issuesData, mileage, fixedIssueIds]);
 
-  const nowCount = grouped.safety.length + grouped.planned.length + grouped.minor.length;
+  // «Мелочи» = low-болячки + отдельный тип minor_annoyance (без кузова)
+  const minorAll = useMemo(() => {
+    const extra = (issuesData?.minor || []).filter(r => (r.issue?.system || r.position?.system || r.part_info?.system) !== 'body');
+    return [...grouped.minor, ...extra];
+  }, [grouped, issuesData]);
+
+  const firstOpenKey = grouped.safety.length ? 'safety' : grouped.planned.length ? 'planned' : minorAll.length ? 'minor' : null;
+  const isGroupOpen = (key) => (openGroups[key] !== undefined ? openGroups[key] : key === firstOpenKey);
+  const toggleGroup = (key) => setOpenGroups(prev => ({ ...prev, [key]: !isGroupOpen(key) }));
+
+  const nowCount = grouped.safety.length + grouped.planned.length + minorAll.length;
+  const doneCount = fixedIssueIds.length;
 
   const TABS = [
     { id: 'issues', label: 'Слабые места' },
@@ -63,31 +83,54 @@ export default function IssuesScreen() {
     { id: 'map', label: 'Карта' },
   ];
 
-  const issueGroup = (key, opts, list) => (
-    <Section
-      icon={opts.icon} iconColor={opts.iconColor} title={opts.title} subtitle={opts.subtitle}
-      muted={opts.muted} count={list.length} open={openGroups[key]} onToggle={() => toggleGroup(key)}
-    >
-      {list.length === 0 ? (
-        <div style={s.okEmpty}><Icon name="check" size={16} color={c.success} /> Тут пока чисто — для вашего пробега ничего</div>
-      ) : (
-        <>
-          {opts.intro && <div style={s.chronicIntro}>{opts.intro}</div>}
-          {list.map(issue => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              expanded={expandedIssue === issue.id}
-              onToggle={() => toggleIssue(issue.id)}
-              onDetails={() => navigate(`/issues/${issue.id}`)}
-              recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
-              classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
-            />
-          ))}
-        </>
-      )}
-    </Section>
-  );
+  const rowSub = (issue) => {
+    const sys = systemLabelRu(issue.issue?.system || issue.position?.system || issue.part_info?.system);
+    const mi = issue.mileage || {};
+    let when = '';
+    if (mi.peak_km != null) when = `пик ~${Math.round(mi.peak_km / 1000)} тыс.`;
+    else if (mi.typical_start_km != null) when = `от ~${Math.round(mi.typical_start_km / 1000)} тыс.`;
+    const recall = getLinkedRecalls(issue.id, issuesData.recalls).length > 0 ? ' · есть recall' : '';
+    return [sys, when].filter(Boolean).join(' · ') + recall;
+  };
+
+  const issueGroup = (key, opts, list) => {
+    const hasSerious = list.some(i => i.issue?.severity === 'critical' || i.issue?.severity === 'high');
+    const seeAll = seeAllGroups[key];
+    const shown = seeAll ? list : list.slice(0, 3);
+    return (
+      <Section
+        icon={opts.icon}
+        iconColor={list.length === 0 ? c.textTertiary : hasSerious ? c.warning : c.textTertiary}
+        title={opts.title} subtitle={opts.subtitle} muted={opts.muted}
+        count={list.length} empty={list.length === 0}
+        open={isGroupOpen(key)} onToggle={() => toggleGroup(key)}
+      >
+        {opts.intro && <div style={s.chronicIntro}>{opts.intro}</div>}
+        {shown.map((issue, idx) => {
+          const infoOnly = !issue.issue && !issue.solutions; // minor_annoyance: нет детальной страницы
+          const rowStyle = { ...s.issueRow, ...(idx > 0 ? s.issueRowBorder : {}) };
+          const inner = (
+            <>
+              <span style={{ ...s.sevDot, background: sevColor(issue.issue?.severity) }} />
+              <div style={s.issueRowInfo}>
+                <div style={s.issueRowTitle}>{recordTitle(issue)}</div>
+                <div style={s.issueRowSub}>{infoOnly ? (issue.description || '') : rowSub(issue)}</div>
+              </div>
+              {!infoOnly && <Icon name="arrowRight" size={16} color={c.textTertiary} />}
+            </>
+          );
+          return infoOnly
+            ? <div key={issue.id} style={rowStyle}>{inner}</div>
+            : <button key={issue.id} style={rowStyle} onClick={() => navigate(`/issues/${issue.id}`)}>{inner}</button>;
+        })}
+        {list.length > 3 && !seeAll && (
+          <button style={s.moreInGroup} onClick={() => setSeeAllGroups(p => ({ ...p, [key]: true }))}>
+            Ещё {list.length - 3} в этой группе
+          </button>
+        )}
+      </Section>
+    );
+  };
 
   if (loading) {
     return <div style={s.loading}>Загрузка...</div>;
@@ -153,7 +196,7 @@ export default function IssuesScreen() {
         <div style={s.calmNums}>
           <div style={s.calmStat}><div style={{ ...s.calmNum, color: c.textPrimary }}>{nowCount}</div><div style={s.calmStatLabel}>сейчас</div></div>
           <div style={s.calmStat}><div style={{ ...s.calmNum, color: c.textPrimary }}>{grouped.upcoming.length}</div><div style={s.calmStatLabel}>впереди</div></div>
-          <div style={s.calmStat}><div style={{ ...s.calmNum, color: c.success }}>{grouped.past.length}</div><div style={s.calmStatLabel}>пройдено</div></div>
+          <div style={s.calmStat}><div style={{ ...s.calmNum, color: c.success }}>{doneCount}</div><div style={s.calmStatLabel}>пройдено</div></div>
         </div>
       </div>
 
@@ -240,10 +283,15 @@ export default function IssuesScreen() {
       {/* Контент вкладок */}
       {activeTab === 'issues' && (
         <div style={s.sections}>
-          {issueGroup('safety', { icon: 'shield', iconColor: c.warning, title: 'Важно для безопасности и мотора', subtitle: 'стоит держать в поле зрения' }, grouped.safety)}
-          {issueGroup('planned', { icon: 'wrench', iconColor: c.textSecondary, title: 'Плановый ремонт и износ', subtitle: 'по мере пробега' }, grouped.planned)}
-          {issueGroup('minor', { icon: 'info', iconColor: c.textTertiary, title: 'Мелочи · просто знать', subtitle: 'не требуют действий', muted: true }, grouped.minor)}
-          {grouped.upcoming.length > 0 && issueGroup('upcoming', { icon: 'clock', iconColor: c.textSecondary, title: 'Что может проявиться впереди', subtitle: 'старт по пробегу ещё впереди', intro: 'Не сейчас, а на горизонте. Просто чтобы знать.' }, grouped.upcoming)}
+          {issueGroup('safety', { icon: 'shield', title: 'Важно для безопасности и мотора', subtitle: 'стоит держать в поле зрения' }, grouped.safety)}
+          {issueGroup('planned', { icon: 'wrench', title: 'Плановый ремонт и износ', subtitle: 'по мере пробега' }, grouped.planned)}
+          {issueGroup('minor', { icon: 'info', title: 'Мелочи · просто знать', subtitle: 'не требуют действий', muted: true }, minorAll)}
+          {grouped.upcoming.length > 0 && (
+            <>
+              <div style={s.aheadDivider} />
+              {issueGroup('upcoming', { icon: 'clock', title: 'Что может проявиться впереди', subtitle: 'старт по пробегу ещё впереди', intro: 'Не сейчас, а на горизонте. Просто чтобы знать.' }, grouped.upcoming)}
+            </>
+          )}
         </div>
       )}
 
@@ -253,21 +301,27 @@ export default function IssuesScreen() {
   );
 }
 
-function Section({ icon, iconColor, title, subtitle, count, open, onToggle, children, muted }) {
+function Section({ icon, iconColor, title, subtitle, count, open, onToggle, children, muted, empty }) {
   return (
     <div style={{ ...s.groupCard, ...(muted ? s.groupCardMuted : {}) }}>
-      <button style={s.groupHead} onClick={onToggle}>
-        {icon && <span style={s.groupIcon}><Icon name={icon} size={24} color={iconColor || c.textSecondary} strokeWidth={1.7} /></span>}
+      <button style={s.groupHead} onClick={empty ? undefined : onToggle} disabled={empty}>
+        {icon && <span style={s.groupIcon}><Icon name={empty ? 'check' : icon} size={24} color={empty ? c.success : (iconColor || c.textSecondary)} strokeWidth={1.7} /></span>}
         <div style={s.groupText}>
           <div style={s.groupTitle}>{title}</div>
           {subtitle && <div style={s.groupSub}>{subtitle}</div>}
         </div>
-        <span style={s.groupCount}>{count}</span>
-        <span style={{ ...s.groupChev, transform: open ? 'rotate(180deg)' : 'none' }}>
-          <Icon name="chevronDown" size={18} color={c.textTertiary} />
-        </span>
+        {empty ? (
+          <span style={s.groupOk}>пока чисто</span>
+        ) : (
+          <>
+            <span style={s.groupCount}>{count}</span>
+            <span style={{ ...s.groupChev, transform: open ? 'rotate(180deg)' : 'none' }}>
+              <Icon name="chevronDown" size={18} color={c.textTertiary} />
+            </span>
+          </>
+        )}
       </button>
-      {open && <div style={s.groupBody}>{children}</div>}
+      {!empty && open && <div style={s.groupBody}>{children}</div>}
     </div>
   );
 }
@@ -441,7 +495,17 @@ const s = {
   groupSub: { fontSize: '13px', color: c.textTertiary, marginTop: '2px' },
   groupCount: { minWidth: '30px', height: '30px', padding: '0 9px', borderRadius: '15px', background: '#EDF0F4', color: c.textPrimary, fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   groupChev: { display: 'inline-flex', transition: 'transform 0.2s', flexShrink: 0 },
-  groupBody: { padding: '0 12px 12px' },
+  groupOk: { fontSize: '13px', color: c.success, fontWeight: '500', flexShrink: 0 },
+  groupBody: { padding: '0 16px 6px' },
+  aheadDivider: { height: '1px', background: c.border, margin: '6px 24px 14px' },
+
+  issueRow: { width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },
+  issueRowBorder: { borderTop: `1px solid ${c.border}` },
+  sevDot: { width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0 },
+  issueRowInfo: { flex: 1, minWidth: 0 },
+  issueRowTitle: { fontSize: '15px', fontWeight: '600', color: c.textPrimary, lineHeight: 1.3 },
+  issueRowSub: { fontSize: '12px', color: c.textTertiary, marginTop: '2px' },
+  moreInGroup: { width: '100%', padding: '11px 0 4px', background: 'none', border: 'none', borderTop: `1px solid ${c.border}`, cursor: 'pointer', fontSize: '13px', color: c.primary, fontWeight: '500', fontFamily: 'inherit', textAlign: 'left' },
 
   okEmpty: { display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 4px 8px', fontSize: '13px', color: c.textSecondary },
   
