@@ -12,6 +12,8 @@ import {
   formatRelativeTime,
   recordTitle,
   estimateOwnership,
+  pictureCompleteness,
+  maturityLevel,
   UI_SYSTEMS,
 } from '../utils/issueHelpers';
 import MileageUpdateModal from './MileageUpdateModal';
@@ -78,7 +80,7 @@ function systemStatusWord(score) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed } = useCar();
+  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, journalRecords } = useCar();
   const [showMileageModal, setShowMileageModal] = useState(false);
   const [systemsOpen, setSystemsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
@@ -87,10 +89,26 @@ export default function Dashboard() {
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
+  const answers = userCar?.onboardingAnswers || null;
+
   const healthIndex = useMemo(() => {
     if (!issuesData) return MAX_INDEX;
-    return calculateHealthIndex(issuesData.systemic, mileage, fixedIssueIds);
-  }, [issuesData, mileage, fixedIssueIds]);
+    return calculateHealthIndex(issuesData.systemic, mileage, fixedIssueIds, answers);
+  }, [issuesData, mileage, fixedIssueIds, answers]);
+
+  // Зрелость оценки: «% картины» собран и уровень (1 предв. → 2 уточн. → 3 точн.)
+  const picturePct = useMemo(() => {
+    if (!issuesData) return 0;
+    return pictureCompleteness({
+      answers: answers || {},
+      issues: issuesData.systemic,
+      fixedIssueIds,
+      journalCount: (journalRecords || []).length,
+      mileageKnown: mileage > 0,
+    });
+  }, [issuesData, answers, fixedIssueIds, journalRecords, mileage]);
+
+  const maturity = useMemo(() => maturityLevel(picturePct), [picturePct]);
 
   const grouped = useMemo(() => {
     if (!issuesData) return { current: [], upcoming: [], past: [], chronic: [] };
@@ -218,31 +236,74 @@ export default function Dashboard() {
               <div style={s.ringWrap}>
                 <svg width="84" height="84" style={{ transform: 'rotate(-90deg)' }}>
                   <circle cx="42" cy="42" r={R} fill="none" stroke={c.border} strokeWidth="6" />
-                  {/* засечка-потолок 95 */}
-                  <circle cx="42" cy="42" r={R} fill="none" stroke={c.amber} strokeWidth="2"
-                    strokeDasharray="1.5 4" opacity="0.6" />
-                  <circle cx="42" cy="42" r={R} fill="none" stroke={status.ring} strokeWidth="6"
-                    strokeLinecap="round" strokeDasharray={CIRC}
-                    strokeDashoffset={CIRC * (1 - fillRatio)}
-                    style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
+                  {/* засечка-потолок 95 — только когда оценка точная */}
+                  {maturity.level === 3 && (
+                    <circle cx="42" cy="42" r={R} fill="none" stroke={c.amber} strokeWidth="2"
+                      strokeDasharray="1.5 4" opacity="0.6" />
+                  )}
+                  {maturity.level === 1 ? (
+                    // Предварительная: бледное пунктирное кольцо-плейсхолдер, без цвета
+                    <circle cx="42" cy="42" r={R} fill="none" stroke={c.textTertiary} strokeWidth="6"
+                      strokeLinecap="round" strokeDasharray="3 5" opacity="0.7" />
+                  ) : (
+                    <circle cx="42" cy="42" r={R} fill="none" stroke={status.ring} strokeWidth="6"
+                      strokeLinecap="round" strokeDasharray={CIRC}
+                      strokeDashoffset={CIRC * (1 - fillRatio)}
+                      style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
+                  )}
                 </svg>
                 <div style={s.ringCenter}>
-                  <div style={{ ...s.ringVal, color: c.textPrimary }}>{healthIndex}</div>
+                  <div style={{ ...s.ringVal, color: maturity.level === 1 ? c.textSecondary : c.textPrimary }}>
+                    {maturity.level === 1 ? `~${healthIndex}` : healthIndex}
+                  </div>
+                  {maturity.level === 1 && <div style={s.ringHint}>пока</div>}
                 </div>
                 {pop && <div style={s.ringPop} className="aaa-pop-up">+{pop}</div>}
               </div>
               <div style={s.healthInfo}>
-                <div style={{ ...s.healthStatus, color: status.text }}>{status.label}</div>
-                <div style={s.healthMean}>Для машины с таким пробегом — крепкий результат.</div>
+                {maturity.level === 3 ? (
+                  <>
+                    <div style={{ ...s.healthStatus, color: status.text }}>{status.label}</div>
+                    <div style={s.healthMean}>Для машины с таким пробегом — крепкий результат.</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ ...s.healthStatus, color: c.textSecondary }}>{maturity.label}</div>
+                    <div style={s.healthMean}>
+                      {maturity.level === 1
+                        ? 'Собираем картину вашей машины — отметьте, что уже знаете.'
+                        : 'Чем больше отметите, тем точнее оценка.'}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
-            <div style={s.peer}>
-              <Icon name="trophy" size={17} color={c.successDark} />
-              <div style={s.peerText}>
-                Крепче, чем у <b>~{peerPct}%</b> ровесников {carDetails.model_name} с похожим пробегом
+            {/* Полоса «% картины» + мягкий призыв уточнить — пока оценка не точная */}
+            {maturity.level < 3 && (
+              <div style={s.pictureWrap}>
+                <div style={s.pictureTop}>
+                  <span style={s.pictureLabel}>Картина собрана</span>
+                  <span style={s.picturePct}>{picturePct}%</span>
+                </div>
+                <div style={s.pictureBar}>
+                  <div style={{ ...s.pictureFill, width: `${picturePct}%` }} />
+                </div>
+                <button style={s.refineBtn} onClick={() => navigate('/issues')}>
+                  <Icon name="sparkles" size={16} color={c.primary} />
+                  Уточнить оценку
+                </button>
               </div>
-            </div>
+            )}
+
+            {maturity.level === 3 && (
+              <div style={s.peer}>
+                <Icon name="trophy" size={17} color={c.successDark} />
+                <div style={s.peerText}>
+                  Крепче, чем у <b>~{peerPct}%</b> ровесников {carDetails.model_name} с похожим пробегом
+                </div>
+              </div>
+            )}
 
             {ownership?.total > 0 && (
               <div style={s.costWrap}>
@@ -473,12 +534,22 @@ const s = {
   ringVal: { fontSize: '26px', fontWeight: '700', lineHeight: 1 },
   ringMax: { fontSize: '9px', color: c.textTertiary, marginTop: '2px' },
   ringPop: { position: 'absolute', top: '-6px', left: '50%', transform: 'translateX(-50%)', fontSize: '15px', fontWeight: '700', color: c.successDark, pointerEvents: 'none' },
+  ringHint: { fontSize: '10px', color: c.textTertiary, marginTop: '1px' },
   healthInfo: { flex: 1, minWidth: 0 },
   healthStatus: { fontSize: '17px', fontWeight: '600', marginBottom: '3px' },
   healthMean: { fontSize: '12px', color: c.textSecondary, lineHeight: 1.4 },
 
   peer: { marginTop: '14px', padding: '11px 14px', background: c.bg, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px' },
   peerText: { fontSize: '13px', color: c.textPrimary, lineHeight: 1.35 },
+
+  // «Картина собрана N%» + CTA «Уточнить оценку»
+  pictureWrap: { marginTop: '14px' },
+  pictureTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' },
+  pictureLabel: { fontSize: '13px', color: c.textSecondary },
+  picturePct: { fontSize: '13px', fontWeight: '600', color: c.textPrimary, fontVariantNumeric: 'tabular-nums' },
+  pictureBar: { height: '7px', borderRadius: '4px', background: c.bg, overflow: 'hidden' },
+  pictureFill: { height: '100%', background: c.success, borderRadius: '4px', transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' },
+  refineBtn: { marginTop: '10px', width: '100%', padding: '11px', borderRadius: '10px', border: 'none', background: c.primaryLight, color: c.primary, fontSize: '14px', fontWeight: '600', fontFamily: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' },
 
   noData: { fontSize: '13px', color: c.textSecondary, lineHeight: 1.5 },
 

@@ -22,7 +22,11 @@ const VALID_FIELDS = [
   'color',           // цвет силуэта (из палитры CAR_COLORS)
   'addedAt',         // ISO timestamp добавления
   'mileageUpdatedAt',// ISO timestamp последнего обновления пробега
+  'onboardingAnswers',// ответы на вопросы-ощущения { [questionId]: 'good'|'mid'|'bad'|'unknown' }
 ];
+
+const ANSWER_VALUES = new Set(['good', 'mid', 'bad', 'unknown']);
+const MAX_ANSWERS = 20;
 
 const MAX_VIN_LENGTH = 17;
 const MAX_MILEAGE = 999999;
@@ -80,6 +84,22 @@ function validateCarData(data) {
     }
   }
 
+  // Ответы онбординга — объект { questionId: одно из ANSWER_VALUES }, с whitelist ключей/значений
+  if (clean.onboardingAnswers !== undefined) {
+    const a = clean.onboardingAnswers;
+    if (!a || typeof a !== 'object' || Array.isArray(a)) {
+      delete clean.onboardingAnswers;
+    } else {
+      const ok = {};
+      let n = 0;
+      for (const [k, v] of Object.entries(a)) {
+        if (n++ >= MAX_ANSWERS) break;
+        if (typeof k === 'string' && /^[a-z0-9_]+$/.test(k) && ANSWER_VALUES.has(v)) ok[k] = v;
+      }
+      clean.onboardingAnswers = ok;
+    }
+  }
+
   return clean;
 }
 
@@ -129,6 +149,23 @@ export function updateUserCar(updates) {
   const current = getUserCar();
   if (!current) return false;
   return saveUserCar({ ...current, ...updates });
+}
+
+/**
+ * Ответы на вопросы-ощущения (для «созревания» индекса).
+ * Возвращает {} если машины/ответов нет.
+ */
+export function getOnboardingAnswers() {
+  const car = getUserCar();
+  return car?.onboardingAnswers || {};
+}
+
+/**
+ * Сохранить/обновить ответы (мерджит с уже сохранёнными).
+ */
+export function saveOnboardingAnswers(answers) {
+  const current = getOnboardingAnswers();
+  return updateUserCar({ onboardingAnswers: { ...current, ...(answers || {}) } });
 }
 
 /**

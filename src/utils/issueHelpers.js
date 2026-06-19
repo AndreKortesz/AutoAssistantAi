@@ -116,14 +116,78 @@ export function weightFor(issue, cat) {
   return w;
 }
 
-export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds = []) {
+export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds = [], answers = null) {
   const fixed = new Set(fixedIssueIds);
   let score = mileageBase(currentMileage);
   for (const issue of issues) {
     if (fixed.has(issue.id)) continue;
     score -= weightFor(issue, classifyIssueByMileage(issue, currentMileage));
   }
+  // Ответы-ощущения мягко корректируют оценку (хорошо ↑, тревожно ↓, не знаю — ноль).
+  if (answers) score += answerAdjustment(answers);
   return Math.max(40, Math.min(95, Math.round(score)));
+}
+
+/* ============================================================
+ * «Созревание» индекса (модель Oura): индекс — не диагноз, а
+ * предварительная оценка, которая крепнет по мере данных.
+ * Источники картины: вопросы-ощущения (~30%), отметки болячек (~50%),
+ * журнал + пробег (~20%).
+ * ============================================================ */
+
+// Насколько сильно ответ по системе двигает индекс. Двигатель/коробка — тяжелее.
+// Ключи совпадают с questionId из формы вопросов (этап C).
+export const SENSATION_WEIGHTS = {
+  engine_cold_start: 4,
+  oil_consumption: 4,
+  engine_noise: 4,
+  engine_pull: 3,
+  transmission: 4,
+  suspension_knock: 2,
+  steering: 2,
+  brakes: 3,
+  service_history: 0, // нейтрально, не штрафует
+};
+const SENSATION_TOTAL_QUESTIONS = 5; // ядро (3) + 2 доп. — база для «% картины»
+
+// Суммарная поправка к индексу от ответов. Мягкая, чтобы цифра не прыгала.
+export function answerAdjustment(answers = {}) {
+  let delta = 0;
+  for (const [id, val] of Object.entries(answers || {})) {
+    const w = SENSATION_WEIGHTS[id] ?? 2;
+    if (val === 'good') delta += w * 0.4;
+    else if (val === 'mid') delta -= w * 0.3;
+    else if (val === 'bad') delta -= w;
+    // 'unknown' → 0 (туман, не штрафуем)
+  }
+  return delta;
+}
+
+// «Процент картины собран» — от 0 до 100. Растёт от любого источника.
+// answers: {id:val}; issues: болячки модели; fixedIssueIds: отмеченные «устранено»;
+// journalCount: число записей журнала; mileageKnown: задан ли пробег.
+export function pictureCompleteness({ answers = {}, issues = [], fixedIssueIds = [], journalCount = 0, mileageKnown = false } = {}) {
+  const definite = Object.values(answers || {}).filter(v => v && v !== 'unknown').length;
+  const qPct = Math.min(30, (definite / SENSATION_TOTAL_QUESTIONS) * 30);
+
+  const relevant = (issues || []).filter(i => !isBodyRecord(i));
+  const fixed = new Set(fixedIssueIds);
+  const decided = relevant.filter(i => fixed.has(i.id)).length;
+  const iPct = relevant.length ? Math.min(50, (decided / relevant.length) * 50) : 0;
+
+  let jPct = 0;
+  if (journalCount > 0) jPct += 10;
+  if (mileageKnown) jPct += 10;
+  jPct = Math.min(20, jPct);
+
+  return Math.round(Math.min(100, qPct + iPct + jPct));
+}
+
+// Уровень зрелости по «% картины»: 1 предварительная → 2 уточняется → 3 точная.
+export function maturityLevel(picturePct) {
+  if (picturePct >= 80) return { level: 3, key: 'precise', label: 'Точная оценка' };
+  if (picturePct >= 25) return { level: 2, key: 'refining', label: 'Оценка уточняется' };
+  return { level: 1, key: 'preliminary', label: 'Предварительная оценка' };
 }
 
 // Группировка issue.system → 4 системы UI. Кузов НЕ показываем (решение владельца),
