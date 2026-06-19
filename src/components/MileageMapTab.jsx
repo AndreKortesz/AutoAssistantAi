@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import { recordTitle, recordSystem, isBodyRecord, severityColor } from '../utils/issueHelpers';
@@ -13,6 +13,7 @@ export default function MileageMapTab() {
   const { issuesData, userCar } = useCar();
   const navigate = useNavigate();
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
+  const [showPast, setShowPast] = useState(false);
 
   const points = useMemo(() => {
     if (!issuesData) return [];
@@ -44,11 +45,22 @@ export default function MileageMapTab() {
     return <div style={s.empty}>Карта появится, когда подключим данные по этой модели.</div>;
   }
 
+  const pastCount = points.filter(p => !p.here && p.km < mileage).length;
+  const visible = showPast ? points : points.filter(p => p.here || p.km >= mileage);
+
   return (
     <div style={s.wrap}>
-      <div style={s.intro}>Дорога вперёд по пробегу: что уже позади и что ждёт — с расстоянием до события. Не список проблем, а план.</div>
+      <div style={s.intro}>Дорога вперёд по пробегу: что ждёт — с расстоянием до события. Не список проблем, а план.</div>
+
+      {pastCount > 0 && (
+        <button style={s.pastBtn} onClick={() => setShowPast(v => !v)}>
+          {showPast ? 'Скрыть пройденное' : `Показать пройденное (${pastCount})`}
+          <Icon name="chevronDown" size={15} color={c.t2} style={{ transform: showPast ? 'rotate(180deg)' : 'none' }} />
+        </button>
+      )}
+
       <div style={s.timeline}>
-        {points.map((p) => {
+        {visible.map((p) => {
           const past = !p.here && p.km < mileage;
           return (
             <div
@@ -76,7 +88,8 @@ export default function MileageMapTab() {
 
 const s = {
   wrap: { padding: '12px' },
-  intro: { fontSize: '13px', color: c.t2, lineHeight: 1.5, padding: '4px 4px 14px' },
+  intro: { fontSize: '13px', color: c.t2, lineHeight: 1.5, padding: '4px 4px 12px' },
+  pastBtn: { width: '100%', marginBottom: '14px', padding: '11px', borderRadius: '10px', background: c.card, border: `1px solid ${c.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px', color: c.t2, fontFamily: 'inherit' },
   timeline: { position: 'relative', borderLeft: `2px solid ${c.border}`, marginLeft: '60px', paddingLeft: '0' },
   point: { display: 'flex', alignItems: 'center', gap: '0', padding: '8px 0', position: 'relative' },
   km: { position: 'absolute', left: '-60px', width: '52px', textAlign: 'right', fontSize: '12px', color: c.t3, fontVariantNumeric: 'tabular-nums' },

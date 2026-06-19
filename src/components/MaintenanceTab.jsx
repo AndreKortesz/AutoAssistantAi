@@ -101,7 +101,7 @@ export default function MaintenanceTab() {
   return (
     <div style={s.wrap}>
       <div style={s.subHead}>
-        <Icon name="clock" size={18} color={c.primary} />
+        <Icon name="calendar" size={20} color={c.t2} strokeWidth={1.7} />
         <div>
           <div style={s.subTitle}>Регламент — строго по графику</div>
           <div style={s.subSub}>меняется по пробегу, не глядя на состояние</div>
@@ -110,8 +110,8 @@ export default function MaintenanceTab() {
       {mVis.length === 0 ? <div style={s.empty}>На вашем пробеге по регламенту ничего срочного.</div>
         : mVis.map(it => <Row key={it.id} it={it} />)}
 
-      <div style={{ ...s.subHead, marginTop: '20px' }}>
-        <Icon name="activity" size={18} color={c.primary} />
+      <div style={{ ...s.subHead, marginTop: '22px' }}>
+        <Icon name="gauge" size={20} color={c.t2} strokeWidth={1.7} />
         <div>
           <div style={s.subTitle}>Износ — по состоянию и пробегу</div>
           <div style={s.subSub}>ходит по-разному, смотрят по факту</div>
@@ -140,13 +140,13 @@ function systemLabel(sys) {
 const s = {
   wrap: { padding: '12px' },
   subHead: { display: 'flex', alignItems: 'center', gap: '10px', margin: '0 2px 10px' },
-  subTitle: { fontSize: '15px', fontWeight: '700', color: c.t1 },
-  subSub: { fontSize: '12px', color: c.t3, marginTop: '1px' },
-  row: { display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 14px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', marginBottom: '8px' },
-  dot: { width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0 },
+  subTitle: { fontSize: '16px', fontWeight: '700', color: c.t1 },
+  subSub: { fontSize: '13px', color: c.t3, marginTop: '1px' },
+  row: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px 16px', background: c.card, borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: '8px' },
+  dot: { width: '9px', height: '9px', borderRadius: '50%', flexShrink: 0 },
   info: { flex: 1, minWidth: 0 },
-  title: { fontSize: '14px', fontWeight: '600', color: c.t1, lineHeight: 1.3 },
-  sub: { fontSize: '12px', color: c.t3, marginTop: '2px' },
+  title: { fontSize: '15px', fontWeight: '600', color: c.t1, lineHeight: 1.3 },
+  sub: { fontSize: '13px', color: c.t3, marginTop: '2px' },
   right: { textAlign: 'right', flexShrink: 0 },
   rightTop: { fontSize: '13px', fontWeight: '600' },
   rightBot: { fontSize: '11px', color: c.t3, marginTop: '2px' },

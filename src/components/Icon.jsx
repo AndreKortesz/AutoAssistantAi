@@ -38,6 +38,10 @@ const PATHS = {
   x: <path d="M18 6 6 18 M6 6l12 12" />,
   plus: <path d="M12 5v14 M5 12h14" />,
   arrowLeft: <path d="M19 12H5 m7 7-7-7 7-7" />,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5 M12 8h0" /></>,
+  smile: <><circle cx="12" cy="12" r="9" /><path d="M8 14a4 4 0 0 0 8 0" /><path d="M9 9h0 M15 9h0" /></>,
+  calendar: <><rect x="4" y="5" width="16" height="16" rx="2" /><path d="M8 3v4 M16 3v4 M4 10h16" /><path d="m9 15 2 2 4-4" /></>,
+  gauge: <><path d="M12 14 15 9" /><circle cx="12" cy="14" r="1" /><path d="M4 18a8 8 0 1 1 16 0" /></>,
 };
 
 export default function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 1.8, style }) {

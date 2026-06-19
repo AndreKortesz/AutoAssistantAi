@@ -63,13 +63,16 @@ export default function IssuesScreen() {
     { id: 'map', label: 'Карта' },
   ];
 
-  const issueGroup = (key, type, title, list, intro) => (
-    <Section type={type} title={title} count={list.length} open={openGroups[key]} onToggle={() => toggleGroup(key)}>
+  const issueGroup = (key, opts, list) => (
+    <Section
+      icon={opts.icon} iconColor={opts.iconColor} title={opts.title} subtitle={opts.subtitle}
+      muted={opts.muted} count={list.length} open={openGroups[key]} onToggle={() => toggleGroup(key)}
+    >
       {list.length === 0 ? (
         <div style={s.okEmpty}><Icon name="check" size={16} color={c.success} /> Тут пока чисто — для вашего пробега ничего</div>
       ) : (
         <>
-          {intro && <div style={s.chronicIntro}>{intro}</div>}
+          {opts.intro && <div style={s.chronicIntro}>{opts.intro}</div>}
           {list.map(issue => (
             <IssueCard
               key={issue.id}
@@ -141,18 +144,16 @@ export default function IssuesScreen() {
       {/* Шапка C: спокойная фраза + сводка 3 чисел */}
       <div style={s.calmCard}>
         <div style={s.calmTop}>
-          <Icon name="shield" size={20} color={c.success} />
+          <Icon name="smile" size={22} color={c.success} />
           <div>
             <div style={s.calmPhrase}>Для своего пробега — спокойно</div>
             <div style={s.calmHint}>Известные слабые места модели, а не поломки вашей машины.</div>
           </div>
         </div>
         <div style={s.calmNums}>
-          <span><b style={{ color: c.textPrimary }}>{nowCount}</b> сейчас</span>
-          <span style={s.calmDot}>·</span>
-          <span><b style={{ color: c.textPrimary }}>{grouped.upcoming.length}</b> впереди</span>
-          <span style={s.calmDot}>·</span>
-          <span style={{ color: c.success }}><b>{grouped.past.length}</b> пройдено</span>
+          <div style={s.calmStat}><div style={{ ...s.calmNum, color: c.textPrimary }}>{nowCount}</div><div style={s.calmStatLabel}>сейчас</div></div>
+          <div style={s.calmStat}><div style={{ ...s.calmNum, color: c.textPrimary }}>{grouped.upcoming.length}</div><div style={s.calmStatLabel}>впереди</div></div>
+          <div style={s.calmStat}><div style={{ ...s.calmNum, color: c.success }}>{grouped.past.length}</div><div style={s.calmStatLabel}>пройдено</div></div>
         </div>
       </div>
 
@@ -239,10 +240,10 @@ export default function IssuesScreen() {
       {/* Контент вкладок */}
       {activeTab === 'issues' && (
         <div style={s.sections}>
-          {issueGroup('safety', 'warning', 'Важно для безопасности и мотора', grouped.safety)}
-          {issueGroup('planned', 'default', 'Плановый ремонт и износ', grouped.planned)}
-          {issueGroup('minor', 'default', 'Мелочи · просто знать', grouped.minor)}
-          {grouped.upcoming.length > 0 && issueGroup('upcoming', 'info', 'Что может проявиться впереди', grouped.upcoming, 'Старт по пробегу ещё впереди — не сейчас, а на горизонте. Просто чтобы знать.')}
+          {issueGroup('safety', { icon: 'shield', iconColor: c.warning, title: 'Важно для безопасности и мотора', subtitle: 'стоит держать в поле зрения' }, grouped.safety)}
+          {issueGroup('planned', { icon: 'wrench', iconColor: c.textSecondary, title: 'Плановый ремонт и износ', subtitle: 'по мере пробега' }, grouped.planned)}
+          {issueGroup('minor', { icon: 'info', iconColor: c.textTertiary, title: 'Мелочи · просто знать', subtitle: 'не требуют действий', muted: true }, grouped.minor)}
+          {grouped.upcoming.length > 0 && issueGroup('upcoming', { icon: 'clock', iconColor: c.textSecondary, title: 'Что может проявиться впереди', subtitle: 'старт по пробегу ещё впереди', intro: 'Не сейчас, а на горизонте. Просто чтобы знать.' }, grouped.upcoming)}
         </div>
       )}
 
@@ -252,24 +253,21 @@ export default function IssuesScreen() {
   );
 }
 
-function Section({ type, title, count, open, onToggle, children }) {
+function Section({ icon, iconColor, title, subtitle, count, open, onToggle, children, muted }) {
   return (
-    <div style={s.section}>
-      <div style={s.sectionWrapper(type)}>
-        <button style={s.sectionHeader(type)} onClick={onToggle}>
-          <div style={s.sectionHeaderLeft}>
-            <div style={s.sectionDot(type)} />
-            <span style={s.sectionTitle}>{title}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={s.sectionCount(type)}>{count}</span>
-            <span style={s.sectionToggle(open)}>▼</span>
-          </div>
-        </button>
-        <div style={s.sectionContent(open)}>
-          {children}
+    <div style={{ ...s.groupCard, ...(muted ? s.groupCardMuted : {}) }}>
+      <button style={s.groupHead} onClick={onToggle}>
+        {icon && <span style={s.groupIcon}><Icon name={icon} size={24} color={iconColor || c.textSecondary} strokeWidth={1.7} /></span>}
+        <div style={s.groupText}>
+          <div style={s.groupTitle}>{title}</div>
+          {subtitle && <div style={s.groupSub}>{subtitle}</div>}
         </div>
-      </div>
+        <span style={s.groupCount}>{count}</span>
+        <span style={{ ...s.groupChev, transform: open ? 'rotate(180deg)' : 'none' }}>
+          <Icon name="chevronDown" size={18} color={c.textTertiary} />
+        </span>
+      </button>
+      {open && <div style={s.groupBody}>{children}</div>}
     </div>
   );
 }
@@ -419,19 +417,33 @@ const s = {
   loading: { padding: '40px', textAlign: 'center', color: c.textSecondary },
 
   // Шапка C
-  calmCard: { margin: '12px', padding: '16px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '14px' },
-  calmTop: { display: 'flex', alignItems: 'flex-start', gap: '10px' },
-  calmPhrase: { fontSize: '15px', fontWeight: '600', color: c.success },
-  calmHint: { fontSize: '12px', color: c.textSecondary, lineHeight: '1.4', marginTop: '2px' },
-  calmNums: { display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${c.border}`, fontSize: '13px', color: c.textSecondary },
-  calmDot: { color: c.textTertiary },
+  calmCard: { margin: '12px', padding: '18px', background: c.card, borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' },
+  calmTop: { display: 'flex', alignItems: 'flex-start', gap: '12px' },
+  calmPhrase: { fontSize: '17px', fontWeight: '600', color: c.success },
+  calmHint: { fontSize: '13px', color: c.textSecondary, lineHeight: '1.45', marginTop: '4px' },
+  calmNums: { display: 'flex', marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${c.border}` },
+  calmStat: { flex: 1, textAlign: 'center' },
+  calmNum: { fontSize: '26px', fontWeight: '700', lineHeight: 1 },
+  calmStatLabel: { fontSize: '12px', color: c.textTertiary, marginTop: '4px' },
 
-  // Таб-бар
-  tabbar: { display: 'flex', gap: '4px', margin: '0 12px 12px', padding: '4px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '12px' },
+  // Таб-бар (iOS-сегмент)
+  tabbar: { display: 'flex', gap: '2px', margin: '0 12px 14px', padding: '4px', background: '#EDF0F4', borderRadius: '12px' },
   tab: { flex: 1, padding: '9px 6px', background: 'none', border: 'none', borderRadius: '9px', fontSize: '13px', fontWeight: '600', color: c.textSecondary, cursor: 'pointer', fontFamily: 'inherit' },
-  tabActive: { background: c.primaryLight, color: c.primary },
+  tabActive: { background: c.card, color: c.primary, boxShadow: '0 1px 3px rgba(0,0,0,0.10)' },
 
-  okEmpty: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', fontSize: '13px', color: c.textSecondary },
+  // Группы-карточки (заголовок раскрывающейся группы)
+  groupCard: { margin: '0 12px 10px', background: c.card, borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' },
+  groupCardMuted: { background: '#F1F2F4', boxShadow: 'none' },
+  groupHead: { width: '100%', display: 'flex', alignItems: 'center', gap: '14px', padding: '16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },
+  groupIcon: { flexShrink: 0, display: 'flex' },
+  groupText: { flex: 1, minWidth: 0 },
+  groupTitle: { fontSize: '17px', fontWeight: '600', color: c.textPrimary, lineHeight: 1.25 },
+  groupSub: { fontSize: '13px', color: c.textTertiary, marginTop: '2px' },
+  groupCount: { minWidth: '30px', height: '30px', padding: '0 9px', borderRadius: '15px', background: '#EDF0F4', color: c.textPrimary, fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  groupChev: { display: 'inline-flex', transition: 'transform 0.2s', flexShrink: 0 },
+  groupBody: { padding: '0 12px 12px' },
+
+  okEmpty: { display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 4px 8px', fontSize: '13px', color: c.textSecondary },
   
   emptyState: { padding: '40px 20px', textAlign: 'center' },
   emptyIcon: { fontSize: '64px', marginBottom: '16px' },
