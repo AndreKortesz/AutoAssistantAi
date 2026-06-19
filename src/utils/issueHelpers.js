@@ -10,43 +10,48 @@
  * - future:   далеко впереди (>50к), в индекс не идёт, в UI сливается с upcoming
  * - chronic:  «особенность поколения» — end_km==null и не critical. Фон, не давит на индекс.
  */
+// Эпицентр болячки — пробег, где она реально проявляется/кусается:
+// пик, иначе середина диапазона [start,end], иначе старт. null если данных нет.
+export function issueAnchorKm(issue) {
+  const mi = issue.mileage || {};
+  const start = mi.typical_start_km ?? null;
+  const end = mi.typical_end_km ?? null;
+  const peak = mi.peak_km ?? null;
+  if (peak != null) return peak;
+  if (start != null && end != null) return Math.round((start + end) / 2);
+  return start;
+}
+
 export function classifyIssueByMileage(issue, currentMileage = 0) {
   const mileage = issue.mileage || {};
-  const start = mileage.typical_start_km ?? 0;
-  const end = mileage.typical_end_km;
-  const peak = mileage.peak_km;
+  const end = mileage.typical_end_km ?? null;
+  const peak = mileage.peak_km ?? null;
   const severity = issue.issue?.severity;
   const m = currentMileage || 0;
+  const anchor = issueAnchorKm(issue);
 
-  // Особенность поколения: end_km==null И не critical.
-  // Critical хроника (например, HECU recall) остаётся в current — безопасность.
-  if (end == null && severity !== 'critical') {
-    if (start && start - m > 50000) return 'future';
-    if (start && start - m > 15000) return 'upcoming';
-    return 'chronic';
+  const CURRENT_WINDOW = 20000;   // насколько близко к эпицентру, чтобы быть «сейчас»
+  const CRIT_WINDOW = 30000;      // критичные показываем чуть раньше
+  const UPCOMING_MAX = 80000;     // дальше — «будущее» (в списке не давит, видно на «Карте»)
+  const win = severity === 'critical' ? CRIT_WINDOW : CURRENT_WINDOW;
+
+  // Уже позади: за концом диапазона или заметно за пиком.
+  if (end != null && m > end + 15000) return 'past';
+  if (end == null && peak != null && m > peak + 30000) {
+    // Далеко за пиком. Критичный риск всё равно держим в поле зрения.
+    return severity === 'critical' ? 'current' : 'past';
   }
 
-  // Critical хроника с пиком: ориентируемся на пик
-  if (end == null) {
-    if (peak != null) {
-      if (m > peak + 25000) return 'past';
-      const ahead = peak - m;
-      if (ahead > 50000) return 'future';
-      if (ahead > 25000) return 'upcoming';
-      return 'current';
-    }
-    // Critical без конца и без пика — постоянный риск
-    if (start && start - m > 50000) return 'future';
-    if (start && start - m > 5000) return 'upcoming';
-    return 'current';
-  }
+  // Нет данных по пробегу: критичное — в поле зрения, остальное — фон поколения.
+  if (anchor == null) return severity === 'critical' ? 'current' : 'chronic';
 
-  // Ранжированная: «сейчас» = внутри диапазона (с лёгким преддверием 5к);
-  // «скоро» = старт впереди на 5-50к; дальше — «будущее»; после конца +15к — «пройдено».
-  if (m > end + 15000) return 'past';
-  const ahead = start - m;
-  if (ahead > 50000) return 'future';
-  if (ahead > 5000) return 'upcoming';
+  const ahead = anchor - m;
+  if (ahead > UPCOMING_MAX) return 'future';
+  if (ahead > win) return 'upcoming';
+
+  // В пределах окна или уже на эпицентре.
+  // Ушли заметно за эпицентр, конца нет и не критично → фон поколения, не давим.
+  if (ahead < -30000 && end == null && severity !== 'critical') return 'chronic';
   return 'current';
 }
 
@@ -178,19 +183,14 @@ export function isBodyRecord(r) {
 // Группировка болячек по ВАЖНOСTИ (для вкладки «Слабые места»).
 // Возвращает: safety (critical/high), planned (medium), minor (low),
 // upcoming (старт впереди ≤ horizon), past (позади). Кузов отфильтрован.
-export function groupByImportance(issues, currentMileage = 0, fixedIssueIds = [], horizonKm = 30000) {
+export function groupByImportance(issues, currentMileage = 0, fixedIssueIds = []) {
   const res = { safety: [], planned: [], minor: [], upcoming: [], past: [] };
   for (const issue of issues || []) {
     if (isBodyRecord(issue)) continue;
     const cat = classifyIssueByMileage(issue, currentMileage);
     if (cat === 'past') { res.past.push(issue); continue; }
-    if (cat === 'upcoming' || cat === 'future') {
-      const start = issue.mileage?.typical_start_km;
-      if (start != null && start - currentMileage <= horizonKm) res.upcoming.push(issue);
-      // дальше горизонта — только на «Карте», в список не пихаем
-      else if (start == null) res.upcoming.push(issue);
-      continue;
-    }
+    // upcoming/future уже отфильтрованы по горизонту 80к в classify — показываем «впереди».
+    if (cat === 'upcoming' || cat === 'future') { res.upcoming.push(issue); continue; }
     // current / chronic → активно сейчас, делим по severity
     const sev = issue.issue?.severity;
     if (sev === 'critical' || sev === 'high') res.safety.push(issue);
@@ -199,7 +199,9 @@ export function groupByImportance(issues, currentMileage = 0, fixedIssueIds = []
   }
   const order = { critical: 0, high: 1, medium: 2, low: 3 };
   const sortSev = arr => arr.sort((a, b) => (order[a.issue?.severity] ?? 9) - (order[b.issue?.severity] ?? 9));
-  ['safety', 'planned', 'minor', 'upcoming'].forEach(k => sortSev(res[k]));
+  ['safety', 'planned', 'minor'].forEach(k => sortSev(res[k]));
+  // «впереди» — по близости эпицентра (ближайшее первым).
+  res.upcoming.sort((a, b) => (issueAnchorKm(a) ?? 1e9) - (issueAnchorKm(b) ?? 1e9));
   return res;
 }
 

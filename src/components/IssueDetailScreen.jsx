@@ -643,10 +643,10 @@ function PartCard({ part, secondary }) {
           ))}
         </div>
       )}
-      {part.alternatives?.length > 0 && (
+      {asArray(part.alternatives).length > 0 && (
         <div style={s.partSub}>
           <div style={s.partSubTitle}>Хорошие аналоги</div>
-          {part.alternatives.map((a, i) => (
+          {asArray(part.alternatives).map((a, i) => (
             <div key={i} style={s.altRow}>
               <span style={s.altManuf}>{a.manufacturer}</span>
               {a.part_number && <code style={s.revPn}>{a.part_number}</code>}
@@ -655,10 +655,10 @@ function PartCard({ part, secondary }) {
           ))}
         </div>
       )}
-      {part.do_not_buy?.length > 0 && (
+      {asArray(part.do_not_buy).length > 0 && (
         <div style={s.partSub}>
           <div style={{ ...s.partSubTitle, color: c.critical }}>Не брать</div>
-          {part.do_not_buy.map((a, i) => (
+          {asArray(part.do_not_buy).map((a, i) => (
             <div key={i} style={s.altRow}>
               <span style={s.altManuf}>{a.manufacturer}{a.part_number ? ` (${a.part_number})` : ''}</span>
               {a.reason && <span style={s.revNote}>{a.reason}</span>}
@@ -666,8 +666,8 @@ function PartCard({ part, secondary }) {
           ))}
         </div>
       )}
-      {part.where_to_buy?.length > 0 && (
-        <div style={s.whereBuy}>Где купить: {part.where_to_buy.join(' · ')}</div>
+      {asArray(part.where_to_buy).length > 0 && (
+        <div style={s.whereBuy}>Где купить: {asArray(part.where_to_buy).join(' · ')}</div>
       )}
     </div>
   );

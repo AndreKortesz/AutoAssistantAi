@@ -36,10 +36,10 @@ function maintItem(r, mileage) {
   };
 }
 
-function Row({ it }) {
+function Row({ it, onOpen }) {
   const meta = STATE_META[it.state] || STATE_META.early;
   return (
-    <div style={s.row}>
+    <button style={s.row} onClick={onOpen}>
       <span style={{ ...s.dot, background: it.dot || meta.dot }} />
       <div style={s.info}>
         <div style={s.title}>{it.title}</div>
@@ -49,7 +49,8 @@ function Row({ it }) {
         <div style={{ ...s.rightTop, color: it.color || meta.color }}>{it.rightTop}</div>
         {it.rightBot && <div style={s.rightBot}>{it.rightBot}</div>}
       </div>
-    </div>
+      <Icon name="arrowRight" size={16} color={c.t3} />
+    </button>
   );
 }
 
@@ -108,7 +109,7 @@ export default function MaintenanceTab() {
         </div>
       </div>
       {mVis.length === 0 ? <div style={s.empty}>На вашем пробеге по регламенту ничего срочного.</div>
-        : mVis.map(it => <Row key={it.id} it={it} />)}
+        : mVis.map(it => <Row key={it.id} it={it} onOpen={() => navigate(`/issues/${it.id}`)} />)}
 
       <div style={{ ...s.subHead, marginTop: '22px' }}>
         <Icon name="gauge" size={20} color={c.t2} strokeWidth={1.7} />
@@ -118,7 +119,7 @@ export default function MaintenanceTab() {
         </div>
       </div>
       {wVis.length === 0 ? <div style={s.empty}>На вашем пробеге расходники по износу пока не требуют внимания.</div>
-        : wVis.map(it => <Row key={it.id} it={it} />)}
+        : wVis.map(it => <Row key={it.id} it={it} onOpen={() => navigate(`/issues/${it.id}`)} />)}
 
       {hiddenCount > 0 && (
         <button style={s.showAll} onClick={() => setShowAll(v => !v)}>
@@ -142,7 +143,7 @@ const s = {
   subHead: { display: 'flex', alignItems: 'center', gap: '10px', margin: '0 2px 10px' },
   subTitle: { fontSize: '16px', fontWeight: '700', color: c.t1 },
   subSub: { fontSize: '13px', color: c.t3, marginTop: '1px' },
-  row: { display: 'flex', alignItems: 'center', gap: '12px', padding: '15px 16px', background: c.card, borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: '8px' },
+  row: { width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', padding: '15px 16px', background: c.card, borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: '8px' },
   dot: { width: '9px', height: '9px', borderRadius: '50%', flexShrink: 0 },
   info: { flex: 1, minWidth: 0 },
   title: { fontSize: '15px', fontWeight: '600', color: c.t1, lineHeight: 1.3 },

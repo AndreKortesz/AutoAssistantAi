@@ -55,6 +55,8 @@ export default function IssuesScreen() {
   const [openGroups, setOpenGroups] = useState({}); // {} = дефолт (первая непустая раскрыта)
   const [seeAllGroups, setSeeAllGroups] = useState({});
   const [recallsOpen, setRecallsOpen] = useState(false);
+  const [expandedIssue, setExpandedIssue] = useState(null);
+  const toggleIssue = (id) => setExpandedIssue(prev => prev === id ? null : id);
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
@@ -74,7 +76,8 @@ export default function IssuesScreen() {
   const isGroupOpen = (key) => (openGroups[key] !== undefined ? openGroups[key] : key === firstOpenKey);
   const toggleGroup = (key) => setOpenGroups(prev => ({ ...prev, [key]: !isGroupOpen(key) }));
 
-  const nowCount = grouped.safety.length + grouped.planned.length + minorAll.length;
+  // «Сейчас» = то, что стоит внимания (безопасность + плановое). Мелочи — фон, не пугаем цифрой.
+  const nowCount = grouped.safety.length + grouped.planned.length;
   const doneCount = fixedIssueIds.length;
 
   const TABS = [
@@ -108,20 +111,28 @@ export default function IssuesScreen() {
         {opts.intro && <div style={s.chronicIntro}>{opts.intro}</div>}
         {shown.map((issue, idx) => {
           const infoOnly = !issue.issue && !issue.solutions; // minor_annoyance: нет детальной страницы
-          const rowStyle = { ...s.issueRow, ...(idx > 0 ? s.issueRowBorder : {}) };
-          const inner = (
-            <>
-              <span style={{ ...s.sevDot, background: sevColor(issue.issue?.severity) }} />
-              <div style={s.issueRowInfo}>
-                <div style={s.issueRowTitle}>{recordTitle(issue)}</div>
-                <div style={s.issueRowSub}>{infoOnly ? (issue.description || '') : rowSub(issue)}</div>
+          if (infoOnly) {
+            return (
+              <div key={issue.id} style={{ ...s.issueRow, ...(idx > 0 ? s.issueRowBorder : {}) }}>
+                <span style={{ ...s.sevDot, background: sevColor(issue.issue?.severity) }} />
+                <div style={s.issueRowInfo}>
+                  <div style={s.issueRowTitle}>{recordTitle(issue)}</div>
+                  <div style={s.issueRowSub}>{issue.description || ''}</div>
+                </div>
               </div>
-              {!infoOnly && <Icon name="arrowRight" size={16} color={c.textTertiary} />}
-            </>
+            );
+          }
+          return (
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              expanded={expandedIssue === issue.id}
+              onToggle={() => toggleIssue(issue.id)}
+              onDetails={() => navigate(`/issues/${issue.id}`)}
+              recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
+              classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
+            />
           );
-          return infoOnly
-            ? <div key={issue.id} style={rowStyle}>{inner}</div>
-            : <button key={issue.id} style={rowStyle} onClick={() => navigate(`/issues/${issue.id}`)}>{inner}</button>;
         })}
         {list.length > 3 && !seeAll && (
           <button style={s.moreInGroup} onClick={() => setSeeAllGroups(p => ({ ...p, [key]: true }))}>
@@ -328,7 +339,7 @@ function Section({ icon, iconColor, title, subtitle, count, open, onToggle, chil
 
 function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed }) {
   const severity = issue.issue?.severity || 'low';
-  const title = issue.issue?.title || 'Без названия';
+  const title = recordTitle(issue);
   const subsystem = issue.issue?.subsystem || issue.issue?.system || '';
   const freq = frequencyText(issue.mileage);
   const peakKm = issue.mileage?.peak_km;
