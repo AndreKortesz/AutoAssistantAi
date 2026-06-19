@@ -52,7 +52,7 @@ function systemLabelRu(sys) {
 export default function IssuesScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userCar, carDetails, issuesData, loading, fixedIssueIds } = useCar();
+  const { userCar, carDetails, issuesData, loading, fixedIssueIds, markIssueFixed, issueStatuses, setIssueStatus } = useCar();
 
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'issues'); // issues | service | map
   const [openGroups, setOpenGroups] = useState({}); // {} = дефолт (первая непустая раскрыта)
@@ -156,6 +156,10 @@ export default function IssuesScreen() {
               onDetails={() => navigate(`/issues/${issue.id}`)}
               recalls={getLinkedRecalls(issue.id, issuesData.recalls)}
               classActions={getLinkedClassActions(issue.id, issuesData.classActions)}
+              isFixed={fixedIssueIds.includes(issue.id)}
+              status={issueStatuses[issue.id]}
+              onMarkFixed={() => markIssueFixed(issue)}
+              onSetStatus={(st) => setIssueStatus(issue.id, issueStatuses[issue.id] === st ? null : st)}
             />
           );
         })}
@@ -365,7 +369,7 @@ function Section({ icon, iconColor, title, subtitle, count, open, onToggle, chil
   );
 }
 
-function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed }) {
+function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed, status, onMarkFixed, onSetStatus }) {
   const severity = issue.issue?.severity || 'low';
   const title = recordTitle(issue);
   const subsystem = issue.issue?.subsystem || issue.issue?.system || '';
@@ -466,6 +470,22 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
             </div>
           )}
         </div>
+
+        {/* Дожим: мягко спрашиваем, что человек знает про эту болячку */}
+        {isFixed ? (
+          <div style={s.dozhimDone}>
+            <Icon name="check" size={15} color={c.success} /> Отмечено как сделано
+          </div>
+        ) : (
+          <div style={s.dozhim}>
+            <div style={s.dozhimQ}>Про это что-то знаете?</div>
+            <div style={s.dozhimRow}>
+              <button style={s.dozhimBtn} onClick={onMarkFixed}>Уже сделал</button>
+              <button style={{ ...s.dozhimBtn, ...(status === 'actual' ? s.dozhimBtnActive : {}) }} onClick={() => onSetStatus('actual')}>Актуально</button>
+              <button style={{ ...s.dozhimBtn, ...(status === 'unknown' ? s.dozhimBtnActive : {}) }} onClick={() => onSetStatus('unknown')}>Не знаю</button>
+            </div>
+          </div>
+        )}
 
         <button style={s.detailButton} onClick={onDetails}>
           Подробнее →
@@ -652,6 +672,14 @@ const s = {
   metricValue: { fontSize: '13px', fontWeight: '600', color: c.textPrimary },
   
   detailButton: { width: '100%', padding: '14px', background: c.primary, color: '#FFF', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
-  
+
+  dozhim: { marginBottom: '12px', padding: '12px', background: c.bg, borderRadius: '10px' },
+  dozhimQ: { fontSize: '13px', color: c.textSecondary, marginBottom: '8px' },
+  dozhimRow: { display: 'flex', gap: '6px' },
+  dozhimBtn: { flex: 1, padding: '9px 4px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '8px', fontSize: '13px', color: c.textPrimary, cursor: 'pointer', fontFamily: 'inherit' },
+  dozhimBtnActive: { borderColor: c.primary, color: c.primary, background: 'rgba(31,79,216,0.06)', fontWeight: '600' },
+  dozhimDone: { marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: c.success },
+
+
   emptyText: { padding: '20px', textAlign: 'center', fontSize: '13px', color: c.textTertiary },
 };

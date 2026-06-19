@@ -80,7 +80,7 @@ function systemStatusWord(score) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, journalRecords } = useCar();
+  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, journalRecords, issueStatuses } = useCar();
   const [showMileageModal, setShowMileageModal] = useState(false);
   const [systemsOpen, setSystemsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
@@ -104,10 +104,11 @@ export default function Dashboard() {
       answers: answers || {},
       issues: issuesData.systemic,
       fixedIssueIds,
+      issueStatuses,
       journalCount: (journalRecords || []).length,
       mileageKnown: mileage > 0,
     });
-  }, [issuesData, answers, fixedIssueIds, journalRecords, mileage]);
+  }, [issuesData, answers, fixedIssueIds, issueStatuses, journalRecords, mileage]);
 
   const maturity = useMemo(() => maturityLevel(picturePct), [picturePct]);
 

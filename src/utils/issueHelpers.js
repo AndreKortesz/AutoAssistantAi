@@ -166,13 +166,14 @@ export function answerAdjustment(answers = {}) {
 // «Процент картины собран» — от 0 до 100. Растёт от любого источника.
 // answers: {id:val}; issues: болячки модели; fixedIssueIds: отмеченные «устранено»;
 // journalCount: число записей журнала; mileageKnown: задан ли пробег.
-export function pictureCompleteness({ answers = {}, issues = [], fixedIssueIds = [], journalCount = 0, mileageKnown = false } = {}) {
+export function pictureCompleteness({ answers = {}, issues = [], fixedIssueIds = [], issueStatuses = {}, journalCount = 0, mileageKnown = false } = {}) {
   const definite = Object.values(answers || {}).filter(v => v && v !== 'unknown').length;
   const qPct = Math.min(30, (definite / SENSATION_TOTAL_QUESTIONS) * 30);
 
   const relevant = (issues || []).filter(i => !isBodyRecord(i));
   const fixed = new Set(fixedIssueIds);
-  const decided = relevant.filter(i => fixed.has(i.id)).length;
+  // «Решено» = отмечено «устранено» (журнал) ИЛИ подтверждено «актуально».
+  const decided = relevant.filter(i => fixed.has(i.id) || issueStatuses[i.id] === 'actual').length;
   const iPct = relevant.length ? Math.min(50, (decided / relevant.length) * 50) : 0;
 
   let jPct = 0;

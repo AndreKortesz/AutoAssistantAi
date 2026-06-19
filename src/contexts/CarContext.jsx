@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import * as dataService from '../services/dataService';
 import * as userCarService from '../services/userCarService';
 import * as journalService from '../services/journalService';
+import * as issueStatusService from '../services/issueStatusService';
 
 const CarContext = createContext(null);
 
@@ -13,6 +14,7 @@ export function CarProvider({ children }) {
   const [carDetails, setCarDetails] = useState(null); // данные модели из catalog
   const [issuesData, setIssuesData] = useState(null); // болячки + recalls и т.д.
   const [journalRecords, setJournalRecords] = useState(() => journalService.loadRecords());
+  const [issueStatuses, setIssueStatuses] = useState(() => issueStatusService.loadStatuses());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,6 +28,17 @@ export function CarProvider({ children }) {
     return journalService.subscribe(() => {
       setJournalRecords(journalService.loadRecords());
     });
+  }, []);
+
+  // Подписка на статусы болячек (актуально / не знаю).
+  useEffect(() => {
+    return issueStatusService.subscribe(() => {
+      setIssueStatuses(issueStatusService.loadStatuses());
+    });
+  }, []);
+
+  const setIssueStatus = useCallback((id, status) => {
+    issueStatusService.setStatus(id, status);
   }, []);
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
@@ -121,6 +134,8 @@ export function CarProvider({ children }) {
     markIssueFixed,
     unmarkIssueFixed,
     saveAnswers,
+    issueStatuses,
+    setIssueStatus,
   };
 
   return <CarContext.Provider value={value}>{children}</CarContext.Provider>;
