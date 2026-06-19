@@ -6,7 +6,10 @@ import * as journalService from '../services/journalService';
 const CarContext = createContext(null);
 
 export function CarProvider({ children }) {
-  const [userCar, setUserCar] = useState(null);
+  // userCar читаем из localStorage СИНХРОННО — это мгновенно и позволяет
+  // корневому маршруту сразу решить, куда вести (онбординг/дашборд/добавление),
+  // не дожидаясь загрузки тяжёлого JSON болячек.
+  const [userCar, setUserCar] = useState(() => userCarService.getUserCar());
   const [carDetails, setCarDetails] = useState(null); // данные модели из catalog
   const [issuesData, setIssuesData] = useState(null); // болячки + recalls и т.д.
   const [journalRecords, setJournalRecords] = useState(() => journalService.loadRecords());

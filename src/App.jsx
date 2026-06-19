@@ -115,25 +115,16 @@ const shouldShowNav = (pathname) => {
   return !noNavRoutes.includes(pathname)
 }
 
-// Сплэш на время загрузки машины из localStorage — нейтральный экран,
-// чтобы не мигал онбординг до того, как мы решили, куда вести пользователя.
-function Splash() {
-  return (
-    <div style={styles.splash}>
-      <div style={styles.splashLogo}>AAA</div>
-    </div>
-  )
-}
-
-// Что показывать на корневом маршруте «/». Решаем декларативно (без мигания):
-// пока грузимся — сплэш; новый пользователь — онбординг; вернувшийся —
-// сразу редирект на дашборд / добавление авто.
+// Что показывать на корневом маршруте «/». Решаем декларативно и СРАЗУ
+// (userCar и флаг онбординга читаются из localStorage синхронно — без async-зазора,
+// поэтому онбординг не мигает и не нужно ждать загрузку данных):
+// новый пользователь — онбординг; вернувшийся — мгновенный редирект.
+// Тяжёлый JSON болячек грузится в фоне, экраны показывают своё «Загрузка».
 function RootRoute({ onComplete }) {
-  const { userCar, loading } = useCar()
+  const { userCar } = useCar()
   const hasCompletedOnboarding = userCarService.isOnboardingCompleted()
 
   if (!hasCompletedOnboarding) return <Onboarding onComplete={onComplete} />
-  if (loading) return <Splash />
   return <Navigate to={userCar ? '/dashboard' : '/add-car'} replace />
 }
 
@@ -184,27 +175,6 @@ const styles = {
     background: colors.background,
   },
 
-  splash: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: colors.background,
-  },
-  splashLogo: {
-    width: '56px',
-    height: '56px',
-    borderRadius: '14px',
-    background: colors.primary,
-    color: '#FFFFFF',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '700',
-    fontSize: '18px',
-    letterSpacing: '1px',
-  },
-  
   bottomNav: {
     position: 'fixed',
     bottom: 0,
