@@ -11,6 +11,7 @@ import {
   recordTitle,
   getLinkedRecalls,
   getLinkedClassActions,
+  isBodyRecord,
 } from '../utils/issueHelpers';
 import Icon from './Icon';
 import CarSilhouette from './CarSilhouette';
@@ -52,7 +53,7 @@ function systemLabelRu(sys) {
 export default function IssuesScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userCar, carDetails, issuesData, loading, fixedIssueIds, markIssueFixed, issueStatuses, setIssueStatus } = useCar();
+  const { userCar, carDetails, issuesData, loading, fixedIssueIds, markIssueFixed, unmarkIssueFixed, issueStatuses, setIssueStatus } = useCar();
 
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'issues'); // issues | service | map
   const [openGroups, setOpenGroups] = useState({}); // {} = дефолт (первая непустая раскрыта)
@@ -63,10 +64,15 @@ export default function IssuesScreen() {
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
-  // Группируем болячки по важности (кузов отфильтрован внутри)
+  const isFixed = (id) => fixedIssueIds.includes(id);
+
+  // Группируем болячки по важности (кузов отфильтрован внутри).
+  // Отмеченные «сделано» убираем из активных групп — они уходят в отдельную кучу «Сделано».
   const grouped = useMemo(() => {
     if (!issuesData) return { safety: [], planned: [], minor: [], upcoming: [], past: [] };
-    return groupByImportance(issuesData.systemic, mileage, fixedIssueIds);
+    const g = groupByImportance(issuesData.systemic, mileage, fixedIssueIds);
+    for (const k of ['safety', 'planned', 'minor', 'upcoming']) g[k] = g[k].filter(i => !isFixed(i.id));
+    return g;
   }, [issuesData, mileage, fixedIssueIds]);
 
   // «Мелочи» = low-болячки + отдельный тип minor_annoyance (без кузова)
@@ -74,6 +80,12 @@ export default function IssuesScreen() {
     const extra = (issuesData?.minor || []).filter(r => (r.issue?.system || r.position?.system || r.part_info?.system) !== 'body');
     return [...grouped.minor, ...extra];
   }, [grouped, issuesData]);
+
+  // «Сделано» — всё, что пользователь отметил устранённым (отдельная куча, свёрнута).
+  const doneAll = useMemo(() => {
+    if (!issuesData) return [];
+    return (issuesData.systemic || []).filter(i => isFixed(i.id) && !isBodyRecord(i));
+  }, [issuesData, fixedIssueIds]);
 
   const firstOpenKey = grouped.safety.length ? 'safety' : grouped.planned.length ? 'planned' : minorAll.length ? 'minor' : null;
   const isGroupOpen = (key) => (openGroups[key] !== undefined ? openGroups[key] : key === firstOpenKey);
@@ -159,6 +171,7 @@ export default function IssuesScreen() {
               isFixed={fixedIssueIds.includes(issue.id)}
               status={issueStatuses[issue.id]}
               onMarkFixed={() => markIssueFixed(issue)}
+              onUnmark={() => unmarkIssueFixed(issue.id)}
               onSetStatus={(st) => setIssueStatus(issue.id, issueStatuses[issue.id] === st ? null : st)}
             />
           );
@@ -333,6 +346,12 @@ export default function IssuesScreen() {
               {issueGroup('upcoming', { icon: 'clock', title: 'Что может проявиться впереди', subtitle: 'старт по пробегу ещё впереди', intro: 'Не сейчас, а на горизонте. Просто чтобы знать.' }, grouped.upcoming)}
             </>
           )}
+          {doneAll.length > 0 && (
+            <>
+              <div style={s.aheadDivider} />
+              {issueGroup('done', { icon: 'check', title: 'Сделано', subtitle: 'вы отметили как устранённое', muted: true, done: true }, doneAll)}
+            </>
+          )}
         </div>
       )}
 
@@ -369,7 +388,7 @@ function Section({ icon, iconColor, title, subtitle, count, open, onToggle, chil
   );
 }
 
-function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed, status, onMarkFixed, onSetStatus }) {
+function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed, status, onMarkFixed, onUnmark, onSetStatus }) {
   const severity = issue.issue?.severity || 'low';
   const title = recordTitle(issue);
   const subsystem = issue.issue?.subsystem || issue.issue?.system || '';
@@ -471,17 +490,20 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
           )}
         </div>
 
-        {/* Дожим: мягко спрашиваем, что человек знает про эту болячку */}
+        {/* Дожим: что у пользователя с этой болячкой. Понятные действия. */}
         {isFixed ? (
           <div style={s.dozhimDone}>
-            <Icon name="check" size={15} color={c.success} /> Отмечено как сделано
+            <span style={s.dozhimDoneLabel}><Icon name="check" size={15} color={c.success} /> Устранено — вы отметили</span>
+            <button style={s.dozhimUndo} onClick={onUnmark}>Вернуть</button>
           </div>
         ) : (
           <div style={s.dozhim}>
-            <div style={s.dozhimQ}>Про это что-то знаете?</div>
+            <div style={s.dozhimQ}>Что у вас с этим?</div>
             <div style={s.dozhimRow}>
-              <button style={s.dozhimBtn} onClick={onMarkFixed}>Уже сделал</button>
-              <button style={{ ...s.dozhimBtn, ...(status === 'actual' ? s.dozhimBtnActive : {}) }} onClick={() => onSetStatus('actual')}>Актуально</button>
+              <button style={s.dozhimFix} onClick={onMarkFixed}>
+                <Icon name="check" size={15} color="#fff" /> Уже устранил
+              </button>
+              <button style={{ ...s.dozhimBtn, ...(status === 'actual' ? s.dozhimBtnActive : {}) }} onClick={() => onSetStatus('actual')}>Ещё не делал</button>
               <button style={{ ...s.dozhimBtn, ...(status === 'unknown' ? s.dozhimBtnActive : {}) }} onClick={() => onSetStatus('unknown')}>Не знаю</button>
             </div>
           </div>
@@ -676,9 +698,12 @@ const s = {
   dozhim: { marginBottom: '12px', padding: '12px', background: c.bg, borderRadius: '10px' },
   dozhimQ: { fontSize: '13px', color: c.textSecondary, marginBottom: '8px' },
   dozhimRow: { display: 'flex', gap: '6px' },
+  dozhimFix: { flex: 1.2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '9px 4px', background: c.success, border: `1px solid ${c.success}`, borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
   dozhimBtn: { flex: 1, padding: '9px 4px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '8px', fontSize: '13px', color: c.textPrimary, cursor: 'pointer', fontFamily: 'inherit' },
   dozhimBtnActive: { borderColor: c.primary, color: c.primary, background: 'rgba(31,79,216,0.06)', fontWeight: '600' },
-  dozhimDone: { marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: c.success },
+  dozhimDone: { marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', padding: '10px 12px', background: 'rgba(46,158,111,0.08)', borderRadius: '10px' },
+  dozhimDoneLabel: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: c.success, fontWeight: '500' },
+  dozhimUndo: { background: 'none', border: 'none', color: c.textSecondary, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' },
 
 
   emptyText: { padding: '20px', textAlign: 'center', fontSize: '13px', color: c.textTertiary },

@@ -104,8 +104,9 @@ export default function IssueDetailScreen() {
 
   const handleMarkFixed = () => {
     if (!issue || isFixed) return;
-    const before = calculateHealthIndex(issuesData?.systemic || [], mileage, fixedIssueIds);
-    const after = calculateHealthIndex(issuesData?.systemic || [], mileage, [...fixedIssueIds, issue.id]);
+    const answers = userCar?.onboardingAnswers || null;
+    const before = calculateHealthIndex(issuesData?.systemic || [], mileage, fixedIssueIds, answers);
+    const after = calculateHealthIndex(issuesData?.systemic || [], mileage, [...fixedIssueIds, issue.id], answers);
     markIssueFixed(issue);
     setToast({ before, after, issueId: issue.id });
   };
