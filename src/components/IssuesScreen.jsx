@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import {
@@ -16,6 +16,9 @@ import Icon from './Icon';
 import CarSilhouette from './CarSilhouette';
 import MaintenanceTab from './MaintenanceTab';
 import MileageMapTab from './MileageMapTab';
+import CoachmarksTour from './CoachmarksTour';
+
+const TOUR_KEY = 'aaa_service_tour_seen';
 
 // AutoAssistantAi — Экран болячек
 // Группировка: текущие / предстоящие / прошедшие (по пробегу)
@@ -80,10 +83,32 @@ export default function IssuesScreen() {
   const nowCount = grouped.safety.length + grouped.planned.length;
   const doneCount = fixedIssueIds.length;
 
+  const tabRefs = [useRef(null), useRef(null), useRef(null)];
   const TABS = [
     { id: 'issues', label: 'Слабые места' },
     { id: 'service', label: 'ТО и расходники' },
     { id: 'map', label: 'Карта' },
+  ];
+
+  // Коачмарк-тур по 3 вкладкам — один раз, при первом заходе с реальными данными.
+  const [tourOn, setTourOn] = useState(false);
+  useEffect(() => {
+    if (!issuesData?.hasData) return;
+    let seen = true;
+    try { seen = localStorage.getItem(TOUR_KEY) === 'true'; } catch (e) {}
+    if (!seen) setTourOn(true);
+  }, [issuesData]);
+  const closeTour = () => {
+    setTourOn(false);
+    try { localStorage.setItem(TOUR_KEY, 'true'); } catch (e) {}
+  };
+  const tourSteps = [
+    { targetRef: tabRefs[0], onEnter: () => setActiveTab('issues'), title: 'Слабые места',
+      text: `Болячки именно вашего ${carDetails?.model_name || 'авто'} — что бывает на этой версии и пробеге. Отмечайте, что уже сделано, — оценка станет точнее.` },
+    { targetRef: tabRefs[1], onEnter: () => setActiveTab('service'), title: 'ТО и расходники',
+      text: 'Регламент и износ по вашему пробегу: что и когда менять. Загляните в карточку — там детали и артикулы.' },
+    { targetRef: tabRefs[2], onEnter: () => setActiveTab('map'), title: 'Карта',
+      text: 'Дорога вперёд по пробегу — что ждёт и через сколько тысяч км. Спокойный план, не список проблем.' },
   ];
 
   const rowSub = (issue) => {
@@ -280,9 +305,10 @@ export default function IssuesScreen() {
 
       {/* Вкладки раздела */}
       <div style={s.tabbar}>
-        {TABS.map(t => (
+        {TABS.map((t, i) => (
           <button
             key={t.id}
+            ref={tabRefs[i]}
             style={{ ...s.tab, ...(activeTab === t.id ? s.tabActive : {}) }}
             onClick={() => setActiveTab(t.id)}
           >
@@ -308,6 +334,8 @@ export default function IssuesScreen() {
 
       {activeTab === 'service' && <MaintenanceTab />}
       {activeTab === 'map' && <MileageMapTab />}
+
+      {tourOn && <CoachmarksTour steps={tourSteps} onClose={closeTour} />}
     </div>
   );
 }
