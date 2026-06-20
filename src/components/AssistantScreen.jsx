@@ -245,14 +245,18 @@ export default function AssistantScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const messagesRef = useRef(null);
 
+  // Прокручиваем ТОЛЬКО внутренний контейнер сообщений (не окно) — иначе на мобиле
+  // scrollIntoView дёргает страницу. behavior:auto — без «доезжания», которое сбивает чтение.
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isTyping]);
 
   // Контекст для заземления ассистента: реальные болячки из базы (без выдумок).
   const buildCarContext = () => {
@@ -360,7 +364,7 @@ export default function AssistantScreen() {
       </div>
 
       {/* Messages */}
-      <div style={styles.messagesContainer}>
+      <div ref={messagesRef} style={styles.messagesContainer}>
         {messages.length === 0 && <WelcomeMessage car={car} />}
         
         {messages.map((msg, i) => (
@@ -427,7 +431,9 @@ export default function AssistantScreen() {
 
 const styles = {
   container: {
-    height: '100vh',
+    // 100dvh = реальный видимый вьюпорт мобилы (без «прыжков» 100vh);
+    // минус высота нижней навигации, чтобы инпут не уходил под неё.
+    height: 'calc(100dvh - 72px)',
     width: '100%',
     background: colors.background,
     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
@@ -493,8 +499,9 @@ const styles = {
   messagesContainer: {
     flex: 1,
     overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
     padding: '16px',
-    paddingBottom: '100px',
+    paddingBottom: '24px',
   },
 
   // Welcome

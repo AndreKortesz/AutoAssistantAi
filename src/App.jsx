@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 
 import { CarProvider, useCar } from './contexts/CarContext'
@@ -132,6 +132,17 @@ function RootRoute({ onComplete }) {
   return <Navigate to={userCar ? '/dashboard' : '/add-car'} replace />
 }
 
+// Сброс прокрутки наверх при смене маршрута — иначе новая страница открывается
+// на той же позиции, что и прошлая (выглядит как «открылась в середине»).
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    if (document.scrollingElement) document.scrollingElement.scrollTop = 0
+  }, [pathname])
+  return null
+}
+
 // Внутренний компонент роутинга, имеет доступ к контексту
 function AppRoutes() {
   const navigate = useNavigate()
@@ -146,6 +157,7 @@ function AppRoutes() {
 
   return (
     <div style={styles.app}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<RootRoute onComplete={handleOnboardingComplete} />} />
         <Route path="/add-car" element={<AddCarForm />} />
