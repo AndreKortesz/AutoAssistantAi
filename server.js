@@ -11,6 +11,7 @@
 const express = require('express');
 const compression = require('compression');
 const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
 // gzip всего ответа: данные модели ~828 КБ → ~114 КБ. Главный ускоритель загрузки.
@@ -25,8 +26,48 @@ const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;   // токен бота
 const TG_CHAT = process.env.TELEGRAM_CHAT_ID;      // chat_id владельца
 const INTEREST_WEBHOOK = process.env.INTEREST_WEBHOOK_URL; // произвольный вебхук (Slack/Make/и т.п.)
-// Память-счётчик на время жизни процесса (для быстрой сводки; постоянное хранение — Phase 3/БД).
+const ADMIN_KEY = process.env.ADMIN_KEY; // ключ для просмотра отчёта /api/interest/report?key=...
+// Память-счётчик на время жизни процесса (резерв, если БД недоступна).
 const interestCounts = Object.create(null);
+
+// --- PostgreSQL (Railway): постоянное хранение событий интереса ---
+// Если DATABASE_URL не задан — БД не используется (всё работает на логах/счётчике).
+const DATABASE_URL = process.env.DATABASE_URL;
+const pool = DATABASE_URL
+  ? new Pool({
+      connectionString: DATABASE_URL,
+      // Внутренний хост Railway (*.railway.internal) — без SSL; внешний — с SSL.
+      ssl: /railway\.internal/.test(DATABASE_URL) ? false : { rejectUnauthorized: false },
+      max: 4,
+    })
+  : null;
+
+async function ensureSchema() {
+  if (!pool) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS service_interest (
+        id BIGSERIAL PRIMARY KEY,
+        service_id TEXT NOT NULL,
+        user_id TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_si_service ON service_interest (service_id)');
+    console.log('DB ready: service_interest');
+  } catch (e) {
+    console.error('DB schema error:', e.message);
+  }
+}
+ensureSchema();
+
+async function recordInterest(serviceId, userId) {
+  if (!pool) return;
+  try {
+    await pool.query('INSERT INTO service_interest (service_id, user_id) VALUES ($1, $2)', [serviceId, userId]);
+  } catch (e) {
+    console.error('DB insert error:', e.message);
+  }
+}
 
 // --- простой in-memory rate-limit: 20 запросов/мин на IP ---
 const hits = new Map();
@@ -141,17 +182,45 @@ app.post('/api/interest', async (req, res) => {
     return res.status(400).json({ ok: false });
   }
   const sid = service_id.replace(/[^a-z0-9_]/gi, '').slice(0, 64);
+  const uid = String(user_id || 'anon').slice(0, 32);
   interestCounts[sid] = (interestCounts[sid] || 0) + 1;
 
-  // Всегда в логи Railway (владелец видит). Плюс Telegram/вебхук, если настроены env.
-  const uid = String(user_id || 'anon').slice(0, 32);
-  console.info(`[interest] ${sid} — всего за сессию процесса: ${interestCounts[sid]} (user ${uid})`);
+  recordInterest(sid, uid);           // постоянное хранение в БД (если есть)
+  console.info(`[interest] ${sid} (user ${uid})`);
   notifyOwner(
-    `🔔 Интерес к сервису «${sid}». Нажатий (с перезапуска): ${interestCounts[sid]}.`,
+    `🔔 Интерес к сервису «${sid}».`,
     { service_id: sid, user_id: uid, timestamp: new Date().toISOString() }
   );
 
   res.json({ ok: true });
+});
+
+// Отчёт по спросу — защищён ключом ADMIN_KEY. Открываешь в браузере, видишь таблицу.
+app.get('/api/interest/report', async (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send('Доступ запрещён');
+  if (!pool) return res.status(503).send('БД не подключена (нет DATABASE_URL)');
+  try {
+    const { rows } = await pool.query(`
+      SELECT service_id,
+             COUNT(*)::int AS clicks,
+             COUNT(DISTINCT user_id)::int AS users,
+             MAX(created_at) AS last_at,
+             COUNT(*) FILTER (WHERE created_at > now() - interval '30 days')::int AS last_30d
+      FROM service_interest
+      GROUP BY service_id
+      ORDER BY clicks DESC`);
+    const total = rows.reduce((s, r) => s + r.clicks, 0);
+    const esc = (s) => String(s).replace(/[<>&]/g, m => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[m]));
+    const trs = rows.map(r => `<tr><td>${esc(r.service_id)}</td><td>${r.clicks}</td><td>${r.users}</td><td>${r.last_30d}</td><td>${r.last_at ? new Date(r.last_at).toLocaleString('ru-RU') : '—'}</td></tr>`).join('');
+    res.set('Content-Type', 'text/html; charset=utf-8').send(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Спрос по сервисам</title>
+<style>body{font-family:-apple-system,Inter,sans-serif;background:#F7F8FA;color:#1E293B;margin:0;padding:20px}h1{font-size:20px;font-weight:600}p{color:#64748B;font-size:13px}table{border-collapse:collapse;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}th,td{padding:11px 14px;text-align:left;font-size:14px;border-bottom:1px solid #E2E8F0}th{background:#F1F5F9;font-weight:600;font-size:12px;color:#64748B}tr:last-child td{border-bottom:none}td:nth-child(n+2){text-align:right;font-variant-numeric:tabular-nums}</style>
+<h1>Спрос по сервисам</h1><p>Всего нажатий: ${total}. Обновлено: ${new Date().toLocaleString('ru-RU')}</p>
+<table><tr><th>Сервис</th><th>Нажатий</th><th>Уник.</th><th>За 30 дней</th><th>Последнее</th></tr>${trs || '<tr><td colspan="5">Пока нет данных</td></tr>'}</table>`);
+  } catch (e) {
+    console.error('report error:', e.message);
+    res.status(500).send('Ошибка отчёта');
+  }
 });
 
 // статика фронтенда + SPA-fallback.

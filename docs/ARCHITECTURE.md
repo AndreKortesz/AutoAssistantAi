@@ -143,9 +143,12 @@ prototypes/                    ← HTML-референсы дизайна (Audi 
 
 - `compression()` — gzip всех ответов (JSON модели ~828 КБ → ~114 КБ; главный ускоритель загрузки).
 - Кэш-заголовки: хешированные ассеты Vite (`-<hash>.js|css`) → `max-age=31536000, immutable`; `index.html` → `no-cache`.
-- `POST /api/interest` — интерес к сервису: счётчик в памяти + лог в Railway + (если заданы env)
-  уведомление владельцу. Каналы по env: `TELEGRAM_BOT_TOKEN`+`TELEGRAM_CHAT_ID` (Telegram),
-  `INTEREST_WEBHOOK_URL` (произвольный вебхук). Без env — только лог.
+- `POST /api/interest` — интерес к сервису: запись в PostgreSQL (если задан `DATABASE_URL`) +
+  лог в Railway + (если заданы env) уведомление владельцу: `TELEGRAM_BOT_TOKEN`+`TELEGRAM_CHAT_ID`
+  (Telegram), `INTEREST_WEBHOOK_URL` (вебхук, получает структуру события). Без БД/env — работает на логах.
+- `GET /api/interest/report?key=<ADMIN_KEY>` — HTML-таблица спроса по сервисам (нажатий, уникальных,
+  за 30 дней, последнее). Защищена `ADMIN_KEY`. Источник — таблица `service_interest` в Postgres
+  (создаётся автоматически при старте, если есть `DATABASE_URL`). Драйвер — `pg` (Pool, SSL для внешнего хоста).
 - `POST /api/chat` → Gemini 2.5 Flash (`generativelanguage.googleapis.com`):
   - системный промпт строится из контекста машины + болячек, с жёстким запретом выдумывать артикулы/recall/цены;
   - `thinkingConfig.thinkingBudget: 0` — иначе «мышление» съедает `maxOutputTokens` и ответ обрывается;
