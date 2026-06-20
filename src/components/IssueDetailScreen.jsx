@@ -414,16 +414,16 @@ export default function IssueDetailScreen() {
                     {currentSol.diy_difficulty && (
                       <Metric icon="difficulty" label="Сложность" value={difficultyLabel(currentSol.diy_difficulty)} />
                     )}
-                    {currentSol.diy_time_hours && (
-                      <Metric icon="time"label="Время" value={`${currentSol.diy_time_hours} ч`} />
+                    {currentSol.diy_time_hours > 0 && (
+                      <Metric icon="time" label="Время" value={`${currentSol.diy_time_hours} ч`} />
                     )}
                   </>
                 ) : (
                   <>
-                    {currentSol.service_time_hours && (
-                      <Metric icon="time"label="Время в сервисе" value={`${currentSol.service_time_hours} ч`} />
+                    {currentSol.service_time_hours > 0 && (
+                      <Metric icon="time" label="Время в сервисе" value={`${currentSol.service_time_hours} ч`} />
                     )}
-                    {currentSol.labor_cost && (
+                    {currentSol.labor_cost > 0 && (
                       <Metric icon="cost" label="Работа" value={formatPrice(currentSol.labor_cost)} />
                     )}
                   </>
@@ -458,15 +458,20 @@ export default function IssueDetailScreen() {
       {issue.prevention?.possible && (issue.prevention.recommendation || asArray(issue.prevention.actions).length > 0) && (
         <Section title="Как избежать" expanded={expanded.prevention} onToggle={() => toggle('prevention')}>
           {issue.prevention.recommendation && <p style={s.causeText}>{issue.prevention.recommendation}</p>}
-          {asArray(issue.prevention.actions).map((a, i) => (
-            <div key={i} style={s.preventItem}>
-              <span style={s.preventDot} />
-              <div style={s.preventText}>
-                {a.description}
-                {a.interval_km ? <span style={s.preventInterval}> · каждые {formatMileage(a.interval_km)}</span> : null}
+          {asArray(issue.prevention.actions).map((a, i) => {
+            const text = typeof a === 'string' ? a : (a.description || a.action || '');
+            if (!text) return null;
+            const interval = typeof a === 'object' ? a.interval_km : null;
+            return (
+              <div key={i} style={s.preventItem}>
+                <span style={s.preventDot} />
+                <div style={s.preventText}>
+                  {text}
+                  {interval ? <span style={s.preventInterval}> · каждые {formatMileage(interval)}</span> : null}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </Section>
       )}
 
@@ -505,30 +510,38 @@ export default function IssueDetailScreen() {
         </Section>
       )}
 
-      {/* Отзывы владельцев */}
-      {issue.owner_reports?.length > 0 && (
-        <Section
-          title={`Опыт владельцев (${issue.owner_reports.length})`}
-          expanded={expanded.reviews}
-          onToggle={() => toggle('reviews')}
-        >
-          {issue.owner_reports.map((r, i) => (
-            <div key={i} style={s.reviewCard}>
-              <div style={s.reviewMeta}>
-                {r.year && <span>{r.year} год</span>}
-                {r.mileage_km && <span> · {formatMileage(r.mileage_km)}</span>}
-                {r.solution_worked !== undefined && (
-                  <span style={{ color: r.solution_worked ? c.success : c.critical }}>
-                    {r.solution_worked ? ' · решение помогло' : ' · решение не помогло'}
-                  </span>
+      {/* Отзывы владельцев — показываем только содержательные (с текстом) */}
+      {(() => {
+        const reports = (issue.owner_reports || [])
+          .map(r => (typeof r === 'string' ? { comment: r } : r))
+          .filter(r => (r.comment || r.text || r.quote || '').trim());
+        if (reports.length === 0) return null;
+        return (
+          <Section
+            title={`Опыт владельцев (${reports.length})`}
+            expanded={expanded.reviews}
+            onToggle={() => toggle('reviews')}
+          >
+            {reports.map((r, i) => (
+              <div key={i} style={s.reviewCard}>
+                {(r.year || r.mileage_km || r.solution_worked !== undefined) && (
+                  <div style={s.reviewMeta}>
+                    {r.year && <span>{r.year} год</span>}
+                    {r.mileage_km && <span> · {formatMileage(r.mileage_km)}</span>}
+                    {r.solution_worked !== undefined && (
+                      <span style={{ color: r.solution_worked ? c.success : c.critical }}>
+                        {r.solution_worked ? ' · решение помогло' : ' · решение не помогло'}
+                      </span>
+                    )}
+                  </div>
                 )}
+                <div style={s.reviewText}>{r.comment || r.text || r.quote}</div>
+                {r.source && <div style={s.reviewSource}>— {r.source}</div>}
               </div>
-              <div style={s.reviewText}>{r.comment}</div>
-              {r.source && <div style={s.reviewSource}>— {r.source}</div>}
-            </div>
-          ))}
-        </Section>
-      )}
+            ))}
+          </Section>
+        );
+      })()}
 
       {/* По годам выпуска */}
       {issue.history?.affected_years?.length > 0 && (
@@ -537,7 +550,7 @@ export default function IssueDetailScreen() {
             <span style={s.conseqLabel}>Затронуты годы</span>
             <span style={s.conseqVal}>{yearsRange(issue.history.affected_years)}</span>
           </div>
-          {issue.history.safe_years?.length > 0 && (
+          {yearsRange(issue.history.safe_years) && (
             <div style={s.conseqRow}>
               <span style={s.conseqLabel}>Без проблемы</span>
               <span style={{ ...s.conseqVal, color: c.success }}>{yearsRange(issue.history.safe_years)}</span>
@@ -552,7 +565,7 @@ export default function IssueDetailScreen() {
         <Section title={`Источники (${issue.sources.length})`} expanded={expanded.sources} onToggle={() => toggle('sources')}>
           {issue.sources.map((src, i) => (
             <a key={i} href={src.url} target="_blank" rel="noopener noreferrer" style={s.sourceRow}>
-              <span style={s.sourceName}>{src.author || src.type || 'Источник'}{src.date ? ` · ${src.date}` : ''}</span>
+              <span style={s.sourceName}>{sourceLabel(src)}{src.date ? ` · ${src.date}` : ''}</span>
               <Icon name="arrowRight" size={14} color={c.textTertiary} />
             </a>
           ))}
@@ -627,7 +640,7 @@ function PartCard({ part, secondary }) {
         </div>
         {part.part_number && <code style={s.partNumber}>{part.part_number}</code>}
       </div>
-      {part.price && (
+      {part.price > 0 && (
         <div style={s.partPrice}>{formatPrice(part.price)}{part.price_usd ? <span style={s.partUsd}> · ${part.price_usd} в США</span> : null}</div>
       )}
       {part.reason && <div style={s.partReason}>{part.reason}</div>}
@@ -674,12 +687,25 @@ function PartCard({ part, secondary }) {
   );
 }
 
-// Компактный диапазон годов: [2010,2011,...2017] → «2010–2017»
+// Компактный диапазон годов: [2010,2011,...2017] → «2010–2017».
+// Отбрасываем мусорные значения (0/null/строки), чтобы не показывать «0–)».
 function yearsRange(years) {
-  if (!years?.length) return '';
-  const sorted = [...years].sort((a, b) => a - b);
-  const min = sorted[0], max = sorted[sorted.length - 1];
+  const valid = (Array.isArray(years) ? years : [years])
+    .map(y => parseInt(y, 10))
+    .filter(y => y >= 1900 && y <= 2100)
+    .sort((a, b) => a - b);
+  if (valid.length === 0) return '';
+  const min = valid[0], max = valid[valid.length - 1];
   return min === max ? `${min}` : `${min}–${max}`;
+}
+
+// Понятная подпись источника: заголовок → домен из URL → автор/тип → запасной вариант.
+function sourceLabel(src) {
+  if (src.title) return src.title;
+  if (src.url) {
+    try { return new URL(src.url).hostname.replace(/^www\./, ''); } catch (e) {}
+  }
+  return src.author || src.type || 'Источник';
 }
 
 function difficultyLabel(d) {

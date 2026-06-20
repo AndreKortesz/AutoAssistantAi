@@ -112,7 +112,8 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // --- Интерес к сервисам: уведомление владельцу + счётчик спроса ---
-async function notifyOwner(text) {
+// text → Telegram (читаемое сообщение); event → вебхук (структурой, для Google Таблицы и т.п.).
+async function notifyOwner(text, event) {
   const jobs = [];
   if (TG_TOKEN && TG_CHAT) {
     jobs.push(fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
@@ -125,7 +126,7 @@ async function notifyOwner(text) {
     jobs.push(fetch(INTEREST_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, ...event }),
     }).catch(e => console.error('webhook notify error', e.message)));
   }
   await Promise.allSettled(jobs);
@@ -143,9 +144,12 @@ app.post('/api/interest', async (req, res) => {
   interestCounts[sid] = (interestCounts[sid] || 0) + 1;
 
   // Всегда в логи Railway (владелец видит). Плюс Telegram/вебхук, если настроены env.
-  const line = `[interest] ${sid} — всего за сессию процесса: ${interestCounts[sid]} (user ${String(user_id || 'anon').slice(0, 32)})`;
-  console.info(line);
-  notifyOwner(`🔔 Интерес к сервису «${sid}». Нажатий (с перезапуска): ${interestCounts[sid]}.`);
+  const uid = String(user_id || 'anon').slice(0, 32);
+  console.info(`[interest] ${sid} — всего за сессию процесса: ${interestCounts[sid]} (user ${uid})`);
+  notifyOwner(
+    `🔔 Интерес к сервису «${sid}». Нажатий (с перезапуска): ${interestCounts[sid]}.`,
+    { service_id: sid, user_id: uid, timestamp: new Date().toISOString() }
+  );
 
   res.json({ ok: true });
 });
