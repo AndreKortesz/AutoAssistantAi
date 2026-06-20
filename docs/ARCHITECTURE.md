@@ -1,340 +1,161 @@
 # Архитектура AutoAssistantAi
 
-## Обзор системы
+> Главная техническая карта. Описывает код, как он есть сейчас. Если расходится с
+> кодом — верен код, документ надо поправить.
+
+---
+
+## 1. Стек и деплой
+
+- **Frontend:** React 18 + Vite + react-router-dom v6. **Инлайн-стили** (объекты `styles`/`s`/`c`), без Tailwind, без CSS-файлов, без TypeScript.
+- **Backend (тонкий):** `server.js` — Express. Отдаёт собранный `dist/` и проксирует чат к Gemini. Никакой БД пока нет.
+- **Деплой:** Railway. `git push` в `main` → авто-сборка (`npm install && npm run build`) → `node server.js`.
+- **Данные модели:** статические JSON в `public/data/` (копируются в `dist/` при сборке).
+- **Состояние пользователя:** localStorage (с whitelist-валидацией). PII не храним.
+
+Сборка: `npm run build`. Локальный фронт: `npm run dev`. Локально с сервером/чатом: `npm run dev:server` (нужен `GEMINI_API_KEY`).
+
+---
+
+## 2. Карта файлов
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         ПОЛЬЗОВАТЕЛЬ                                │
-└────────────────────────────┬────────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                      MOBILE / WEB APP                               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
-│  │Onboarding│ │Dashboard │ │ Issues   │ │ Journal  │ │Assistant │  │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘  │
-└────────────────────────────┬────────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                       DATA LAYER                                    │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐   │
-│  │   Cars DB   │ │  Issues DB  │ │  User Data  │ │  VIN Decode │   │
-│  │ (cars-base) │ │(Gold Std)   │ │  (Local)    │ │  (External) │   │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
+server.js                      ← Express: gzip, кэш-заголовки, статика dist/, /api/chat → Gemini
+index.html                     ← favicon (light/dark), apple-touch-icon, manifest, theme-color
+public/
+├── manifest.webmanifest       ← PWA: «добавить на рабочий стол», standalone
+├── apple-touch-icon.png, icon-192/512, icon-maskable-512, favicon-light/dark.png
+├── branding/                  ← logo-mark-light.png (знак в UI), logo-wide-light/dark.png
+└── data/
+    ├── catalog.json           ← бренды/модели/поколения/двигатели/коробки (+ transmission.type, body_types)
+    └── issues/hyundai/
+        ├── solaris_rb/solaris_rb_final.json
+        └── solaris_hc/solaris_ii_final.json
+
+src/
+├── main.jsx                   ← точка входа
+├── App.jsx                    ← роутинг, ErrorBoundary, BottomNav, RootRoute (редирект), shouldShowNav
+├── contexts/
+│   └── CarContext.jsx         ← единый провайдер состояния (см. §4)
+├── services/
+│   ├── dataService.js         ← загрузка catalog/модели; кэш; защита (path traversal, лимит 5 МБ, валидация)
+│   ├── userCarService.js      ← машина пользователя + ответы онбординга в localStorage (whitelist)
+│   ├── journalService.js      ← журнал ТО/ремонтов; из него выводятся fixedIssueIds (с TTL)
+│   └── issueStatusService.js  ← статус болячки по мнению юзера: 'actual' | 'unknown' (localStorage)
+├── utils/
+│   └── issueHelpers.js        ← ВСЯ доменная логика: классификация по пробегу, индекс, зрелость,
+│                                системы, стоимость владения, форматтеры, линковка recalls/исков
+└── components/
+    ├── Onboarding.jsx         ← 4 слайда-интро (новый пользователь)
+    ├── AddCarForm.jsx         ← каскадные селекты: марка→модель→поколение→двигатель→коробка→год→пробег
+    ├── OnboardingQuestions.jsx← /checkup: вопросы-ощущения (Duolingo-стиль) + «Не знаю» → 3 пути
+    ├── Dashboard.jsx          ← «Мой гараж»: кольцо зрелости, «% картины», системы, стоимость, ассистент-чип
+    ├── IssuesScreen.jsx       ← «Обслуживание»: 3 вкладки (Слабые места / ТО / Карта) + дожим + тур
+    ├── MaintenanceTab.jsx     ← вкладка ТО: Регламент + Износ (строки → детальная карточка)
+    ├── MileageMapTab.jsx      ← вкладка Карта: вертикальный таймлайн по пробегу
+    ├── IssueDetailScreen.jsx  ← детальная страница болячки/ТО/износа по id
+    ├── JournalScreen.jsx      ← журнал обслуживания
+    ├── AssistantScreen.jsx    ← AI-чат (Gemini), рендер markdown
+    ├── CoachmarksTour.jsx     ← оверлей-подсветка для тура по вкладкам
+    ├── MileageUpdateModal.jsx ← модалка обновления пробега
+    ├── CarSilhouette.jsx      ← SVG-силуэт авто по типу кузова/цвету
+    └── Icon.jsx               ← инлайн-SVG иконки (Lucide-стиль). ТОЛЬКО контурные, без эмодзи.
+
+docs/                          ← эта документация
+data/                          ← каноническая схема болячки + пример (ISSUE_SCHEMA.md, *.json)
+prototypes/                    ← HTML-референсы дизайна (Audi A1)
 ```
 
 ---
 
-## Компоненты системы
+## 3. Роутинг (`App.jsx`)
 
-### 1. Frontend (React)
+| Путь | Экран | Нав. снизу |
+|------|-------|:----------:|
+| `/` | `RootRoute` — редирект | — |
+| `/add-car` | `AddCarForm` | — |
+| `/checkup` | `OnboardingQuestions` (опрос) | — |
+| `/dashboard` | `Dashboard` | ✓ |
+| `/issues` | `IssuesScreen` (вкладку можно задать через `location.state.tab`) | ✓ |
+| `/issues/:issueId` | `IssueDetailScreen` | ✓ |
+| `/journal` | `JournalScreen` | ✓ |
+| `/maintenance` | `MaintenanceScreen` *(осиротевший — функционал переехал во вкладку `/issues` service; кандидат на удаление)* | ✓ |
+| `/cost` | `CostScreen` (полная стоимость владения) | ✓ |
+| `/assistant` | `AssistantScreen` | ✓ |
 
-#### Экраны приложения
-
-```
-App.jsx
-├── Onboarding.jsx          # Первичная настройка
-│   ├── Slide 1: Welcome
-│   ├── Slide 2: Brand select
-│   ├── Slide 3: Model select
-│   ├── Slide 4: Generation select
-│   ├── Slide 5: Engine select
-│   ├── Slide 6: Transmission select
-│   └── Slide 7: Mileage input
-│
-├── Dashboard.jsx           # Главный экран
-│   ├── Health Index Ring   # Круговой индикатор здоровья
-│   ├── Issues Accordion    # Что снижает индекс
-│   ├── Quick Actions       # Быстрые действия
-│   └── Systems Grid        # Системы автомобиля
-│
-├── IssuesScreen.jsx        # Список болячек
-│   ├── Section: "Актуально сейчас"
-│   ├── Section: "Скоро"
-│   ├── Section: "Пройдено"
-│   └── Section: "В будущем"
-│
-├── IssueDetailScreen.jsx   # Детальная болячка
-│   ├── Hero: severity, title, stats
-│   ├── Defect Status (lawsuits, recalls)
-│   ├── Symptoms
-│   ├── OBD Codes
-│   ├── Cause
-│   ├── Solution (tabs: Service / DIY)
-│   ├── Parts
-│   ├── Progress Checklist
-│   └── Related Issues
-│
-├── JournalScreen.jsx       # Журнал обслуживания
-│   └── Timeline of services
-│
-└── AssistantScreen.jsx     # AI-чат
-    ├── Quick prompts
-    └── Chat interface
-```
-
-#### Переиспользуемые компоненты
-
-```
-components/
-├── SeverityBadge       # Бейдж критичности (🔴🟠🟡🟢)
-├── HealthRing          # Кольцевой индикатор здоровья
-├── IssueCard           # Карточка болячки в списке
-├── MileageProgress     # Прогресс-бар пробега
-├── Section             # Сворачиваемая секция
-├── Chip                # Тег/чип
-├── PartCard            # Карточка запчасти
-├── DefectStatusBlock   # Блок статуса дефекта
-└── VinPrompt           # Промпт для ввода VIN
-```
+- **`RootRoute`** решает СРАЗУ (без мигания): `userCar` и флаг онбординга читаются из localStorage синхронно. Нет авто → `/add-car`; есть → `/dashboard`; не прошёл интро → `Onboarding`. Тяжёлый JSON болячек грузится в фоне, экраны показывают своё «Загрузка». **Не возвращать splash-гейт на `loading`** — это была регрессия медленного старта.
+- **`shouldShowNav`** скрывает нижнюю навигацию на `/`, `/add-car`, `/checkup`.
+- **`ErrorBoundary`** ловит падение дерева и показывает текст ошибки + «Сбросить и перезагрузить» (вместо белого экрана).
 
 ---
 
-### 2. Data Layer
+## 4. Состояние: `CarContext.jsx`
 
-#### Cars Database (cars-base.ru)
+Единый провайдер. Значения:
 
-```
-Иерархия:
-Mark (марка)
-└── Model (модель)
-    └── Generation (поколение)
-        └── Modification (модификация)
-            ├── Engine (двигатель)
-            └── Transmission (КПП)
-```
+| Поле | Что |
+|------|-----|
+| `userCar` | машина из localStorage (читается **синхронно** в инициализаторе useState) |
+| `carDetails` | данные модели из catalog (двигатели, коробки, поколение) |
+| `issuesData` | `{ systemic, wear, maintenance, minor, recalls, classActions, tsb, annual_budget, hasData }` — отфильтровано под конфигурацию |
+| `journalRecords` | записи журнала (подписка на `journalService`) |
+| `fixedIssueIds` | **производное** от журнала: id болячек, отмеченных «устранено» (с учётом TTL по пробегу) |
+| `issueStatuses` | `{ id: 'actual' \| 'unknown' }` (подписка на `issueStatusService`) |
+| **методы** | `saveCar`, `updateMileage`, `removeCar`, `refresh`, `markIssueFixed(issue)`, `unmarkIssueFixed(id)`, `saveAnswers(answers)`, `setIssueStatus(id, status)` |
 
-**Пример:**
-```
-Toyota
-└── Camry
-    └── XV70 (2017-2024)
-        └── 2.5 (181 л.с.) + 8AT
-```
-
-#### Issues Database (собственная)
-
-**Структура коллекции:**
-```
-issues/
-├── toyota_camry_xv70_cvt_judder.json
-├── toyota_camry_xv70_strut_mount.json
-├── ford_mustang_6g_fuel_sensor.json
-└── ...
-```
-
-**Индексы:**
-- По марке/модели/поколению
-- По системе (engine, transmission, suspension...)
-- По severity
-- По диапазону пробега
-
-#### User Data (локальное хранение)
-
-```javascript
-{
-  car: {
-    brand: "Toyota",
-    model: "Camry",
-    generation: "XV70",
-    engine: "2.5 (181 л.с.)",
-    transmission: "8AT",
-    year: 2020,
-    mileage: 67000,
-    mileageUpdatedAt: "2026-01-15",
-    mileageConfidence: "high"
-  },
-  journal: [
-    {
-      date: "2025-12-01",
-      type: "service",
-      description: "Замена масла",
-      mileage: 65000
-    }
-  ],
-  completedIssues: ["camry_xv70_strut_mount"],
-  dismissedIssues: []
-}
-```
+`loading` остаётся `true`, пока грузятся `carDetails` + большой JSON болячек; на него завязаны лоадеры экранов (НЕ корневой редирект — см. §3).
 
 ---
 
-### 3. Алгоритмы
+## 5. Потоки данных
 
-#### Health Index Calculation
+**Старт:** `CarProvider` синхронно читает `userCar` → `RootRoute` мгновенно решает маршрут → `loadUserCar()` асинхронно тянет `getModelById` (catalog) и `getIssuesForCar` (JSON модели, кэшируется) → `issuesData` готов → экраны рендерят контент.
 
-```javascript
-function calculateHealthIndex(car, issues) {
-  const MILEAGE_BUFFER = 15000; // км до начала = "скоро"
-  
-  let baseIndex = 100;
-  let totalImpact = 0;
-  
-  const activeIssues = issues.filter(issue => {
-    return car.mileage >= issue.mileageStart && 
-           car.mileage <= issue.mileageEnd;
-  });
-  
-  activeIssues.forEach(issue => {
-    const severityWeight = {
-      critical: 15,
-      high: 10,
-      medium: 5,
-      low: 2
-    };
-    
-    // Вес = severity × (probability / 100)
-    const impact = severityWeight[issue.severity] * (issue.probability / 100);
-    totalImpact += impact;
-  });
-  
-  return Math.max(0, baseIndex - totalImpact);
-}
-```
+**Фильтрация под конфигурацию:** `dataService.getIssuesForCar(modelId, {engineCode, transmissionCode})` берёт `records` из JSON и делит по `type`: `systemic_defect`→systemic, `common_wear`→wear, `maintenance`→maintenance; `minor_annoyance`→minor. Глобальные `global_recalls/_class_actions/_tsb` кладутся в recalls/classActions/tsb. Применяется match по двигателю/коробке (с нюансом: записи систем трансмиссии могут иметь `engine:null`, чтобы не привязываться к мотору).
 
-#### Issue Categorization
-
-```javascript
-function categorizeIssues(issues, currentMileage) {
-  const SOON_THRESHOLD = 15000;
-  
-  return {
-    active: issues.filter(i => 
-      currentMileage >= i.mileageStart && 
-      currentMileage <= i.mileageEnd
-    ),
-    soon: issues.filter(i => 
-      currentMileage < i.mileageStart && 
-      (i.mileageStart - currentMileage) <= SOON_THRESHOLD
-    ),
-    passed: issues.filter(i => 
-      currentMileage > i.mileageEnd
-    ),
-    future: issues.filter(i => 
-      currentMileage < i.mileageStart && 
-      (i.mileageStart - currentMileage) > SOON_THRESHOLD
-    )
-  };
-}
-```
-
-#### Mileage Confidence
-
-```javascript
-// Пробег показываем с ~ (примерно)
-// Уверенность зависит от давности обновления
-
-function getMileageConfidence(lastUpdate) {
-  const daysSinceUpdate = (Date.now() - new Date(lastUpdate)) / (1000 * 60 * 60 * 24);
-  
-  if (daysSinceUpdate < 30) return 'high';
-  if (daysSinceUpdate < 90) return 'medium';
-  return 'low';
-}
-
-function formatMileage(mileage) {
-  const rounded = Math.round(mileage / 1000) * 1000;
-  return `~${rounded.toLocaleString('ru-RU')} км`;
-}
-```
+**Отметка «устранено»:** кнопка в `IssueCard`/`IssueDetailScreen` → `markIssueFixed(issue)` → запись в журнал → `journalService` уведомляет → `fixedIssueIds` пересчитывается → индекс/группы/«% картины» обновляются.
 
 ---
 
-### 4. Потоки данных
+## 6. Хранилище (localStorage)
 
-#### Онбординг
+| Ключ | Сервис | Что | Валидация |
+|------|--------|-----|-----------|
+| `aaa_user_car` | userCarService | конфигурация авто + `onboardingAnswers` | whitelist полей; ответы — только `good/mid/bad/unknown`, ≤20 шт |
+| `aaa_onboarding_completed` | userCarService | прошёл ли интро | 'true' |
+| `aaa_journal` | journalService | записи ТО/ремонтов | — |
+| `aaa_issue_status` | issueStatusService | вердикт по болячке | ключ snake_case, значение `actual/unknown` |
+| `aaa_service_tour_seen` | IssuesScreen | показан ли тур-коачмарк | 'true' |
 
-```
-User Input → Validate → Store locally → Load issues for car → Dashboard
-```
-
-#### Просмотр болячек
-
-```
-Load car config
-    ↓
-Fetch issues for [brand + model + generation + engine]
-    ↓
-Categorize by mileage
-    ↓
-Sort by severity
-    ↓
-Render IssuesScreen
-```
-
-#### Детальная болячка
-
-```
-IssueCard click
-    ↓
-Load full issue data (with parts, solutions, etc.)
-    ↓
-Check defect status (recalls, lawsuits)
-    ↓
-Render IssueDetailScreen
-```
-
-#### VIN-проверка (будущее)
-
-```
-User inputs VIN
-    ↓
-Decode VIN → get exact car config
-    ↓
-Check recalls database
-    ↓
-Personalize: "Ваш автомобиль попадает под отзывную"
-```
+**Правила безопасности:** никаких PII (ФИО/телефон/email); никаких секретов; всё валидируется при чтении и записи; `GEMINI_API_KEY` — только в env сервера, на фронт не уходит.
 
 ---
 
-## Внешние интеграции (планируется)
+## 7. Сервер (`server.js`)
 
-| Интеграция | Назначение |
-|------------|------------|
-| VIN Decoder API | Расшифровка VIN |
-| NHTSA Recalls API | Отзывные кампании США |
-| Auto.ru API | Цены на запчасти |
-| Exist.ru API | Наличие запчастей |
-| СТО-агрегаторы | Запись на сервис |
-
----
-
-## Масштабирование
-
-### Текущее состояние (MVP)
-- Локальное хранение данных
-- Статичная база болячек
-- Один автомобиль на пользователя
-
-### Следующий этап
-- Backend API (Node.js / Python)
-- PostgreSQL для болячек
-- Redis для кэширования
-- Несколько автомобилей на аккаунт
-
-### Продакшн
-- Микросервисы
-- CDN для статики
-- Real-time уведомления (Push)
-- Аналитика и ML для улучшения предсказаний
+- `compression()` — gzip всех ответов (JSON модели ~828 КБ → ~114 КБ; главный ускоритель загрузки).
+- Кэш-заголовки: хешированные ассеты Vite (`-<hash>.js|css`) → `max-age=31536000, immutable`; `index.html` → `no-cache`.
+- `POST /api/chat` → Gemini 2.5 Flash (`generativelanguage.googleapis.com`):
+  - системный промпт строится из контекста машины + болячек, с жёстким запретом выдумывать артикулы/recall/цены;
+  - `thinkingConfig.thinkingBudget: 0` — иначе «мышление» съедает `maxOutputTokens` и ответ обрывается;
+  - `maxOutputTokens: 1024`, простой rate-limit 20 запросов/мин на IP, лимит тела 256 КБ.
+- SPA-fallback: всё остальное → `dist/index.html`.
 
 ---
 
-## Безопасность
+## 8. Дизайн-система (кратко; подробно — UI_GUIDELINES.md)
 
-### Данные пользователя
-- Хранятся локально (localStorage / AsyncStorage)
-- Не передаются на сервер без согласия
-- VIN — чувствительные данные, требуют шифрования
-
-### API
-- HTTPS only
-- Rate limiting
-- API keys для внешних сервисов
+- Primary Blue `#1F4FD8`, Background `#F7F8FA`, Text `#1E293B`.
+- Success `#2E9E6F`/`#1D9E75`, Warning/янтарь `#BA7517`/`#D97706`, Critical `#DC2626`/`#E24B4A`.
+- Шрифт Inter / системный. Mobile-first, max-width ~420px. Белые карточки, мягкие тени, радиусы.
+- Иконки — **только контурные** инлайн-SVG (`Icon.jsx`). **Никаких эмодзи.** Цвет несёт точка/иконка, не заливка блока.
 
 ---
 
-*Документ обновляется по мере развития проекта.*
+## 9. Известные хвосты / технический долг
+
+- `/maintenance` + `MaintenanceScreen.jsx` — осиротевший роут (функционал во вкладке `/issues`). Кандидат на удаление.
+- `rowSub` в `IssuesScreen` — мёртвый код после возврата `IssueCard`.
+- `groupByImportance` принимает `fixedIssueIds`, но фильтрация «сделано» сейчас в `IssuesScreen` (не внутри хелпера).
+- Жёсткого клампа «плавного шага» индекса нет — плавность даёт мягкие веса + анимация кольца.
+- Автотестов нет. Первый кандидат — юнит-тесты на `classifyIssueByMileage`/`issueAnchorKm`/`pictureCompleteness`.
