@@ -58,6 +58,7 @@ src/
     ├── JournalScreen.jsx      ← журнал обслуживания
     ├── AssistantScreen.jsx    ← AI-чат (Gemini), рендер markdown
     ├── ServicesScreen.jsx     ← «Сервисы»: витрина услуг (заглушки «скоро» + «Уведомить» → аналитика интереса)
+    ├── BuyerChecklistScreen.jsx← «Чек-лист покупки»: что проверить при покупке (динамически из болячек)
     ├── CoachmarksTour.jsx     ← оверлей-подсветка для тура по вкладкам
     ├── MileageUpdateModal.jsx ← модалка обновления пробега
     ├── CarSilhouette.jsx      ← SVG-силуэт авто по типу кузова/цвету
@@ -85,6 +86,7 @@ prototypes/                    ← HTML-референсы дизайна (Audi 
 | `/cost` | `CostScreen` (полная стоимость владения) | ✓ |
 | `/assistant` | `AssistantScreen` | ✓ |
 | `/services` | `ServicesScreen` (витрина услуг) | ✓ |
+| `/checklist` | `BuyerChecklistScreen` (чек-лист покупки) | — |
 
 - **`RootRoute`** решает СРАЗУ (без мигания): `userCar` и флаг онбординга читаются из localStorage синхронно. Нет авто → `/add-car`; есть → `/dashboard`; не прошёл интро → `Onboarding`. Тяжёлый JSON болячек грузится в фоне, экраны показывают своё «Загрузка». **Не возвращать splash-гейт на `loading`** — это была регрессия медленного старта.
 - **`shouldShowNav`** скрывает нижнюю навигацию на `/`, `/add-car`, `/checkup`.

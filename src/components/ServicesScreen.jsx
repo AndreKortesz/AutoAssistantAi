@@ -116,7 +116,7 @@ export default function ServicesScreen() {
       {/* Блок 2 — Выбираете машину? */}
       <div style={s.subHead}><Icon name="cart" size={17} color={c.t2} /><span style={s.subHeadText}>Выбираете машину?</span></div>
       <div style={s.listCard}>
-        <ListRow icon="check" title="Чек-лист подбора б/у" doneFeature onOpen={() => navigate('/issues')} />
+        <ListRow icon="check" title="Чек-лист подбора б/у" doneFeature onOpen={() => navigate('/checklist')} />
         <ListRow icon="search" title="Проверка истории" serviceId="history_check" />
         <ListRow icon="user" title="Выездной эксперт" serviceId="field_expert" />
         <ListRow icon="clipboard" title="Объявления с болячками" serviceId="listings" last />
