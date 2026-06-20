@@ -21,6 +21,13 @@ const DIST = path.join(__dirname, 'dist');
 const KEY = process.env.GEMINI_API_KEY;
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
+// Куда слать уведомления об интересе к сервисам (любой канал — опционально):
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;   // токен бота
+const TG_CHAT = process.env.TELEGRAM_CHAT_ID;      // chat_id владельца
+const INTEREST_WEBHOOK = process.env.INTEREST_WEBHOOK_URL; // произвольный вебхук (Slack/Make/и т.п.)
+// Память-счётчик на время жизни процесса (для быстрой сводки; постоянное хранение — Phase 3/БД).
+const interestCounts = Object.create(null);
+
 // --- простой in-memory rate-limit: 20 запросов/мин на IP ---
 const hits = new Map();
 function rateLimited(ip) {
@@ -102,6 +109,45 @@ app.post('/api/chat', async (req, res) => {
     console.error('proxy error', e.message);
     res.status(502).json({ error: 'Ошибка связи с ассистентом.' });
   }
+});
+
+// --- Интерес к сервисам: уведомление владельцу + счётчик спроса ---
+async function notifyOwner(text) {
+  const jobs = [];
+  if (TG_TOKEN && TG_CHAT) {
+    jobs.push(fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT, text, disable_notification: false }),
+    }).catch(e => console.error('tg notify error', e.message)));
+  }
+  if (INTEREST_WEBHOOK) {
+    jobs.push(fetch(INTEREST_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    }).catch(e => console.error('webhook notify error', e.message)));
+  }
+  await Promise.allSettled(jobs);
+}
+
+app.post('/api/interest', async (req, res) => {
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip;
+  if (rateLimited(ip)) return res.status(429).json({ ok: false });
+
+  const { service_id, user_id } = req.body || {};
+  if (!service_id || typeof service_id !== 'string' || service_id.length > 64) {
+    return res.status(400).json({ ok: false });
+  }
+  const sid = service_id.replace(/[^a-z0-9_]/gi, '').slice(0, 64);
+  interestCounts[sid] = (interestCounts[sid] || 0) + 1;
+
+  // Всегда в логи Railway (владелец видит). Плюс Telegram/вебхук, если настроены env.
+  const line = `[interest] ${sid} — всего за сессию процесса: ${interestCounts[sid]} (user ${String(user_id || 'anon').slice(0, 32)})`;
+  console.info(line);
+  notifyOwner(`🔔 Интерес к сервису «${sid}». Нажатий (с перезапуска): ${interestCounts[sid]}.`);
+
+  res.json({ ok: true });
 });
 
 // статика фронтенда + SPA-fallback.

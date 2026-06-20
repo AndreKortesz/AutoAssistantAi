@@ -56,6 +56,7 @@ import CostScreen from './components/CostScreen'
 import OnboardingQuestions from './components/OnboardingQuestions'
 import ServicesScreen from './components/ServicesScreen'
 import BuyerChecklistScreen from './components/BuyerChecklistScreen'
+import ServiceDetailScreen from './components/ServiceDetailScreen'
 
 // Цветовая схема
 export const colors = {
@@ -116,6 +117,7 @@ const BottomNav = () => {
 const shouldShowNav = (pathname) => {
   const noNavRoutes = ['/', '/add-car', '/checkup', '/checklist']
   if (pathname.startsWith('/issues/')) return false
+  if (pathname.startsWith('/services/')) return false
   return !noNavRoutes.includes(pathname)
 }
 
@@ -170,6 +172,7 @@ function AppRoutes() {
         <Route path="/cost" element={<CostScreen />} />
         <Route path="/assistant" element={<AssistantScreen />} />
         <Route path="/services" element={<ServicesScreen />} />
+        <Route path="/services/:serviceId" element={<ServiceDetailScreen />} />
         <Route path="/checklist" element={<BuyerChecklistScreen />} />
       </Routes>
       

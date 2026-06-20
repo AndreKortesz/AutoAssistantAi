@@ -59,6 +59,8 @@ src/
     ├── AssistantScreen.jsx    ← AI-чат (Gemini), рендер markdown
     ├── ServicesScreen.jsx     ← «Сервисы»: витрина услуг (заглушки «скоро» + «Уведомить» → аналитика интереса)
     ├── BuyerChecklistScreen.jsx← «Чек-лист покупки»: что проверить при покупке (динамически из болячек)
+    ├── ServiceDetailScreen.jsx ← страница сервиса: описание + «В разработке» + «Уведомить»
+    ├── servicesCatalog.js      ← каталог сервисов (id → title/icon/group/desc), общий для витрины и детали
     ├── CoachmarksTour.jsx     ← оверлей-подсветка для тура по вкладкам
     ├── MileageUpdateModal.jsx ← модалка обновления пробега
     ├── CarSilhouette.jsx      ← SVG-силуэт авто по типу кузова/цвету
@@ -86,6 +88,7 @@ prototypes/                    ← HTML-референсы дизайна (Audi 
 | `/cost` | `CostScreen` (полная стоимость владения) | ✓ |
 | `/assistant` | `AssistantScreen` | ✓ |
 | `/services` | `ServicesScreen` (витрина услуг) | ✓ |
+| `/services/:serviceId` | `ServiceDetailScreen` (детали + «Уведомить») | — |
 | `/checklist` | `BuyerChecklistScreen` (чек-лист покупки) | — |
 
 - **`RootRoute`** решает СРАЗУ (без мигания): `userCar` и флаг онбординга читаются из localStorage синхронно. Нет авто → `/add-car`; есть → `/dashboard`; не прошёл интро → `Onboarding`. Тяжёлый JSON болячек грузится в фоне, экраны показывают своё «Загрузка». **Не возвращать splash-гейт на `loading`** — это была регрессия медленного старта.
@@ -140,6 +143,9 @@ prototypes/                    ← HTML-референсы дизайна (Audi 
 
 - `compression()` — gzip всех ответов (JSON модели ~828 КБ → ~114 КБ; главный ускоритель загрузки).
 - Кэш-заголовки: хешированные ассеты Vite (`-<hash>.js|css`) → `max-age=31536000, immutable`; `index.html` → `no-cache`.
+- `POST /api/interest` — интерес к сервису: счётчик в памяти + лог в Railway + (если заданы env)
+  уведомление владельцу. Каналы по env: `TELEGRAM_BOT_TOKEN`+`TELEGRAM_CHAT_ID` (Telegram),
+  `INTEREST_WEBHOOK_URL` (произвольный вебхук). Без env — только лог.
 - `POST /api/chat` → Gemini 2.5 Flash (`generativelanguage.googleapis.com`):
   - системный промпт строится из контекста машины + болячек, с жёстким запретом выдумывать артикулы/recall/цены;
   - `thinkingConfig.thinkingBudget: 0` — иначе «мышление» съедает `maxOutputTokens` и ответ обрывается;

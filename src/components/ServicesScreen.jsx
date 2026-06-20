@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from './Icon';
-import { trackServiceInterest, isNotified } from '../services/serviceAnalytics';
 
-// Раздел «Сервисы» — витрина услуг (все пока заглушки «скоро» + сбор интереса).
-// Светлый стиль, единый с приложением. НЕ тёмная тема. Иконки сервисов — info-цвет.
+// Раздел «Сервисы» — витрина услуг. Все (кроме чек-листа) — «В разработке».
+// Тап по сервису → детальная страница с кнопкой «Уведомить».
 const c = {
   bg: '#F7F8FA', card: '#FFFFFF', bg2: '#F1F5F9', border: '#E2E8F0',
   primary: '#1F4FD8', primaryLight: 'rgba(31,79,216,0.08)',
@@ -12,60 +11,35 @@ const c = {
   t1: '#1E293B', t2: '#64748B', t3: '#94A3B8',
 };
 
-// Кнопка «Уведомить» → событие интереса + состояние «Уведомим ✓» (в рамках сессии не жмётся повторно).
-function NotifyButton({ serviceId, full }) {
-  const [done, setDone] = useState(() => isNotified(serviceId));
-  const onClick = (e) => {
-    e.stopPropagation();
-    if (done) return;
-    trackServiceInterest(serviceId);
-    setDone(true);
-  };
+// Строка-сервис в списке (блоки 1 и 2).
+function ListRow({ icon, title, done, onClick, last }) {
   return (
-    <button
-      style={{ ...s.notify, ...(full ? { width: '100%' } : {}), ...(done ? s.notifyDone : {}) }}
-      onClick={onClick}
-      aria-label={done ? 'Уведомим о запуске' : 'Уведомить, когда сервис заработает'}
-    >
-      <Icon name={done ? 'check' : 'bell'} size={14} color={done ? c.success : c.primary} />
-      {done ? 'Уведомим' : 'Уведомить'}
-    </button>
-  );
-}
-
-// Строка-сервис в списке (блоки 1 и 2). Тап по «скоро»-строке = интерес.
-function ListRow({ icon, title, serviceId, doneFeature, onOpen, last }) {
-  const [notified, setNotified] = useState(() => (serviceId ? isNotified(serviceId) : false));
-  const handle = () => {
-    if (doneFeature) { onOpen?.(); return; }
-    if (!notified) { trackServiceInterest(serviceId); setNotified(true); }
-  };
-  return (
-    <button style={{ ...s.row, ...(last ? {} : s.rowBorder) }} onClick={handle} aria-label={title}>
+    <button style={{ ...s.row, ...(last ? {} : s.rowBorder) }} onClick={onClick} aria-label={title}>
       <Icon name={icon} size={20} color={c.primary} />
       <span style={s.rowTitle}>{title}</span>
-      {doneFeature
+      {done
         ? <span style={s.doneTag}>готово</span>
-        : <span style={notified ? s.notifiedTag : s.soonInline}>{notified ? 'Уведомим ✓' : 'скоро'}</span>}
+        : <span style={s.soonInline}>В разработке</span>}
+      <Icon name="arrowRight" size={16} color={c.t3} />
     </button>
   );
 }
 
 // Карточка-заглушка в сетке (блок 3).
-function GridCard({ icon, title, serviceId, special, onClick }) {
+function GridCard({ icon, title, special, onClick }) {
   return (
-    <div style={{ ...s.gridCard, ...(special ? { background: c.bg2 } : {}) }} onClick={onClick}>
-      <span style={s.soonTag}>скоро</span>
+    <button style={{ ...s.gridCard, ...(special ? { background: c.bg2 } : {}) }} onClick={onClick} aria-label={title}>
+      <span style={s.soonTag}>В разработке</span>
       <Icon name={icon} size={25} color={c.primary} />
       <div style={s.gridTitle}>{title}</div>
-      {serviceId && <NotifyButton serviceId={serviceId} full />}
-    </div>
+    </button>
   );
 }
 
 export default function ServicesScreen() {
   const navigate = useNavigate();
   const [roadOpen, setRoadOpen] = useState(false);
+  const open = (id) => navigate(`/services/${id}`);
 
   const roadSubs = [
     { id: 'road_tow', icon: 'truck', title: 'Эвакуатор' },
@@ -108,7 +82,7 @@ export default function ServicesScreen() {
       {roadOpen && (
         <div style={s.listCard}>
           {roadSubs.map((r, i) => (
-            <ListRow key={r.id} icon={r.icon} title={r.title} serviceId={r.id} last={i === roadSubs.length - 1} />
+            <ListRow key={r.id} icon={r.icon} title={r.title} onClick={() => open(r.id)} last={i === roadSubs.length - 1} />
           ))}
         </div>
       )}
@@ -116,23 +90,23 @@ export default function ServicesScreen() {
       {/* Блок 2 — Выбираете машину? */}
       <div style={s.subHead}><Icon name="cart" size={17} color={c.t2} /><span style={s.subHeadText}>Выбираете машину?</span></div>
       <div style={s.listCard}>
-        <ListRow icon="check" title="Чек-лист подбора б/у" doneFeature onOpen={() => navigate('/checklist')} />
-        <ListRow icon="search" title="Проверка истории" serviceId="history_check" />
-        <ListRow icon="user" title="Выездной эксперт" serviceId="field_expert" />
-        <ListRow icon="clipboard" title="Объявления с болячками" serviceId="listings" last />
+        <ListRow icon="check" title="Чек-лист подбора б/у" done onClick={() => navigate('/checklist')} />
+        <ListRow icon="search" title="Проверка истории" onClick={() => open('history_check')} />
+        <ListRow icon="user" title="Выездной эксперт" onClick={() => open('field_expert')} />
+        <ListRow icon="clipboard" title="Объявления с болячками" onClick={() => open('listings')} last />
       </div>
 
       {/* Блок 3 — Уже есть машина */}
       <div style={s.subHead}><Icon name="car" size={17} color={c.t2} /><span style={s.subHeadText}>Уже есть машина</span></div>
       <div style={s.grid}>
-        {ownerGrid.map(g => <GridCard key={g.id} icon={g.icon} title={g.title} serviceId={g.id} />)}
-        <GridCard icon="dots" title="Все сервисы" special onClick={() => trackServiceInterest('all_services')} />
+        {ownerGrid.map(g => <GridCard key={g.id} icon={g.icon} title={g.title} onClick={() => open(g.id)} />)}
+        <GridCard icon="dots" title="Все сервисы" special onClick={() => open('all_services')} />
       </div>
 
       {/* Плашка-пояснение */}
       <div style={s.note}>
         <Icon name="info" size={17} color={c.t3} style={{ flexShrink: 0, marginTop: 1 }} />
-        <span>Сервисы запускаем с проверенными партнёрами. Нажмите «Уведомить» — сообщим, когда заработает.</span>
+        <span>Сервисы запускаем с проверенными партнёрами. Откройте сервис и нажмите «Уведомить» — сообщим, когда заработает.</span>
       </div>
     </div>
   );
@@ -158,18 +132,15 @@ const s = {
   rowBorder: { borderBottom: `0.5px solid ${c.border}` },
   rowTitle: { flex: 1, fontSize: '14px', color: c.t1, minWidth: 0 },
   soonInline: { fontSize: '11px', fontWeight: '500', color: c.t3, background: c.bg2, padding: '2px 8px', borderRadius: '6px', flexShrink: 0 },
-  notifiedTag: { fontSize: '11px', fontWeight: '500', color: c.success, background: c.successLight, padding: '2px 8px', borderRadius: '6px', flexShrink: 0 },
   doneTag: { fontSize: '11px', fontWeight: '500', color: c.successDark, background: c.successLight, padding: '2px 8px', borderRadius: '6px', flexShrink: 0 },
 
   subHead: { display: 'flex', alignItems: 'center', gap: '7px', margin: '0 2px 10px' },
   subHeadText: { fontSize: '15px', fontWeight: '500', color: c.t1 },
 
   grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' },
-  gridCard: { position: 'relative', background: c.card, border: `0.5px solid ${c.border}`, borderRadius: '14px', padding: '15px', cursor: 'pointer' },
+  gridCard: { position: 'relative', background: c.card, border: `0.5px solid ${c.border}`, borderRadius: '14px', padding: '15px', paddingTop: '34px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },
   soonTag: { position: 'absolute', top: '10px', right: '10px', fontSize: '10px', fontWeight: '500', color: c.t3, background: c.bg2, padding: '2px 7px', borderRadius: '6px' },
-  gridTitle: { fontSize: '14px', fontWeight: '500', color: c.t1, margin: '10px 0 12px', lineHeight: 1.3 },
-  notify: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', borderRadius: '9px', background: c.bg2, border: 'none', fontSize: '12px', fontWeight: '500', color: c.t1, cursor: 'pointer', fontFamily: 'inherit' },
-  notifyDone: { color: c.successDark },
+  gridTitle: { fontSize: '14px', fontWeight: '500', color: c.t1, marginTop: '10px', lineHeight: 1.3 },
 
   note: { display: 'flex', gap: '9px', background: c.bg2, borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: c.t2, lineHeight: 1.5 },
 };

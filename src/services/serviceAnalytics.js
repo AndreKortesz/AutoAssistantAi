@@ -26,14 +26,22 @@ function write(key, val) { try { localStorage.setItem(key, JSON.stringify(val));
 /**
  * Единая точка для событий интереса. Возвращает событие (для будущей отправки на бэк).
  */
-export function trackServiceInterest(serviceId) {
+export function trackServiceInterest(serviceId, meta = {}) {
   if (!serviceId) return null;
-  const event = { service_id: serviceId, user_id: getUserId(), timestamp: new Date().toISOString() };
+  const event = { service_id: serviceId, user_id: getUserId(), timestamp: new Date().toISOString(), ...meta };
 
-  // MVP: лог + локальный счётчик. TODO Phase 3: POST /api/interest → PostgreSQL.
-  // eslint-disable-next-line no-console
-  console.info('[service-interest]', event);
+  // Отправляем событие на сервер (он уведомит владельца — лог/Telegram, см. server.js).
+  // Fire-and-forget: интерфейс не ждёт ответа и не падает, если сети нет.
+  try {
+    fetch('/api/interest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (e) {}
 
+  // Локальный счётчик (резерв/офлайн). Phase 3: основная аналитика — в БД на бэке.
   const counts = read(COUNTS_KEY);
   counts[serviceId] = (counts[serviceId] || 0) + 1;
   write(COUNTS_KEY, counts);
