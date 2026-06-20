@@ -3,8 +3,11 @@ import * as dataService from '../services/dataService';
 import * as userCarService from '../services/userCarService';
 import * as journalService from '../services/journalService';
 import * as issueStatusService from '../services/issueStatusService';
+import { pictureCompleteness, maturityLevel } from '../utils/issueHelpers';
 
 const CarContext = createContext(null);
+const PICTURE_FLOOR_KEY = 'aaa_picture_floor';
+const readFloor = () => { try { return parseInt(localStorage.getItem(PICTURE_FLOOR_KEY)) || 0; } catch (e) { return 0; } };
 
 export function CarProvider({ children }) {
   // userCar читаем из localStorage СИНХРОННО — это мгновенно и позволяет
@@ -15,6 +18,7 @@ export function CarProvider({ children }) {
   const [issuesData, setIssuesData] = useState(null); // болячки + recalls и т.д.
   const [journalRecords, setJournalRecords] = useState(() => journalService.loadRecords());
   const [issueStatuses, setIssueStatuses] = useState(() => issueStatusService.loadStatuses());
+  const [pictureFloor, setPictureFloor] = useState(readFloor); // монотонный «пол» зрелости — картина не «раскрывается» обратно
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -48,6 +52,29 @@ export function CarProvider({ children }) {
     () => journalService.getFixedIssueIds(journalRecords, mileage),
     [journalRecords, mileage]
   );
+
+  // «% картины» — сырой расчёт; наружу отдаём монотонную версию (не падает от снятия отметок).
+  const rawPicturePct = useMemo(() => {
+    if (!issuesData) return 0;
+    return pictureCompleteness({
+      answers: userCar?.onboardingAnswers || {},
+      issues: issuesData.systemic,
+      fixedIssueIds,
+      issueStatuses,
+      journalCount: journalRecords.length,
+      mileageKnown: mileage > 0,
+    });
+  }, [issuesData, userCar, fixedIssueIds, issueStatuses, journalRecords, mileage]);
+
+  useEffect(() => {
+    if (rawPicturePct > pictureFloor) {
+      setPictureFloor(rawPicturePct);
+      try { localStorage.setItem(PICTURE_FLOOR_KEY, String(rawPicturePct)); } catch (e) {}
+    }
+  }, [rawPicturePct, pictureFloor]);
+
+  const picturePct = Math.max(rawPicturePct, pictureFloor);
+  const maturity = useMemo(() => maturityLevel(picturePct), [picturePct]);
 
   const markIssueFixed = useCallback((issue) => {
     journalService.markIssueFixed(issue, mileage);
@@ -117,6 +144,8 @@ export function CarProvider({ children }) {
     setUserCar(null);
     setCarDetails(null);
     setIssuesData(null);
+    setPictureFloor(0);
+    try { localStorage.removeItem(PICTURE_FLOOR_KEY); } catch (e) {}
   }, []);
 
   const value = {
@@ -136,6 +165,8 @@ export function CarProvider({ children }) {
     saveAnswers,
     issueStatuses,
     setIssueStatus,
+    picturePct,
+    maturity,
   };
 
   return <CarContext.Provider value={value}>{children}</CarContext.Provider>;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import {
@@ -12,8 +12,6 @@ import {
   formatRelativeTime,
   recordTitle,
   estimateOwnership,
-  pictureCompleteness,
-  maturityLevel,
   UI_SYSTEMS,
 } from '../utils/issueHelpers';
 import MileageUpdateModal from './MileageUpdateModal';
@@ -71,6 +69,31 @@ function indexStatus(idx) {
   return { ring: c.critical, text: c.critical, label: 'Несколько мест внимания' };
 }
 
+// Плавный счётчик: число «доезжает» от прежнего к новому за ~600мс (а не подменяется).
+// Уважает prefers-reduced-motion — тогда показывает сразу.
+function useCountUp(target, ms = 650) {
+  const [val, setVal] = useState(target);
+  const fromRef = useRef(target);
+  useEffect(() => {
+    const from = fromRef.current;
+    if (from === target) return;
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { setVal(target); fromRef.current = target; return; }
+    let raf, start;
+    const tick = (t) => {
+      if (start == null) start = t;
+      const p = Math.min(1, (t - start) / ms);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(from + (target - from) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else fromRef.current = target;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return val;
+}
+
 function systemStatusWord(score) {
   if (score == null) return { word: 'мало данных', color: c.textTertiary, attention: false };
   if (score >= 80) return { word: 'В норме', color: c.textTertiary, attention: false };
@@ -80,11 +103,12 @@ function systemStatusWord(score) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, journalRecords, issueStatuses } = useCar();
+  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, picturePct, maturity } = useCar();
   const [showMileageModal, setShowMileageModal] = useState(false);
   const [systemsOpen, setSystemsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   const [pop, setPop] = useState(false); // анимация «+N» после «Я починил»
+  const [notice, setNotice] = useState(null); // тихая микро-награда (тост)
   const animatedRef = useRef(false);
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
@@ -97,20 +121,32 @@ export default function Dashboard() {
     return calculateHealthIndex(issuesData.systemic, mileage, fixedIssueIds, answers);
   }, [issuesData, mileage, fixedIssueIds, answers]);
 
-  // Зрелость оценки: «% картины» собран и уровень (1 предв. → 2 уточн. → 3 точн.)
-  const picturePct = useMemo(() => {
-    if (!issuesData) return 0;
-    return pictureCompleteness({
-      answers: answers || {},
-      issues: issuesData.systemic,
-      fixedIssueIds,
-      issueStatuses,
-      journalCount: (journalRecords || []).length,
-      mileageKnown: mileage > 0,
-    });
-  }, [issuesData, answers, fixedIssueIds, issueStatuses, journalRecords, mileage]);
+  const shownIndex = useCountUp(healthIndex); // плавно «доезжает» к новому значению
 
-  const maturity = useMemo(() => maturityLevel(picturePct), [picturePct]);
+  // Микро-награды: рост «% картины» → тихий тост; первое достижение «точной оценки» → спокойный момент.
+  const prevPct = useRef(picturePct);
+  const prevLevel = useRef(maturity?.level);
+  useEffect(() => {
+    if (picturePct > prevPct.current) {
+      let celebrated = true;
+      try { celebrated = localStorage.getItem('aaa_maturity_done') === 'true'; } catch (e) {}
+      if (maturity.level === 3 && prevLevel.current < 3 && !celebrated) {
+        setNotice('Оценка готова — теперь она про вашу машину, а не про модель.');
+        try { localStorage.setItem('aaa_maturity_done', 'true'); } catch (e) {}
+      } else {
+        setNotice(`Картина точнее — ${picturePct}%`);
+      }
+    }
+    prevPct.current = picturePct;
+    prevLevel.current = maturity?.level;
+  }, [picturePct, maturity]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 3500);
+    return () => clearTimeout(t);
+  }, [notice]);
+
 
   const grouped = useMemo(() => {
     if (!issuesData) return { current: [], upcoming: [], past: [], chronic: [] };
@@ -256,7 +292,7 @@ export default function Dashboard() {
                 </svg>
                 <div style={s.ringCenter}>
                   <div style={{ ...s.ringVal, color: maturity.level === 1 ? c.textSecondary : c.textPrimary }}>
-                    {maturity.level === 1 ? `~${healthIndex}` : healthIndex}
+                    {maturity.level === 1 ? `~${shownIndex}` : shownIndex}
                   </div>
                   {maturity.level === 1 && <div style={s.ringHint}>пока</div>}
                 </div>
@@ -474,6 +510,13 @@ export default function Dashboard() {
           onClose={() => setShowMileageModal(false)}
         />
       )}
+
+      {notice && (
+        <div style={s.notice}>
+          <Icon name="sparkles" size={16} color={c.success} />
+          <span>{notice}</span>
+        </div>
+      )}
     </div>
   );
 
@@ -548,6 +591,7 @@ const s = {
   ringMax: { fontSize: '9px', color: c.textTertiary, marginTop: '2px' },
   ringPop: { position: 'absolute', top: '-6px', left: '50%', transform: 'translateX(-50%)', fontSize: '15px', fontWeight: '700', color: c.successDark, pointerEvents: 'none' },
   ringHint: { fontSize: '10px', color: c.textTertiary, marginTop: '1px' },
+  notice: { position: 'fixed', left: '50%', bottom: '78px', transform: 'translateX(-50%)', zIndex: 1500, display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '92%', padding: '11px 16px', background: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', boxShadow: '0 6px 20px rgba(15,23,42,0.14)', fontSize: '13px', color: c.textPrimary },
   healthInfo: { flex: 1, minWidth: 0 },
   healthStatus: { fontSize: '17px', fontWeight: '600', marginBottom: '3px' },
   healthMean: { fontSize: '12px', color: c.textSecondary, lineHeight: 1.4 },
