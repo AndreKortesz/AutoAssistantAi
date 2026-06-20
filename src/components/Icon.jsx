@@ -42,6 +42,20 @@ const PATHS = {
   smile: <><circle cx="12" cy="12" r="9" /><path d="M8 14a4 4 0 0 0 8 0" /><path d="M9 9h0 M15 9h0" /></>,
   calendar: <><rect x="4" y="5" width="16" height="16" rx="2" /><path d="M8 3v4 M16 3v4 M4 10h16" /><path d="m9 15 2 2 4-4" /></>,
   gauge: <><path d="M12 14 15 9" /><circle cx="12" cy="14" r="1" /><path d="M4 18a8 8 0 1 1 16 0" /></>,
+  // --- иконки раздела «Сервисы» ---
+  store: <><path d="M3 9 4.5 4h15L21 9" /><path d="M5 9v11h14V9" /><path d="M3 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0" /><path d="M9.5 20v-5h5v5" /></>,
+  grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
+  lifebuoy: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3.5" /><path d="m5.5 5.5 4 4 M18.5 5.5l-4 4 M5.5 18.5l4-4 M18.5 18.5l-4-4" /></>,
+  truck: <><rect x="2" y="6" width="12" height="9" rx="1" /><path d="M14 9h4l3 3v3h-7z" /><circle cx="7" cy="18" r="2" /><circle cx="17" cy="18" r="2" /></>,
+  battery: <><rect x="2" y="8" width="15" height="8" rx="1.5" /><path d="M20 11v2" /><path d="M9 9.5 7.5 12.5H10L8.5 15.5" /></>,
+  key: <><circle cx="7.5" cy="15.5" r="3.5" /><path d="m10 13 8-8 M16 5l3 3 M13.5 7.5l2.5 2.5" /></>,
+  fuel: <><path d="M3 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16 M2 21h13 M6 8h6" /><path d="M13 9h3a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3" /></>,
+  cart: <><circle cx="9" cy="20" r="1.5" /><circle cx="18" cy="20" r="1.5" /><path d="M2 3h3l2.4 12h10l1.6-8H6" /></>,
+  car: <><path d="M3 17v-4l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4 M3 13h18" /><circle cx="7.5" cy="17" r="1.6" /><circle cx="16.5" cy="17" r="1.6" /></>,
+  settings: <><circle cx="12" cy="12" r="3" /><path d="M12 2v3 M12 19v3 M2 12h3 M19 12h3 M4.9 4.9l2.1 2.1 M17 17l2.1 2.1 M4.9 19.1l2.1-2.1 M17 7l2.1-2.1" /></>,
+  gavel: <><path d="M14 3l7 7-2.5 2.5-7-7z" /><path d="m9.5 9.5-6.5 6.5 2.5 2.5 6.5-6.5 M3 21h9" /></>,
+  dots: <><circle cx="5" cy="12" r="1.4" /><circle cx="12" cy="12" r="1.4" /><circle cx="19" cy="12" r="1.4" /></>,
+  user: <><circle cx="12" cy="8" r="4" /><path d="M5 21a7 7 0 0 1 14 0" /></>,
 };
 
 export default function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 1.8, style }) {

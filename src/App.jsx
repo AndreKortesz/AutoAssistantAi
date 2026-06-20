@@ -54,6 +54,7 @@ import AssistantScreen from './components/AssistantScreen'
 import MaintenanceScreen from './components/MaintenanceScreen'
 import CostScreen from './components/CostScreen'
 import OnboardingQuestions from './components/OnboardingQuestions'
+import ServicesScreen from './components/ServicesScreen'
 
 // Цветовая схема
 export const colors = {
@@ -88,6 +89,7 @@ const BottomNav = () => {
     { path: '/issues', icon: 'wrench', label: 'Обслуживание' },
     { path: '/journal', icon: 'clipboard', label: 'Журнал' },
     { path: '/assistant', icon: 'chat', label: 'Ассистент' },
+    { path: '/services', icon: 'grid', label: 'Сервисы' },
   ]
 
   return (
@@ -154,6 +156,7 @@ function AppRoutes() {
         <Route path="/maintenance" element={<MaintenanceScreen />} />
         <Route path="/cost" element={<CostScreen />} />
         <Route path="/assistant" element={<AssistantScreen />} />
+        <Route path="/services" element={<ServicesScreen />} />
       </Routes>
       
       {showNav && <BottomNav />}
@@ -191,11 +194,13 @@ const styles = {
   },
 
   navItem: {
+    flex: 1,
+    minWidth: 0,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '2px',
-    padding: '8px 14px',
+    padding: '8px 4px',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
@@ -215,5 +220,9 @@ const styles = {
     fontSize: '10px',
     fontWeight: '500',
     color: colors.textSecondary,
+    whiteSpace: 'nowrap',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
 }

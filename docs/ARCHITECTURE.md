@@ -41,7 +41,8 @@ src/
 │   ├── dataService.js         ← загрузка catalog/модели; кэш; защита (path traversal, лимит 5 МБ, валидация)
 │   ├── userCarService.js      ← машина пользователя + ответы онбординга в localStorage (whitelist)
 │   ├── journalService.js      ← журнал ТО/ремонтов; из него выводятся fixedIssueIds (с TTL)
-│   └── issueStatusService.js  ← статус болячки по мнению юзера: 'actual' | 'unknown' (localStorage)
+│   ├── issueStatusService.js  ← статус болячки по мнению юзера: 'actual' | 'unknown' (localStorage)
+│   └── serviceAnalytics.js    ← trackServiceInterest(serviceId): событие интереса + локальный счётчик (заглушка под бэк)
 ├── utils/
 │   └── issueHelpers.js        ← ВСЯ доменная логика: классификация по пробегу, индекс, зрелость,
 │                                системы, стоимость владения, форматтеры, линковка recalls/исков
@@ -56,6 +57,7 @@ src/
     ├── IssueDetailScreen.jsx  ← детальная страница болячки/ТО/износа по id
     ├── JournalScreen.jsx      ← журнал обслуживания
     ├── AssistantScreen.jsx    ← AI-чат (Gemini), рендер markdown
+    ├── ServicesScreen.jsx     ← «Сервисы»: витрина услуг (заглушки «скоро» + «Уведомить» → аналитика интереса)
     ├── CoachmarksTour.jsx     ← оверлей-подсветка для тура по вкладкам
     ├── MileageUpdateModal.jsx ← модалка обновления пробега
     ├── CarSilhouette.jsx      ← SVG-силуэт авто по типу кузова/цвету
@@ -82,6 +84,7 @@ prototypes/                    ← HTML-референсы дизайна (Audi 
 | `/maintenance` | `MaintenanceScreen` *(осиротевший — функционал переехал во вкладку `/issues` service; кандидат на удаление)* | ✓ |
 | `/cost` | `CostScreen` (полная стоимость владения) | ✓ |
 | `/assistant` | `AssistantScreen` | ✓ |
+| `/services` | `ServicesScreen` (витрина услуг) | ✓ |
 
 - **`RootRoute`** решает СРАЗУ (без мигания): `userCar` и флаг онбординга читаются из localStorage синхронно. Нет авто → `/add-car`; есть → `/dashboard`; не прошёл интро → `Onboarding`. Тяжёлый JSON болячек грузится в фоне, экраны показывают своё «Загрузка». **Не возвращать splash-гейт на `loading`** — это была регрессия медленного старта.
 - **`shouldShowNav`** скрывает нижнюю навигацию на `/`, `/add-car`, `/checkup`.
