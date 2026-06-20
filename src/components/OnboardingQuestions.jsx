@@ -58,7 +58,15 @@ const SERVICE_TIP = 'При ближайшем визите в сервис по
 export default function OnboardingQuestions() {
   const navigate = useNavigate();
   const { userCar, carDetails, saveAnswers } = useCar();
-  const [step, setStep] = useState(0);
+  // «Напомнить позже» работает так: вопрос остаётся неотвеченным (или «не знаю»),
+  // и при повторном входе («Уточнить» на главной) мы стартуем с первого незакрытого —
+  // то есть пропущенные/«не знаю» вопросы возвращаются.
+  const answered = userCar?.onboardingAnswers || {};
+  const isDone = (id) => answered[id] && answered[id] !== 'unknown';
+  const [step, setStep] = useState(() => {
+    const i = CORE.findIndex(q => !isDone(q.id));
+    return i === -1 ? CORE.length : i; // всё ядро отвечено → к развилке
+  });
   const [extraOpen, setExtraOpen] = useState(false); // решил ли «ответить ещё»
   const [pending, setPending] = useState(null);      // вопрос, по которому открыты «3 пути» (после «Не знаю»)
   const [openPath, setOpenPath] = useState(null);     // 'self' | 'service' — какая подсказка раскрыта
@@ -128,16 +136,13 @@ export default function OnboardingQuestions() {
               </button>
               {openPath === 'service' && <div style={s.tip}>{SERVICE_TIP}</div>}
             </div>
-            <button style={s.pathBtn} onClick={() => navigate('/assistant')}>
-              <Icon name="chat" size={20} color={c.primary} />
-              <div style={s.pathInfo}>
-                <div style={s.pathTitle}>Спросить ассистента</div>
-                <div style={s.pathSub}>Задать вопрос про этот момент</div>
-              </div>
-              <Icon name="arrowRight" size={16} color={c.t3} />
-            </button>
           </div>
-          <button style={s.ghostBtn} onClick={continueFromPending}>Напомнить позже</button>
+          <div style={s.assistNote}>
+            <Icon name="chat" size={15} color={c.t3} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>А спросить ассистента про этот момент можно позже — он всегда под рукой на вкладке «Ассистент».</span>
+          </div>
+          <button style={s.primaryBtn} onClick={continueFromPending}>Хорошо, напомните позже</button>
+          <div style={s.pendingFoot}>Вернёмся к этому вопросу, когда нажмёте «Уточнить» на главной.</div>
         </div>
       ) : atGate ? (
         <div style={s.card}>
@@ -199,6 +204,8 @@ const s = {
   pathTitle: { fontSize: '15px', color: c.t1, fontWeight: '500' },
   pathSub: { fontSize: '12px', color: c.t3, marginTop: '2px' },
   tip: { fontSize: '13px', color: c.t2, lineHeight: 1.5, padding: '10px 14px 2px 14px' },
+  assistNote: { display: 'flex', gap: '8px', marginTop: '14px', padding: '11px 13px', background: c.bg, borderRadius: '10px', fontSize: '12px', color: c.t2, lineHeight: 1.45 },
+  pendingFoot: { fontSize: '12px', color: c.t3, textAlign: 'center', marginTop: '10px', lineHeight: 1.4 },
   gateIcon: { width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(29,158,117,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' },
   primaryBtn: { marginTop: '18px', width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: c.primary, color: '#fff', fontSize: '15px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
   ghostBtn: { marginTop: '10px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: 'transparent', color: c.t2, fontSize: '15px', cursor: 'pointer', fontFamily: 'inherit' },

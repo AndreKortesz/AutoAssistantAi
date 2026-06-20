@@ -294,7 +294,7 @@ export default function Dashboard() {
                   <div style={{ ...s.ringVal, color: maturity.level === 1 ? c.textSecondary : c.textPrimary }}>
                     {maturity.level === 1 ? `~${shownIndex}` : shownIndex}
                   </div>
-                  {maturity.level === 1 && <div style={s.ringHint}>пока</div>}
+                  {maturity.level === 1 && <div style={s.ringHint}>предв.</div>}
                 </div>
                 {pop && <div style={s.ringPop} className="aaa-pop-up">+{pop}</div>}
               </div>
