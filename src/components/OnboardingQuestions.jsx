@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import Icon from './Icon';
+import { addDeferred } from '../services/deferredQuestions';
 
 // Этап C: вопросы-ощущения после добавления авто (стиль Duolingo, в наших карточках).
 // Заполняют ответы → «созревание» индекса. Ничего не обязательно: «Не знаю» и «Позже» везде.
@@ -55,6 +56,15 @@ const TIPS = {
 };
 const SERVICE_TIP = 'При ближайшем визите в сервис попросите мастера проверить этот момент — обычно это быстро и недорого.';
 
+// Готовый вопрос ассистенту по каждой теме (для отложенного «спросить ассистента»).
+const ASSIST_Q = {
+  engine_cold_start: 'Как понять, нормально ли мой мотор заводится на холодную, и стоит ли беспокоиться?',
+  oil_consumption: 'Какой расход масла нормален для моего мотора и когда это повод проверить двигатель?',
+  engine_noise: 'Какие звуки мотора на холостых — это норма, а какие повод проверить?',
+  engine_pull: 'Машина как будто вяло тянет при разгоне — в чём может быть причина?',
+  transmission: 'Как понять, что с коробкой что-то не так, и что стоит проверить?',
+};
+
 export default function OnboardingQuestions() {
   const navigate = useNavigate();
   const { userCar, carDetails, saveAnswers } = useCar();
@@ -70,6 +80,7 @@ export default function OnboardingQuestions() {
   const [extraOpen, setExtraOpen] = useState(false); // решил ли «ответить ещё»
   const [pending, setPending] = useState(null);      // вопрос, по которому открыты «3 пути» (после «Не знаю»)
   const [openPath, setOpenPath] = useState(null);     // 'self' | 'service' — какая подсказка раскрыта
+  const [confirmSkip, setConfirmSkip] = useState(false); // подтверждение выхода из опроса
 
   // Вопрос по коробке — по типу трансмиссии машины.
   const transmissionQ = useMemo(() => {
@@ -96,6 +107,10 @@ export default function OnboardingQuestions() {
     else next();
   };
   const continueFromPending = () => { setPending(null); setOpenPath(null); next(); };
+  const askAssistantLater = () => {
+    if (pending) addDeferred({ id: pending.id, label: pending.q, prompt: ASSIST_Q[pending.id] || `Подскажи про «${pending.q}» на моём авто` });
+    continueFromPending();
+  };
   const next = () => {
     if (step + 1 < questions.length) setStep(step + 1);
     else if (!extraOpen && step + 1 >= CORE.length) setStep(CORE.length); // к развилке
@@ -107,7 +122,18 @@ export default function OnboardingQuestions() {
 
   return (
     <div style={s.container}>
-      <button style={s.skipTop} onClick={finish} aria-label="Позже">Позже</button>
+      <button style={s.skipTop} onClick={() => setConfirmSkip(true)} aria-label="Позже">Позже</button>
+
+      {confirmSkip && (
+        <div style={s.confirmOverlay} onClick={() => setConfirmSkip(false)}>
+          <div style={s.confirmCard} onClick={e => e.stopPropagation()}>
+            <div style={s.confirmTitle}>Пропустить опрос?</div>
+            <div style={s.confirmText}>Это пара коротких вопросов — они делают оценку точнее. Можно вернуться к ним в любой момент через «Уточнить» на главной.</div>
+            <button style={s.primaryBtn} onClick={() => setConfirmSkip(false)}>Продолжить опрос</button>
+            <button style={s.ghostBtn} onClick={finish}>Всё равно пропустить</button>
+          </div>
+        </div>
+      )}
 
       {pending ? (
         <div style={s.card}>
@@ -136,10 +162,14 @@ export default function OnboardingQuestions() {
               </button>
               {openPath === 'service' && <div style={s.tip}>{SERVICE_TIP}</div>}
             </div>
-          </div>
-          <div style={s.assistNote}>
-            <Icon name="chat" size={15} color={c.t3} style={{ flexShrink: 0, marginTop: 1 }} />
-            <span>А спросить ассистента про этот момент можно позже — он всегда под рукой на вкладке «Ассистент».</span>
+            <button style={s.pathBtn} onClick={askAssistantLater}>
+              <Icon name="chat" size={20} color={c.primary} />
+              <div style={s.pathInfo}>
+                <div style={s.pathTitle}>Спросить ассистента</div>
+                <div style={s.pathSub}>Запишем — напомним на главной</div>
+              </div>
+              <Icon name="arrowRight" size={16} color={c.t3} />
+            </button>
           </div>
           <button style={s.primaryBtn} onClick={continueFromPending}>Хорошо, напомните позже</button>
           <div style={s.pendingFoot}>Вернёмся к этому вопросу, когда нажмёте «Уточнить» на главной.</div>
@@ -204,8 +234,11 @@ const s = {
   pathTitle: { fontSize: '15px', color: c.t1, fontWeight: '500' },
   pathSub: { fontSize: '12px', color: c.t3, marginTop: '2px' },
   tip: { fontSize: '13px', color: c.t2, lineHeight: 1.5, padding: '10px 14px 2px 14px' },
-  assistNote: { display: 'flex', gap: '8px', marginTop: '14px', padding: '11px 13px', background: c.bg, borderRadius: '10px', fontSize: '12px', color: c.t2, lineHeight: 1.45 },
   pendingFoot: { fontSize: '12px', color: c.t3, textAlign: 'center', marginTop: '10px', lineHeight: 1.4 },
+  confirmOverlay: { position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' },
+  confirmCard: { background: c.card, borderRadius: '16px', padding: '22px', maxWidth: '360px', width: '100%', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' },
+  confirmTitle: { fontSize: '18px', fontWeight: '600', color: c.t1, marginBottom: '8px' },
+  confirmText: { fontSize: '14px', color: c.t2, lineHeight: 1.5, marginBottom: '18px' },
   gateIcon: { width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(29,158,117,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' },
   primaryBtn: { marginTop: '18px', width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: c.primary, color: '#fff', fontSize: '15px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' },
   ghostBtn: { marginTop: '10px', width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: 'transparent', color: c.t2, fontSize: '15px', cursor: 'pointer', fontFamily: 'inherit' },

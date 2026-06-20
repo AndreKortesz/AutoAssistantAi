@@ -15,6 +15,7 @@ import {
   UI_SYSTEMS,
 } from '../utils/issueHelpers';
 import MileageUpdateModal from './MileageUpdateModal';
+import { loadDeferred, removeDeferred } from '../services/deferredQuestions';
 import CarSilhouette from './CarSilhouette';
 import Icon from './Icon';
 
@@ -109,7 +110,12 @@ export default function Dashboard() {
   const [costOpen, setCostOpen] = useState(false);
   const [pop, setPop] = useState(false); // анимация «+N» после «Я починил»
   const [notice, setNotice] = useState(null); // тихая микро-награда (тост)
+  const [deferred, setDeferred] = useState(() => loadDeferred()); // отложенные вопросы к ассистенту
   const animatedRef = useRef(false);
+
+  const deferredItem = deferred[0] || null; // показываем по одному
+  const askDeferred = (item) => { removeDeferred(item.id); setDeferred(loadDeferred()); navigate('/assistant', { state: { prompt: item.prompt } }); };
+  const dismissDeferred = (item) => { removeDeferred(item.id); setDeferred(loadDeferred()); };
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
@@ -394,6 +400,19 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Отложенный вопрос: пользователь в опросе захотел спросить ассистента */}
+      {deferredItem && (
+        <div style={s.deferCard}>
+          <div style={s.deferIcon}><Icon name="bulb" size={18} color={c.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }} onClick={() => askDeferred(deferredItem)}>
+            <div style={s.deferTitle}>Вы хотели уточнить</div>
+            <div style={s.deferSub}>«{deferredItem.label}» — спросить ассистента?</div>
+          </div>
+          <button style={s.deferAsk} onClick={() => askDeferred(deferredItem)}>Спросить</button>
+          <button style={s.deferClose} onClick={() => dismissDeferred(deferredItem)} aria-label="Скрыть"><Icon name="x" size={15} color={c.textTertiary} /></button>
+        </div>
+      )}
+
       {/* Спросить про мою машину (обводка) */}
       <div style={s.askBtn}>
         <div style={s.askTop} onClick={() => navigate('/assistant')}>
@@ -610,6 +629,12 @@ const s = {
 
   noData: { fontSize: '13px', color: c.textSecondary, lineHeight: 1.5 },
 
+  deferCard: { display: 'flex', alignItems: 'center', gap: '11px', margin: '0 12px 14px', padding: '13px 14px', background: c.primaryLight, borderRadius: '14px' },
+  deferIcon: { width: '36px', height: '36px', borderRadius: '10px', background: c.card, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  deferTitle: { fontSize: '12px', color: c.textSecondary },
+  deferSub: { fontSize: '14px', fontWeight: '500', color: c.textPrimary, lineHeight: 1.35, cursor: 'pointer' },
+  deferAsk: { flexShrink: 0, padding: '8px 14px', borderRadius: '9px', border: 'none', background: c.primary, color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
+  deferClose: { flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: '4px' },
   askBtn: { margin: '0 12px 14px', padding: '13px 16px', background: 'none', border: `1px solid ${c.border}`, borderRadius: '14px' },
   askTop: { display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' },
   askTitle: { fontSize: '14px', fontWeight: '600', color: c.textPrimary },
