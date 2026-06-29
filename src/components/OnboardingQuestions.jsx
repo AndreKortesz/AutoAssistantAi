@@ -114,9 +114,12 @@ export default function OnboardingQuestions() {
     if (pending) addDeferred({ id: pending.id, label: pending.q, prompt: ASSIST_Q[pending.id] || `Подскажи про «${pending.q}» на моём авто` });
     setAskedConfirm(true);
   };
+  // Идём к следующему НЕзакрытому вопросу (не отвечён или «не знаю»), уже определённые
+  // пропускаем. Поэтому при повторном входе переспрашиваются только открытые, без хождения по кругу.
   const next = () => {
-    if (step + 1 < questions.length) setStep(step + 1);
-    else finish();
+    const nextOpen = questions.findIndex((qq, i) => i > step && !isDone(qq.id));
+    if (nextOpen === -1) finish();
+    else setStep(nextOpen);
   };
   const finish = () => navigate('/dashboard', { replace: true });
 
