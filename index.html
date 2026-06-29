@@ -35,8 +35,11 @@
       .aaa-car-in { animation: aaaCarIn .7s cubic-bezier(.22,1,.36,1) both; }
       .aaa-shine { animation: aaaShine 1.1s ease-in .6s both; }
       .aaa-pop-up { animation: aaaPopUp 1.2s ease-out forwards; }
+      /* Деликатный ореол-пульс у кольца индекса — намёк, что можно тапнуть */
+      @keyframes aaaRingPulse { 0% { transform: scale(1); opacity: .5; } 70% { transform: scale(1.28); opacity: 0; } 100% { transform: scale(1.28); opacity: 0; } }
+      .aaa-ring-pulse { animation: aaaRingPulse 3.2s ease-out infinite; }
       @media (prefers-reduced-motion: reduce) {
-        .aaa-car-in, .aaa-shine, .aaa-pop-up { animation: none !important; }
+        .aaa-car-in, .aaa-shine, .aaa-pop-up, .aaa-ring-pulse { animation: none !important; }
       }
     </style>
   </head>

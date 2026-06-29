@@ -96,6 +96,17 @@ function useCountUp(target, ms = 650) {
   return val;
 }
 
+// Линейная интерполяция между двумя hex-цветами (t: 0..1) → rgb-строка.
+function lerpColor(a, b, t) {
+  const k = Math.max(0, Math.min(1, t));
+  const h = (x) => [parseInt(x.slice(1, 3), 16), parseInt(x.slice(3, 5), 16), parseInt(x.slice(5, 7), 16)];
+  const [r1, g1, b1] = h(a), [r2, g2, b2] = h(b);
+  const m = (p, q) => Math.round(p + (q - p) * k);
+  return `rgb(${m(r1, r2)}, ${m(g1, g2)}, ${m(b1, b2)})`;
+}
+const RING_MUTED = '#7FC9AD';  // приглушённый зелёный — мало данных
+const RING_FULL = '#1D9E75';   // насыщенный основной — картина собрана
+
 function systemStatusWord(score) {
   if (score == null) return { word: 'мало данных', color: c.textTertiary, attention: false };
   if (score >= 80) return { word: 'В норме', color: c.textTertiary, attention: false };
@@ -105,14 +116,24 @@ function systemStatusWord(score) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, picturePct, maturity } = useCar();
+  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, picturePct, maturity, journalRecords } = useCar();
   const [showMileageModal, setShowMileageModal] = useState(false);
   const [systemsOpen, setSystemsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   const [pop, setPop] = useState(false); // анимация «+N» после «Я починил»
   const [notice, setNotice] = useState(null); // тихая микро-награда (тост)
   const [deferred, setDeferred] = useState(() => loadDeferred()); // отложенные вопросы к ассистенту
+  const [entered, setEntered] = useState(false); // анимация входа кольца «от полного к текущему»
+  const [showInfo, setShowInfo] = useState(false); // модалка «Что это за оценка»
   const animatedRef = useRef(false);
+
+  // Запуск анимации кольца при входе/возврате на главную (компонент монтируется заново при навигации).
+  useEffect(() => {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { setEntered(true); return; }
+    const raf = requestAnimationFrame(() => setEntered(true)); // следующий кадр → CSS-переход «полное → текущее»
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const deferredItem = deferred[0] || null; // показываем по одному
   const askDeferred = (item) => { removeDeferred(item.id); setDeferred(loadDeferred()); navigate('/assistant', { state: { prompt: item.prompt } }); };
@@ -266,6 +287,19 @@ export default function Dashboard() {
   const R = 35, CIRC = 2 * Math.PI * R;
   const fillRatio = Math.min(1, healthIndex / MAX_INDEX);
 
+  // Цвет дуги = зрелость насыщенностью: мало данных → приглушённый, по мере сбора → насыщенный.
+  // На точной оценке (ур.3) — реальный цвет по значению (зелёный/янтарь/красный).
+  const ringEndColor = maturity.level === 3 ? status.ring : lerpColor(RING_MUTED, RING_FULL, picturePct / 80);
+  // Анимация входа: до entered кольцо полное и насыщенное (вспышка), затем CSS-переход к текущему.
+  const ringColor = entered ? ringEndColor : RING_FULL;
+  const ringOffset = entered ? CIRC * (1 - fillRatio) : 0;
+
+  // Чек-лист источников «Что собрано»
+  const systemicList = (issuesData.systemic || []).filter(i => (i.issue?.system || i.position?.system) !== 'body');
+  const systemicTotal = systemicList.length;
+  const systemicMarked = systemicList.filter(i => fixedIssueIds.includes(i.id)).length;
+  const journalCount = (journalRecords || []).length;
+
   const animateOnce = !animatedRef.current;
   animatedRef.current = true;
 
@@ -298,7 +332,8 @@ export default function Dashboard() {
           <>
             <div style={s.heroDivider} />
             <div style={s.healthRow}>
-              <div style={s.ringWrap}>
+              <button style={s.ringWrap} onClick={() => setShowInfo(true)} aria-label="Что это за оценка">
+                {maturity.level < 3 && <span style={s.ringPulse} className="aaa-ring-pulse" />}
                 <svg width="84" height="84" style={{ transform: 'rotate(-90deg)' }}>
                   <circle cx="42" cy="42" r={R} fill="none" stroke={c.border} strokeWidth="6" />
                   {/* засечка-потолок 95 — только когда оценка точная */}
@@ -306,57 +341,52 @@ export default function Dashboard() {
                     <circle cx="42" cy="42" r={R} fill="none" stroke={c.amber} strokeWidth="2"
                       strokeDasharray="1.5 4" opacity="0.6" />
                   )}
-                  {maturity.level === 1 ? (
-                    // Предварительная: бледное пунктирное кольцо-плейсхолдер, без цвета
-                    <circle cx="42" cy="42" r={R} fill="none" stroke={c.textTertiary} strokeWidth="6"
-                      strokeLinecap="round" strokeDasharray="3 5" opacity="0.7" />
-                  ) : (
-                    <circle cx="42" cy="42" r={R} fill="none" stroke={status.ring} strokeWidth="6"
-                      strokeLinecap="round" strokeDasharray={CIRC}
-                      strokeDashoffset={CIRC * (1 - fillRatio)}
-                      style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
-                  )}
+                  {/* Одна дуга: длина = оценка, цвет = зрелость (насыщенность). Вход: полное → текущее. */}
+                  <circle cx="42" cy="42" r={R} fill="none" stroke={ringColor} strokeWidth="6"
+                    strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={ringOffset}
+                    style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(0.22,1,0.36,1), stroke 0.9s ease' }} />
                 </svg>
                 <div style={s.ringCenter}>
-                  <div style={{ ...s.ringVal, color: maturity.level === 1 ? c.textSecondary : c.textPrimary }}>
-                    {maturity.level === 1 ? `~${shownIndex}` : shownIndex}
-                  </div>
-                  {maturity.level === 1 && <div style={s.ringHint}>предв.</div>}
+                  <div style={{ ...s.ringVal, color: c.textPrimary }}>{shownIndex}</div>
+                  <div style={s.ringHintTap}>подробнее <span style={s.ringI}>i</span></div>
                 </div>
                 {pop && <div style={s.ringPop} className="aaa-pop-up">+{pop}</div>}
-              </div>
+              </button>
               <div style={s.healthInfo}>
                 {maturity.level === 3 ? (
                   <>
                     <div style={{ ...s.healthStatus, color: status.text }}>{status.label}</div>
                     <div style={s.healthMean}>Для машины с таким пробегом — крепкий результат.</div>
                   </>
-                ) : maturity.level === 1 ? (
-                  <>
-                    <div style={{ ...s.healthStatus, color: c.textPrimary }}>Собираем картину</div>
-                    <div style={s.healthMean}>
-                      Предварительно — типично для {carDetails.model_name} на {Math.round(mileage / 1000)} тыс.
-                      Уточните детали, чтобы оценка стала вашей.
-                    </div>
-                  </>
                 ) : (
                   <>
-                    <div style={{ ...s.healthStatus, color: c.textSecondary }}>{maturity.label}</div>
-                    <div style={s.healthMean}>Чем больше отметите, тем точнее оценка.</div>
+                    <div style={{ ...s.healthStatus, color: c.textPrimary }}>Рейтинг формируется</div>
+                    <div style={s.healthMean}>Чем больше отметите — тем точнее оценка.</div>
                   </>
                 )}
               </div>
             </div>
 
-            {/* Полоса «% картины» — пассивный статус зрелости (как кольцо Oura). Призывы — в едином слоте ниже. */}
+            {/* Чек-лист источников: видно, ЧТО закрыть, чтобы оценка дозрела. */}
             {maturity.level < 3 && (
-              <div style={s.pictureWrap}>
-                <div style={s.pictureTop}>
-                  <span style={s.pictureLabel}>Картина собрана</span>
-                  <span style={s.picturePct}>{picturePct}%</span>
+              <div style={s.sources}>
+                <div style={s.sourceRow}>
+                  {seenCount >= SURVEY_QS.length
+                    ? <><Icon name="check" size={16} color={c.success} /><span style={s.sourceText}>Первые вопросы — готово</span></>
+                    : <><span style={s.sourceDot} /><span style={s.sourceText}>Первые вопросы — {seenCount} из {SURVEY_QS.length}</span>
+                        <button style={s.sourceBtn} onClick={() => navigate('/checkup')}>Пройти</button></>}
                 </div>
-                <div style={s.pictureBar}>
-                  <div style={{ ...s.pictureFill, width: `${picturePct}%` }} />
+                <div style={s.sourceRow}>
+                  {systemicTotal > 0 && systemicMarked >= systemicTotal
+                    ? <><Icon name="check" size={16} color={c.success} /><span style={s.sourceText}>Болячки отмечены</span></>
+                    : <><span style={s.sourceDot} /><span style={s.sourceText}>Отметить болячки — {systemicMarked} из {systemicTotal}</span>
+                        <button style={s.sourceBtn} onClick={() => navigate('/issues')}>Отметить</button></>}
+                </div>
+                <div style={s.sourceRow}>
+                  {journalCount > 0
+                    ? <><Icon name="check" size={16} color={c.success} /><span style={s.sourceText}>Журнал ТО — {journalCount} {journalCount === 1 ? 'запись' : 'записей'}</span></>
+                    : <><span style={s.sourceDot} /><span style={s.sourceText}>Записи в журнале ТО — пусто</span>
+                        <button style={s.sourceBtn} onClick={() => navigate('/journal')}>Добавить</button></>}
                 </div>
               </div>
             )}
@@ -410,8 +440,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Единый слот-нудж: максимум один активный призыв (анти-мельтешение).
-          Приоритет: отложенный вопрос ассистенту → опрос/дозревание картины → отметить болячки. */}
+      {/* Слот-нудж: отложенный вопрос ассистенту, иначе «созревший» открытый «не знаю».
+          Прогресс источников (опрос/болячки/журнал) живёт в чек-листе под кольцом. */}
       {hasData && (deferredItem ? (
         <div style={s.deferCard}>
           <div style={s.deferIcon}><Icon name="bulb" size={18} color={c.primary} /></div>
@@ -422,15 +452,6 @@ export default function Dashboard() {
           <button style={s.deferAsk} onClick={() => askDeferred(deferredItem)}>Спросить</button>
           <button style={s.deferClose} onClick={() => dismissDeferred(deferredItem)} aria-label="Скрыть"><Icon name="x" size={15} color={c.textTertiary} /></button>
         </div>
-      ) : surveyNotAllSeen ? (
-        <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
-          <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={s.surveyTitle}>{seenCount > 0 ? 'Продолжите опрос' : 'Опрос не завершён'}</div>
-            <div style={s.surveySub}>{seenCount > 0 ? `Осталось ${SURVEY_QS.length - seenCount} из ${SURVEY_QS.length} — и оценка станет вашей, а не «по модели».` : '5 коротких вопросов — и оценка станет вашей, а не «по модели».'}</div>
-          </div>
-          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>{seenCount > 0 ? 'Продолжить' : 'Пройти'}</button>
-        </div>
       ) : dueAspect ? (
         <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
           <div style={s.surveyIcon}><Icon name="bulb" size={18} color={c.primary} /></div>
@@ -440,15 +461,6 @@ export default function Dashboard() {
           </div>
           <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Ответить</button>
           <button style={s.deferClose} onClick={(e) => { e.stopPropagation(); dismissMaturing(); }} aria-label="Позже"><Icon name="x" size={15} color={c.textTertiary} /></button>
-        </div>
-      ) : maturity.level < 3 ? (
-        <div style={s.surveyCard} onClick={() => navigate('/issues')}>
-          <div style={s.surveyIcon}><Icon name="check" size={18} color={c.primary} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={s.surveyTitle}>Отметьте, что уже сделано</div>
-            <div style={s.surveySub}>Отметки в «Слабых местах» делают оценку точнее всего.</div>
-          </div>
-          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/issues'); }}>Открыть</button>
         </div>
       ) : null)}
 
@@ -575,6 +587,29 @@ export default function Dashboard() {
           <span>{notice}</span>
         </div>
       )}
+
+      {showInfo && (
+        <div style={s.infoOverlay} onClick={() => setShowInfo(false)}>
+          <div style={s.infoCard} onClick={(e) => e.stopPropagation()}>
+            <div style={s.infoTitle}>Что это за оценка</div>
+            <p style={s.infoText}>
+              Это оценка здоровья именно вашей машины по шкале <b>40–95</b>. Она складывается из ваших
+              ответов про ощущения, отметок болячек и записей в журнале ТО.
+            </p>
+            <p style={s.infoText}>
+              {maturity.level === 3
+                ? 'Картина собрана — оценка точная.'
+                : 'Пока оценка предварительная: мы ещё собираем данные. Чем больше отметите — тем точнее.'}
+            </p>
+            <div style={s.infoBarTop}>
+              <span style={s.infoBarLabel}>Данных собрано</span>
+              <span style={s.infoBarPct}>{picturePct}%</span>
+            </div>
+            <div style={s.infoBar}><div style={{ ...s.infoBarFill, width: `${picturePct}%` }} /></div>
+            <button style={s.infoBtn} onClick={() => setShowInfo(false)}>Понятно</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -643,9 +678,12 @@ const s = {
 
   heroDivider: { height: '1px', background: c.border, margin: '14px 0' },
   healthRow: { display: 'flex', alignItems: 'center', gap: '16px' },
-  ringWrap: { position: 'relative', width: '84px', height: '84px', flexShrink: 0 },
+  ringWrap: { position: 'relative', width: '84px', height: '84px', flexShrink: 0, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  ringPulse: { position: 'absolute', top: '50%', left: '50%', width: '84px', height: '84px', marginTop: '-42px', marginLeft: '-42px', borderRadius: '50%', border: `2px solid ${RING_FULL}`, pointerEvents: 'none' },
   ringCenter: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' },
   ringVal: { fontSize: '26px', fontWeight: '700', lineHeight: 1 },
+  ringHintTap: { fontSize: '9px', color: c.textTertiary, marginTop: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' },
+  ringI: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '11px', height: '11px', borderRadius: '50%', border: `1px solid ${c.textTertiary}`, fontSize: '8px', fontStyle: 'italic', lineHeight: 1 },
   ringMax: { fontSize: '9px', color: c.textTertiary, marginTop: '2px' },
   ringPop: { position: 'absolute', top: '-6px', left: '50%', transform: 'translateX(-50%)', fontSize: '15px', fontWeight: '700', color: c.successDark, pointerEvents: 'none' },
   ringHint: { fontSize: '10px', color: c.textTertiary, marginTop: '1px' },
@@ -660,6 +698,25 @@ const s = {
   // «Картина собрана N%» + CTA «Уточнить оценку»
   pictureWrap: { marginTop: '14px' },
   refineHint: { fontSize: '12px', color: c.textTertiary, textAlign: 'center', marginTop: '8px', lineHeight: 1.4 },
+
+  // Чек-лист источников «что собрано»
+  sources: { marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' },
+  sourceRow: { display: 'flex', alignItems: 'center', gap: '9px' },
+  sourceDot: { width: '16px', height: '16px', borderRadius: '50%', border: `1.5px solid ${c.border}`, flexShrink: 0 },
+  sourceText: { flex: 1, fontSize: '13px', color: c.textSecondary },
+  sourceBtn: { flexShrink: 0, padding: '6px 12px', borderRadius: '8px', border: 'none', background: c.primaryLight, color: c.primary, fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
+
+  // Модалка «Что это за оценка»
+  infoOverlay: { position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' },
+  infoCard: { background: c.card, borderRadius: '16px', padding: '22px', maxWidth: '360px', width: '100%', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' },
+  infoTitle: { fontSize: '18px', fontWeight: '600', color: c.textPrimary, marginBottom: '10px' },
+  infoText: { fontSize: '14px', color: c.textSecondary, lineHeight: 1.55, margin: '0 0 12px' },
+  infoBarTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '4px', marginBottom: '6px' },
+  infoBarLabel: { fontSize: '13px', color: c.textSecondary },
+  infoBarPct: { fontSize: '13px', fontWeight: '600', color: c.textPrimary, fontVariantNumeric: 'tabular-nums' },
+  infoBar: { height: '7px', borderRadius: '4px', background: c.bg, overflow: 'hidden' },
+  infoBarFill: { height: '100%', background: c.success, borderRadius: '4px' },
+  infoBtn: { marginTop: '18px', width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: c.primary, color: '#fff', fontSize: '15px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
   surveyCard: { display: 'flex', alignItems: 'center', gap: '11px', margin: '0 12px 14px', padding: '13px 14px', background: c.primaryLight, borderRadius: '14px', cursor: 'pointer' },
   surveyIcon: { width: '36px', height: '36px', borderRadius: '10px', background: c.card, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   surveyTitle: { fontSize: '14px', fontWeight: '600', color: c.textPrimary },
