@@ -108,6 +108,8 @@ export default function OnboardingQuestions() {
     else next();
   };
   const continueFromPending = () => { setPending(null); setOpenPath(null); setAskedConfirm(false); next(); };
+  // Назад к вопросу (не продвигаем дальше) — можно ответить заново.
+  const backFromPending = () => { setPending(null); setOpenPath(null); setAskedConfirm(false); };
   // Не уводим из опроса и не прыгаем резко: сохраняем вопрос и показываем подтверждение.
   const askAssistantLater = () => {
     if (pending) addDeferred({ id: pending.id, label: pending.q, prompt: ASSIST_Q[pending.id] || `Подскажи про «${pending.q}» на моём авто` });
@@ -148,6 +150,9 @@ export default function OnboardingQuestions() {
         </div>
       ) : pending ? (
         <div style={s.card}>
+          <button style={s.cardBack} onClick={backFromPending} aria-label="Назад к вопросу">
+            <Icon name="arrowLeft" size={18} color={c.t2} /> Назад
+          </button>
           <div style={s.q}>Как это узнать?</div>
           <div style={s.hint}>На вторичке мало кто знает всё — это нормально. Этот момент не штрафует оценку, отметим, когда узнаете.</div>
           <div style={s.options}>
@@ -246,6 +251,7 @@ const s = {
   pathSub: { fontSize: '12px', color: c.t3, marginTop: '2px' },
   tip: { fontSize: '13px', color: c.t2, lineHeight: 1.5, padding: '10px 14px 2px 14px' },
   pendingFoot: { fontSize: '12px', color: c.t3, textAlign: 'center', marginTop: '10px', lineHeight: 1.4 },
+  cardBack: { display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: c.t2, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', padding: '0 0 12px', marginLeft: '-2px' },
   confirmOverlay: { position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' },
   confirmCard: { background: c.card, borderRadius: '16px', padding: '22px', maxWidth: '360px', width: '100%', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' },
   confirmTitle: { fontSize: '18px', fontWeight: '600', color: c.t1, marginBottom: '8px' },

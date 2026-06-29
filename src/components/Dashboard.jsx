@@ -341,20 +341,10 @@ export default function Dashboard() {
                 <div style={s.pictureBar}>
                   <div style={{ ...s.pictureFill, width: `${picturePct}%` }} />
                 </div>
-                {surveyIncomplete ? (
-                  <>
-                    <button style={s.refineBtn} onClick={() => navigate('/checkup')}>
-                      <Icon name="sparkles" size={16} color={c.primary} />
-                      Пройти опрос за 1 минуту
-                    </button>
-                    <div style={s.refineHint}>Опрос не завершён — так оценка станет вашей, а не «по модели».</div>
-                  </>
-                ) : (
-                  <button style={s.refineBtn} onClick={() => navigate('/issues')}>
-                    <Icon name="check" size={16} color={c.primary} />
-                    Отметить, что уже сделано
-                  </button>
-                )}
+                <button style={s.refineBtn} onClick={() => navigate(surveyIncomplete ? '/checkup' : '/issues')}>
+                  <Icon name={surveyIncomplete ? 'sparkles' : 'check'} size={16} color={c.primary} />
+                  {surveyIncomplete ? 'Пройти опрос за 1 минуту' : 'Отметить, что уже сделано'}
+                </button>
               </div>
             )}
 
@@ -406,6 +396,18 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Опрос не завершён — видно всегда, пока 3 ядровых вопроса не пройдены */}
+      {hasData && surveyIncomplete && (
+        <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
+          <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={s.surveyTitle}>Опрос не завершён</div>
+            <div style={s.surveySub}>Пара коротких вопросов — и оценка станет вашей, а не «по модели».</div>
+          </div>
+          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Пройти</button>
+        </div>
+      )}
 
       {/* Отложенный вопрос: пользователь в опросе захотел спросить ассистента */}
       {deferredItem && (
@@ -628,6 +630,11 @@ const s = {
   // «Картина собрана N%» + CTA «Уточнить оценку»
   pictureWrap: { marginTop: '14px' },
   refineHint: { fontSize: '12px', color: c.textTertiary, textAlign: 'center', marginTop: '8px', lineHeight: 1.4 },
+  surveyCard: { display: 'flex', alignItems: 'center', gap: '11px', margin: '0 12px 14px', padding: '13px 14px', background: c.primaryLight, borderRadius: '14px', cursor: 'pointer' },
+  surveyIcon: { width: '36px', height: '36px', borderRadius: '10px', background: c.card, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  surveyTitle: { fontSize: '14px', fontWeight: '600', color: c.textPrimary },
+  surveySub: { fontSize: '12px', color: c.textSecondary, marginTop: '2px', lineHeight: 1.35 },
+  surveyBtn: { flexShrink: 0, padding: '8px 16px', borderRadius: '9px', border: 'none', background: c.primary, color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
   pictureTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' },
   pictureLabel: { fontSize: '13px', color: c.textSecondary },
   picturePct: { fontSize: '13px', fontWeight: '600', color: c.textPrimary, fontVariantNumeric: 'tabular-nums' },
