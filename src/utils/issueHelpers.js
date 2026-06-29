@@ -155,19 +155,38 @@ export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds =
 
 // Насколько сильно ответ по системе двигает индекс. Двигатель/коробка — тяжелее.
 // Ключи совпадают с questionId из формы вопросов (этап C).
-// Веса по ценности сигнала (вердикт механика): расход масла и звуки/холодный
-// пуск — главные; коробка — средний; разгон — почти шум (минимальный вес).
+// Веса ответов-ОЩУЩЕНИЙ — МЯГКИЕ (±1-2): субъективное «мне кажется» не должно ронять оценку
+// сильно (BRIEF addendum B.3); подтверждённые болячки/износ двигают заметнее. Разгон — почти шум.
 export const SENSATION_WEIGHTS = {
-  engine_cold_start: 4,
-  oil_consumption: 4,
-  engine_noise: 4,
-  engine_pull: 1,       // субъективно, человек адаптируется → почти шум
-  transmission: 3,
-  suspension_knock: 2,
-  steering: 2,
-  brakes: 3,
+  engine_cold_start: 2,
+  oil_consumption: 2,
+  engine_noise: 2,
+  engine_pull: 1,
+  transmission: 2,
+  suspension_knock: 1.5,
+  steering: 1.5,
+  brakes: 2,
   service_history: 0, // нейтрально, не штрафует
 };
+
+// Какой системе принадлежит вопрос-ощущение (для подсветки болячек этой системы).
+export const ANSWER_SYSTEM = {
+  engine_cold_start: 'engine', oil_consumption: 'engine', engine_noise: 'engine', engine_pull: 'engine',
+  transmission: 'transmission', suspension_knock: 'suspension', steering: 'steering', brakes: 'brakes',
+};
+
+// Настроение систем из ответов: 'flag' (тревожно/средне — подсветить и поднять внутри группы),
+// 'ok' (только «хорошо» — опустить, «пока не беспокоит»). «Не знаю»/документы не участвуют.
+export function systemSentiment(answers = {}) {
+  const sys = {};
+  for (const [id, val] of Object.entries(answers || {})) {
+    const system = ANSWER_SYSTEM[id];
+    if (!system || val === 'unknown') continue;
+    if (val === 'bad' || val === 'mid') sys[system] = 'flag';
+    else if (val === 'good' && sys[system] !== 'flag') sys[system] = 'ok';
+  }
+  return sys;
+}
 const SENSATION_TOTAL_QUESTIONS = 5; // ядро (3) + 2 доп. — база для «% картины»
 
 // Суммарная поправка к индексу от ответов. Мягкая, чтобы цифра не прыгала.

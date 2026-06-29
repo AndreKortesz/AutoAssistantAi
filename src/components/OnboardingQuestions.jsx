@@ -48,6 +48,16 @@ const CORE = [
 const EXTRA_PULL = { id: 'engine_pull', q: 'Как тянет при разгоне?', hint: 'Под нагрузкой', options: [
   { val: 'good', label: 'Бодро' }, { val: 'mid', label: 'Нормально' }, { val: 'bad', label: 'Вяло, потеря тяги' }] };
 
+// Доп. блок (после 5, по желанию): подвеска / руль / тормоза.
+const EXTRA_QS = [
+  { id: 'suspension_knock', q: 'Стуки на кочках?', hint: 'На неровностях и ямах', options: [
+    { val: 'good', label: 'Тихо, без стуков' }, { val: 'mid', label: 'Лёгкое постукивание' }, { val: 'bad', label: 'Заметные стуки' }] },
+  { id: 'steering', q: 'Руль держит прямо?', hint: 'На ровной дороге', options: [
+    { val: 'good', label: 'Ровно, не уводит' }, { val: 'mid', label: 'Слегка уводит' }, { val: 'bad', label: 'Биение / сильно уводит' }] },
+  { id: 'brakes', q: 'Как тормозит?', hint: 'При обычном торможении', options: [
+    { val: 'good', label: 'Уверенно, ровно' }, { val: 'mid', label: 'Бьёт педаль' }, { val: 'bad', label: 'Писк, скрежет' }] },
+];
+
 // Подсказки «проверить самому» для механики «Не знаю».
 const TIPS = {
   engine_cold_start: 'Заведите утром на холодную и послушайте первые 10 секунд: схватывает сразу и ровно — или троит, плавают обороты.',
@@ -55,6 +65,9 @@ const TIPS = {
   engine_noise: 'На прогретом моторе на холостых послушайте у открытого капота — нет ли цокота или стука.',
   engine_pull: 'На свободной дороге разгонитесь с 60 до 100 — тянет бодро или вяло, с провалами.',
   transmission: 'Прокатитесь спокойно и под газ: обратите внимание на толчки, рывки или «задумчивость» при переключениях.',
+  suspension_knock: 'Проедьте по неровной дороге/лежачим полицейским — слушайте, нет ли стуков спереди или сзади.',
+  steering: 'На ровной свободной дороге проверьте, уводит ли в сторону; на скорости — нет ли биения в руле.',
+  brakes: 'При торможении обратите внимание: нет ли писка/скрежета и не бьёт ли педаль.',
 };
 const SERVICE_TIP = 'При ближайшем визите в сервис попросите мастера проверить этот момент — обычно это быстро и недорого.';
 
@@ -65,6 +78,9 @@ const ASSIST_Q = {
   engine_noise: 'Какие звуки мотора на холостых — это норма, а какие повод проверить?',
   engine_pull: 'Машина как будто вяло тянет при разгоне — в чём может быть причина?',
   transmission: 'Как понять, что с коробкой что-то не так, и что стоит проверить?',
+  suspension_knock: 'Подвеска постукивает на кочках — что обычно стучит на этой модели и насколько срочно?',
+  steering: 'Руль уводит/бьёт на скорости — в чём может быть причина и что проверить?',
+  brakes: 'Тормоза поскрипывают / бьёт педаль — что стоит проверить?',
 };
 
 export default function OnboardingQuestions() {
@@ -87,6 +103,8 @@ export default function OnboardingQuestions() {
   const [openPath, setOpenPath] = useState(null);     // 'self' | 'service' — какая подсказка раскрыта
   const [confirmSkip, setConfirmSkip] = useState(false); // подтверждение выхода из опроса
   const [mini, setMini] = useState(null); // открыт мини-чат ассистента по вопросу (pending)
+  const [extraOpen, setExtraOpen] = useState(false); // открыт доп. блок (подвеска/руль/тормоза)
+  const [showGate, setShowGate] = useState(false);   // развилка «ответить ещё / позже» после 5
 
   // Вопрос по коробке — по типу трансмиссии машины.
   const transmissionQ = useMemo(() => {
@@ -95,9 +113,12 @@ export default function OnboardingQuestions() {
     return { id: 'transmission', ...variant };
   }, [carDetails, userCar]);
 
-  // Все 5 вопросов подряд: 3 ядра + разгон + коробка.
-  const questions = useMemo(() => [...CORE, EXTRA_PULL, transmissionQ], [transmissionQ]);
-  const total = questions.length; // 5
+  // Первые 5 (3 ядра + разгон + коробка); доп. блок (подвеска/руль/тормоза) — по желанию после гейта.
+  const questions = useMemo(
+    () => extraOpen ? [...CORE, EXTRA_PULL, transmissionQ, ...EXTRA_QS] : [...CORE, EXTRA_PULL, transmissionQ],
+    [extraOpen, transmissionQ]
+  );
+  const total = questions.length;
 
   if (!userCar) return <Navigate to="/add-car" replace />;
 
@@ -139,9 +160,11 @@ export default function OnboardingQuestions() {
   // пропускаем. Поэтому при повторном входе переспрашиваются только открытые, без хождения по кругу.
   const next = () => {
     const nextOpen = questions.findIndex((qq, i) => i > step && !isDone(qq.id));
-    if (nextOpen === -1) finish();
-    else setStep(nextOpen);
+    if (nextOpen !== -1) { setStep(nextOpen); return; }
+    if (!extraOpen) { setShowGate(true); return; } // прошли 5 → развилка «ещё / позже»
+    finish();
   };
+  const openExtra = () => { setExtraOpen(true); setShowGate(false); setStep(5); }; // первый доп. вопрос
   const finish = () => navigate('/dashboard', { replace: true });
 
   return (
@@ -199,6 +222,16 @@ export default function OnboardingQuestions() {
             </button>
           </div>
           <button style={s.primaryBtn} onClick={continueFromPending}>Продолжить</button>
+        </div>
+      ) : showGate ? (
+        <div style={s.card}>
+          <div style={s.gateIcon}><Icon name="check" size={28} color={c.success} /></div>
+          <div style={s.q}>Спасибо! Уже понятнее.</div>
+          <div style={s.hint}>Ещё немного — про подвеску, руль и тормоза. Это уточнит оценку, но не обязательно.</div>
+          <button style={s.primaryBtn} onClick={openExtra}>
+            <Icon name="sparkles" size={16} color="#fff" /> Ответить ещё (3)
+          </button>
+          <button style={s.ghostBtn} onClick={finish}>Позже</button>
         </div>
       ) : q ? (
         <div style={s.card}>

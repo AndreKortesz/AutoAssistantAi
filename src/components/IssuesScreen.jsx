@@ -12,6 +12,8 @@ import {
   getLinkedRecalls,
   getLinkedClassActions,
   isBodyRecord,
+  recordSystem,
+  systemSentiment,
 } from '../utils/issueHelpers';
 import Icon from './Icon';
 import CarSilhouette from './CarSilhouette';
@@ -66,14 +68,27 @@ export default function IssuesScreen() {
 
   const isFixed = (id) => fixedIssueIds.includes(id);
 
+  // Подсветка по ответам-ощущениям: системы, помеченные «тревожно/средне» (flag) / «хорошо» (ok).
+  const sentiment = useMemo(() => systemSentiment(userCar?.onboardingAnswers || {}), [userCar]);
+  const hintFor = (issue) => sentiment[recordSystem(issue)]; // 'flag' | 'ok' | undefined
+
+  // Сортировка ВНУТРИ группы: важность первична (severity), затем симптом (flag выше, ok ниже).
+  // Между группами порядок важности НЕ трогаем (критичное всегда в своей верхней группе).
+  const sevRank = { critical: 0, high: 1, medium: 2, low: 3 };
+  const sentRank = { flag: 0, undefined: 1, ok: 2 };
+  const sortInGroup = (arr) => [...arr].sort((a, b) =>
+    (sevRank[a.issue?.severity] ?? 9) - (sevRank[b.issue?.severity] ?? 9) ||
+    (sentRank[hintFor(a)] ?? 1) - (sentRank[hintFor(b)] ?? 1)
+  );
+
   // Группируем болячки по важности (кузов отфильтрован внутри).
   // Отмеченные «сделано» убираем из активных групп — они уходят в отдельную кучу «Сделано».
   const grouped = useMemo(() => {
     if (!issuesData) return { safety: [], planned: [], minor: [], upcoming: [], past: [] };
     const g = groupByImportance(issuesData.systemic, mileage, fixedIssueIds);
-    for (const k of ['safety', 'planned', 'minor', 'upcoming']) g[k] = g[k].filter(i => !isFixed(i.id));
+    for (const k of ['safety', 'planned', 'minor', 'upcoming']) g[k] = sortInGroup(g[k].filter(i => !isFixed(i.id)));
     return g;
-  }, [issuesData, mileage, fixedIssueIds]);
+  }, [issuesData, mileage, fixedIssueIds, sentiment]);
 
   // «Мелочи» = low-болячки + отдельный тип minor_annoyance (без кузова)
   const minorAll = useMemo(() => {
@@ -173,6 +188,7 @@ export default function IssuesScreen() {
               onMarkFixed={() => markIssueFixed(issue)}
               onUnmark={() => unmarkIssueFixed(issue.id)}
               onSetStatus={(st) => setIssueStatus(issue.id, issueStatuses[issue.id] === st ? null : st)}
+              hint={hintFor(issue)}
             />
           );
         })}
@@ -388,7 +404,7 @@ function Section({ icon, iconColor, title, subtitle, count, open, onToggle, chil
   );
 }
 
-function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed, status, onMarkFixed, onUnmark, onSetStatus }) {
+function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions, isFixed, status, onMarkFixed, onUnmark, onSetStatus, hint }) {
   const severity = issue.issue?.severity || 'low';
   const title = recordTitle(issue);
   const subsystem = issue.issue?.subsystem || issue.issue?.system || '';
@@ -414,6 +430,8 @@ function IssueCard({ issue, expanded, onToggle, onDetails, recalls, classActions
             <span style={s.issueMeta}>
               {subsystem && `${subsystem} · `}{freq}
             </span>
+            {hint === 'flag' && <span style={s.hintFlag}>возможно, это про вас</span>}
+            {hint === 'ok' && <span style={s.hintOk}>пока не беспокоит</span>}
           </div>
         </div>
         {(hasRecalls || hasClassActions) && (
@@ -666,6 +684,8 @@ const s = {
   issueName: { fontSize: '15px', fontWeight: '600', color: c.textPrimary, lineHeight: '1.3' },
   fixedBadge: { marginLeft: '8px', fontSize: '11px', fontWeight: '600', color: c.success, background: 'rgba(46, 158, 111, 0.12)', padding: '2px 6px', borderRadius: '6px', verticalAlign: 'middle', whiteSpace: 'nowrap' },
   issueMeta: { fontSize: '12px', color: c.textTertiary },
+  hintFlag: { display: 'inline-block', marginTop: '5px', fontSize: '11px', fontWeight: '500', color: c.warning, background: 'rgba(186,117,23,0.10)', padding: '2px 8px', borderRadius: '6px' },
+  hintOk: { display: 'inline-block', marginTop: '5px', fontSize: '11px', color: c.textTertiary, background: c.bg, padding: '2px 8px', borderRadius: '6px' },
   statusIcons: { display: 'flex', gap: '4px', marginRight: '8px', flexShrink: 0 },
   statusIcon: { width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', background: c.primaryLight, borderRadius: '6px' },
   issueToggle: (open) => ({ fontSize: '10px', color: c.textTertiary, transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }),
