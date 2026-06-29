@@ -81,6 +81,7 @@ export default function OnboardingQuestions() {
   const [pending, setPending] = useState(null);      // вопрос, по которому открыты «3 пути» (после «Не знаю»)
   const [openPath, setOpenPath] = useState(null);     // 'self' | 'service' — какая подсказка раскрыта
   const [confirmSkip, setConfirmSkip] = useState(false); // подтверждение выхода из опроса
+  const [askedConfirm, setAskedConfirm] = useState(false); // показали подтверждение «вопрос отложен ассистенту»
 
   // Вопрос по коробке — по типу трансмиссии машины.
   const transmissionQ = useMemo(() => {
@@ -106,10 +107,11 @@ export default function OnboardingQuestions() {
     if (val === 'unknown') { setPending(q); setOpenPath(null); } // не штрафуем, предлагаем путь к ответу
     else next();
   };
-  const continueFromPending = () => { setPending(null); setOpenPath(null); next(); };
+  const continueFromPending = () => { setPending(null); setOpenPath(null); setAskedConfirm(false); next(); };
+  // Не уводим из опроса и не прыгаем резко: сохраняем вопрос и показываем подтверждение.
   const askAssistantLater = () => {
     if (pending) addDeferred({ id: pending.id, label: pending.q, prompt: ASSIST_Q[pending.id] || `Подскажи про «${pending.q}» на моём авто` });
-    continueFromPending();
+    setAskedConfirm(true);
   };
   const next = () => {
     if (step + 1 < questions.length) setStep(step + 1);
@@ -135,7 +137,16 @@ export default function OnboardingQuestions() {
         </div>
       )}
 
-      {pending ? (
+      {pending && askedConfirm ? (
+        <div style={s.card}>
+          <div style={s.gateIcon}><Icon name="check" size={28} color={c.success} /></div>
+          <div style={s.q}>Записали вопрос</div>
+          <div style={s.hint}>Сейчас спокойно допройдём опрос. Сразу после него на главной появится напоминание — и ассистент поможет разобраться с этим: «{pending.q}». Ничего не потеряется.</div>
+          <button style={s.primaryBtn} onClick={continueFromPending}>
+            <Icon name="arrowRight" size={16} color="#fff" /> Продолжить опрос
+          </button>
+        </div>
+      ) : pending ? (
         <div style={s.card}>
           <div style={s.q}>Как это узнать?</div>
           <div style={s.hint}>На вторичке мало кто знает всё — это нормально. Этот момент не штрафует оценку, отметим, когда узнаете.</div>
