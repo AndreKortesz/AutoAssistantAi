@@ -16,6 +16,7 @@ import {
 } from '../utils/issueHelpers';
 import MileageUpdateModal from './MileageUpdateModal';
 import { loadDeferred, removeDeferred } from '../services/deferredQuestions';
+import { dueAspects, markUnknown, dismissAspect, MATURE } from '../services/maturingAspects';
 import CarSilhouette from './CarSilhouette';
 import Icon from './Icon';
 
@@ -117,6 +118,12 @@ export default function Dashboard() {
   const askDeferred = (item) => { removeDeferred(item.id); setDeferred(loadDeferred()); navigate('/assistant', { state: { prompt: item.prompt } }); };
   const dismissDeferred = (item) => { removeDeferred(item.id); setDeferred(loadDeferred()); };
 
+  // Стадия 2: «созревшие» открытые «не знаю» (наблюдение накоплено по пробегу).
+  const [due, setDue] = useState([]);
+  const [maturingHidden, setMaturingHidden] = useState(false); // скрыто на эту сессию (после «×»)
+  const dueAspect = !maturingHidden && due.length > 0 ? due[0] : null;
+  const dismissMaturing = () => { due.forEach(dismissAspect); setMaturingHidden(true); };
+
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
   const answers = userCar?.onboardingAnswers || null;
@@ -127,7 +134,7 @@ export default function Dashboard() {
   const definiteCount = SURVEY_QS.filter(isDefinite).length;
   const seenCount = SURVEY_QS.filter(isSeen).length;
   const surveyNotAllSeen = seenCount < SURVEY_QS.length;          // не все 5 вопросов пройдены
-  const surveyMaturing = !surveyNotAllSeen && definiteCount < SURVEY_QS.length; // все пройдены, но есть «не знаю»
+  // «созревшие» открытые «не знаю» считаются отдельно (см. due / maturingAspects, Стадия 2)
 
   const healthIndex = useMemo(() => {
     if (!issuesData) return MAX_INDEX;
@@ -159,6 +166,13 @@ export default function Dashboard() {
     const t = setTimeout(() => setNotice(null), 3500);
     return () => clearTimeout(t);
   }, [notice]);
+
+  // Стадия 2: фиксируем пробег для «не знаю» без записи (бэкафилл) и считаем «созревшие».
+  useEffect(() => {
+    if (!answers) { setDue([]); return; }
+    Object.keys(MATURE).forEach(id => { if (answers[id] === 'unknown') markUnknown(id, mileage); });
+    setDue(dueAspects(answers, mileage));
+  }, [answers, mileage]);
 
 
   const grouped = useMemo(() => {
@@ -417,14 +431,15 @@ export default function Dashboard() {
           </div>
           <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>{seenCount > 0 ? 'Продолжить' : 'Пройти'}</button>
         </div>
-      ) : surveyMaturing ? (
+      ) : dueAspect ? (
         <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
-          <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
+          <div style={s.surveyIcon}><Icon name="bulb" size={18} color={c.primary} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={s.surveyTitle}>Картина ещё дозревает</div>
-            <div style={s.surveySub}>Кое-что вы пока отметили как «не знаю». Узнаете — оценка станет точнее. «Не знаю» — это нормально.</div>
+            <div style={s.surveyTitle}>Появился способ узнать</div>
+            <div style={s.surveySub}>{MATURE[dueAspect].ask}</div>
           </div>
-          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Уточнить</button>
+          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Ответить</button>
+          <button style={s.deferClose} onClick={(e) => { e.stopPropagation(); dismissMaturing(); }} aria-label="Позже"><Icon name="x" size={15} color={c.textTertiary} /></button>
         </div>
       ) : maturity.level < 3 ? (
         <div style={s.surveyCard} onClick={() => navigate('/issues')}>

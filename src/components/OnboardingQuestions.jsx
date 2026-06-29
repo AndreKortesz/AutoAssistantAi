@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useCar } from '../contexts/CarContext';
 import Icon from './Icon';
 import { addDeferred } from '../services/deferredQuestions';
+import { markUnknown, clearMaturing } from '../services/maturingAspects';
 
 // Этап C: вопросы-ощущения после добавления авто (стиль Duolingo, в наших карточках).
 // Заполняют ответы → «созревание» индекса. Ничего не обязательно: «Не знаю» и «Позже» везде.
@@ -101,8 +102,13 @@ export default function OnboardingQuestions() {
 
   const q = questions[step];
 
+  const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
   const answer = (val) => {
-    if (q) saveAnswers({ [q.id]: val });
+    if (q) {
+      saveAnswers({ [q.id]: val });
+      if (val === 'unknown') markUnknown(q.id, mileage); // запоминаем пробег для умного возврата
+      else clearMaturing(q.id);                          // закрыт — убираем из отслеживания
+    }
     if (val === 'unknown') { setPending(q); setOpenPath(null); } // не штрафуем, предлагаем путь к ответу
     else next();
   };
