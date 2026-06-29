@@ -121,6 +121,10 @@ export default function Dashboard() {
 
   const answers = userCar?.onboardingAnswers || null;
   const answeredCount = answers ? Object.keys(answers).length : 0;
+  // Опрос «пройден», если отвечены 3 ядровых вопроса (любым ответом, включая «не знаю»).
+  const coreAnswered = ['engine_cold_start', 'oil_consumption', 'engine_noise']
+    .filter(id => answers && answers[id]).length;
+  const surveyIncomplete = coreAnswered < 3;
 
   const healthIndex = useMemo(() => {
     if (!issuesData) return MAX_INDEX;
@@ -337,11 +341,14 @@ export default function Dashboard() {
                 <div style={s.pictureBar}>
                   <div style={{ ...s.pictureFill, width: `${picturePct}%` }} />
                 </div>
-                {answeredCount === 0 ? (
-                  <button style={s.refineBtn} onClick={() => navigate('/checkup')}>
-                    <Icon name="sparkles" size={16} color={c.primary} />
-                    Уточнить за 1 минуту
-                  </button>
+                {surveyIncomplete ? (
+                  <>
+                    <button style={s.refineBtn} onClick={() => navigate('/checkup')}>
+                      <Icon name="sparkles" size={16} color={c.primary} />
+                      Пройти опрос за 1 минуту
+                    </button>
+                    <div style={s.refineHint}>Опрос не завершён — так оценка станет вашей, а не «по модели».</div>
+                  </>
                 ) : (
                   <button style={s.refineBtn} onClick={() => navigate('/issues')}>
                     <Icon name="check" size={16} color={c.primary} />
@@ -620,6 +627,7 @@ const s = {
 
   // «Картина собрана N%» + CTA «Уточнить оценку»
   pictureWrap: { marginTop: '14px' },
+  refineHint: { fontSize: '12px', color: c.textTertiary, textAlign: 'center', marginTop: '8px', lineHeight: 1.4 },
   pictureTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' },
   pictureLabel: { fontSize: '13px', color: c.textSecondary },
   picturePct: { fontSize: '13px', fontWeight: '600', color: c.textPrimary, fontVariantNumeric: 'tabular-nums' },
