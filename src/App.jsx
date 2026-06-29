@@ -115,7 +115,7 @@ const BottomNav = () => {
 }
 
 const shouldShowNav = (pathname) => {
-  const noNavRoutes = ['/', '/add-car', '/checkup', '/checklist']
+  const noNavRoutes = ['/', '/add-car', '/checkup', '/checklist', '/reset']
   if (pathname.startsWith('/issues/')) return false
   if (pathname.startsWith('/services/')) return false
   return !noNavRoutes.includes(pathname)
@@ -145,6 +145,24 @@ function ScrollToTop() {
   return null
 }
 
+// Быстрый сброс для тестов: /reset чистит все данные приложения (aaa_*) и
+// перезагружает на старт (приветствие → выбор авто). Удобно положить в закладку.
+function ResetScreen() {
+  useEffect(() => {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('aaa_'))
+        .forEach(k => localStorage.removeItem(k))
+    } catch (e) {}
+    window.location.replace('/')
+  }, [])
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', fontFamily: '-apple-system, sans-serif' }}>
+      Сбрасываем данные…
+    </div>
+  )
+}
+
 // Внутренний компонент роутинга, имеет доступ к контексту
 function AppRoutes() {
   const navigate = useNavigate()
@@ -161,6 +179,7 @@ function AppRoutes() {
     <div style={styles.app}>
       <ScrollToTop />
       <Routes>
+        <Route path="/reset" element={<ResetScreen />} />
         <Route path="/" element={<RootRoute onComplete={handleOnboardingComplete} />} />
         <Route path="/add-car" element={<AddCarForm />} />
         <Route path="/checkup" element={<OnboardingQuestions />} />
