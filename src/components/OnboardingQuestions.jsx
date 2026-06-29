@@ -4,6 +4,7 @@ import { useCar } from '../contexts/CarContext';
 import Icon from './Icon';
 import { addDeferred } from '../services/deferredQuestions';
 import { markUnknown, clearMaturing } from '../services/maturingAspects';
+import MiniAssistant from './MiniAssistant';
 
 // Этап C: вопросы-ощущения после добавления авто (стиль Duolingo, в наших карточках).
 // Заполняют ответы → «созревание» индекса. Ничего не обязательно: «Не знаю» и «Позже» везде.
@@ -68,7 +69,7 @@ const ASSIST_Q = {
 
 export default function OnboardingQuestions() {
   const navigate = useNavigate();
-  const { userCar, carDetails, saveAnswers } = useCar();
+  const { userCar, carDetails, issuesData, saveAnswers } = useCar();
   // «Напомнить позже» работает так: вопрос остаётся неотвеченным (или «не знаю»),
   // и при повторном входе («Уточнить» на главной) мы стартуем с первого незакрытого —
   // то есть пропущенные/«не знаю» вопросы возвращаются.
@@ -85,7 +86,7 @@ export default function OnboardingQuestions() {
   const [pending, setPending] = useState(null);      // вопрос, по которому открыты «3 пути» (после «Не знаю»)
   const [openPath, setOpenPath] = useState(null);     // 'self' | 'service' — какая подсказка раскрыта
   const [confirmSkip, setConfirmSkip] = useState(false); // подтверждение выхода из опроса
-  const [askedConfirm, setAskedConfirm] = useState(false); // показали подтверждение «вопрос отложен ассистенту»
+  const [mini, setMini] = useState(null); // открыт мини-чат ассистента по вопросу (pending)
 
   // Вопрос по коробке — по типу трансмиссии машины.
   const transmissionQ = useMemo(() => {
@@ -112,13 +113,27 @@ export default function OnboardingQuestions() {
     if (val === 'unknown') { setPending(q); setOpenPath(null); } // не штрафуем, предлагаем путь к ответу
     else next();
   };
-  const continueFromPending = () => { setPending(null); setOpenPath(null); setAskedConfirm(false); next(); };
+  const continueFromPending = () => { setPending(null); setOpenPath(null); next(); };
   // Назад к вопросу (не продвигаем дальше) — можно ответить заново.
-  const backFromPending = () => { setPending(null); setOpenPath(null); setAskedConfirm(false); };
-  // Не уводим из опроса и не прыгаем резко: сохраняем вопрос и показываем подтверждение.
-  const askAssistantLater = () => {
-    if (pending) addDeferred({ id: pending.id, label: pending.q, prompt: ASSIST_Q[pending.id] || `Подскажи про «${pending.q}» на моём авто` });
-    setAskedConfirm(true);
+  const backFromPending = () => { setPending(null); setOpenPath(null); };
+
+  // Контекст машины для ассистента (заземление, без выдумок) — компактно.
+  const carContext = useMemo(() => {
+    if (!userCar || !carDetails) return {};
+    const eng = carDetails.engines?.find(e => e.code === userCar.engineCode);
+    return {
+      car: `${carDetails.brand} ${carDetails.model_name}${carDetails.generation ? ` ${carDetails.generation}` : ''}${eng ? ` · ${eng.label}` : ''}`.trim(),
+      mileage: userCar.mileage,
+      issues: (issuesData?.systemic || []).slice(0, 14).map(i => ({ title: i.issue?.title || '', severity: i.issue?.severity || '', cause: i.issue?.cause?.primary || '' })),
+    };
+  }, [userCar, carDetails, issuesData]);
+
+  // «Спросить ассистента» → мини-чат поверх онбординга (не выход в приложение).
+  const openMini = () => { if (pending) setMini(pending); };
+  const closeMini = (asked) => {
+    // не спросил → откладываем вопрос ассистенту (нудж на главной); спросил → уже получил ответ.
+    if (mini && !asked) addDeferred({ id: mini.id, label: mini.q, prompt: ASSIST_Q[mini.id] || `Подскажи про «${mini.q}» на моём авто` });
+    setMini(null);
   };
   // Идём к следующему НЕзакрытому вопросу (не отвечён или «не знаю»), уже определённые
   // пропускаем. Поэтому при повторном входе переспрашиваются только открытые, без хождения по кругу.
@@ -144,16 +159,7 @@ export default function OnboardingQuestions() {
         </div>
       )}
 
-      {pending && askedConfirm ? (
-        <div style={s.card}>
-          <div style={s.gateIcon}><Icon name="check" size={28} color={c.success} /></div>
-          <div style={s.q}>Записали вопрос</div>
-          <div style={s.hint}>Сейчас спокойно допройдём опрос. Сразу после него на главной появится напоминание — и ассистент поможет разобраться с этим: «{pending.q}». Ничего не потеряется.</div>
-          <button style={s.primaryBtn} onClick={continueFromPending}>
-            <Icon name="arrowRight" size={16} color="#fff" /> Продолжить опрос
-          </button>
-        </div>
-      ) : pending ? (
+      {pending ? (
         <div style={s.card}>
           <button style={s.cardBack} onClick={backFromPending} aria-label="Назад к вопросу">
             <Icon name="arrowLeft" size={18} color={c.t2} /> Назад
@@ -183,11 +189,11 @@ export default function OnboardingQuestions() {
               </button>
               {openPath === 'service' && <div style={s.tip}>{SERVICE_TIP}</div>}
             </div>
-            <button style={s.pathBtn} onClick={askAssistantLater}>
+            <button style={s.pathBtn} onClick={openMini}>
               <Icon name="chat" size={20} color={c.primary} />
               <div style={s.pathInfo}>
                 <div style={s.pathTitle}>Спросить ассистента</div>
-                <div style={s.pathSub}>Запишем — напомним на главной</div>
+                <div style={s.pathSub}>Ответит прямо здесь, по вашей машине</div>
               </div>
               <Icon name="arrowRight" size={16} color={c.t3} />
             </button>
@@ -221,6 +227,15 @@ export default function OnboardingQuestions() {
           </button>
         </div>
       ) : null}
+
+      {mini && (
+        <MiniAssistant
+          questionText={ASSIST_Q[mini.id] || `Подскажи про «${mini.q}» на моём авто`}
+          topicLabel={mini.q}
+          carContext={carContext}
+          onClose={closeMini}
+        />
+      )}
     </div>
   );
 }
