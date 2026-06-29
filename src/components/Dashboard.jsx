@@ -116,7 +116,7 @@ function systemStatusWord(score) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, picturePct, maturity, journalRecords } = useCar();
+  const { userCar, carDetails, issuesData, loading, updateMileage, fixedIssueIds, markIssueFixed, picturePct, maturity, journalRecords, wearStatuses } = useCar();
   const [showMileageModal, setShowMileageModal] = useState(false);
   const [systemsOpen, setSystemsOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
@@ -159,8 +159,8 @@ export default function Dashboard() {
 
   const healthIndex = useMemo(() => {
     if (!issuesData) return MAX_INDEX;
-    return calculateHealthIndex(issuesData.systemic, mileage, fixedIssueIds, answers);
-  }, [issuesData, mileage, fixedIssueIds, answers]);
+    return calculateHealthIndex(issuesData.systemic, mileage, fixedIssueIds, answers, issuesData.wear, wearStatuses);
+  }, [issuesData, mileage, fixedIssueIds, answers, wearStatuses]);
 
   const shownIndex = useCountUp(healthIndex); // плавно «доезжает» к новому значению
 

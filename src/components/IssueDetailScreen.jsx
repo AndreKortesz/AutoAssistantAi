@@ -55,7 +55,7 @@ function mergeLegal(primary, extra, keyFn) {
 export default function IssueDetailScreen() {
   const { issueId } = useParams();
   const navigate = useNavigate();
-  const { userCar, carDetails, issuesData, loading: carLoading, fixedIssueIds, markIssueFixed, unmarkIssueFixed } = useCar();
+  const { userCar, carDetails, issuesData, loading: carLoading, fixedIssueIds, markIssueFixed, unmarkIssueFixed, wearStatuses } = useCar();
 
   const [issue, setIssue] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -105,8 +105,8 @@ export default function IssueDetailScreen() {
   const handleMarkFixed = () => {
     if (!issue || isFixed) return;
     const answers = userCar?.onboardingAnswers || null;
-    const before = calculateHealthIndex(issuesData?.systemic || [], mileage, fixedIssueIds, answers);
-    const after = calculateHealthIndex(issuesData?.systemic || [], mileage, [...fixedIssueIds, issue.id], answers);
+    const before = calculateHealthIndex(issuesData?.systemic || [], mileage, fixedIssueIds, answers, issuesData?.wear || [], wearStatuses);
+    const after = calculateHealthIndex(issuesData?.systemic || [], mileage, [...fixedIssueIds, issue.id], answers, issuesData?.wear || [], wearStatuses);
     markIssueFixed(issue);
     setToast({ before, after, issueId: issue.id });
   };

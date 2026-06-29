@@ -54,12 +54,33 @@ function Row({ it, onOpen }) {
   );
 }
 
+// Позиция конечного износа: строка + контроль статуса по факту (4 варианта).
+// Пробег-просрочка = рекомендация «стоит проверить» (НЕ штраф); рейтинг двигает только факт.
+function WearItem({ it, fixed, status, onOpen, onFixed, onStatus }) {
+  const due = it.state === 'overdue' || it.state === 'now';
+  const showRec = due && !fixed && status !== 'checked_ok' && status !== 'needs_replace';
+  return (
+    <div style={s.wearWrap}>
+      <Row it={it} onOpen={onOpen} />
+      {showRec && <div style={s.wearRec}><Icon name="search" size={13} color={c.amber} /> Пробег подошёл — стоит проверить (на рейтинг не влияет)</div>}
+      {fixed ? (
+        <div style={s.wearDone}><Icon name="check" size={14} color={c.success} /> Заменено — отмечено в журнале</div>
+      ) : (
+        <div style={s.wearCtl}>
+          <button style={s.wearBtnFix} onClick={onFixed}>Заменил</button>
+          <button style={{ ...s.wearBtn, ...(status === 'checked_ok' ? s.wearBtnOk : {}) }} onClick={() => onStatus('checked_ok')}>Проверил — ок</button>
+          <button style={{ ...s.wearBtn, ...(status === 'needs_replace' ? s.wearBtnBad : {}) }} onClick={() => onStatus('needs_replace')}>Нужна замена</button>
+          <button style={{ ...s.wearBtn, ...(status === 'unknown' ? s.wearBtnActive : {}) }} onClick={() => onStatus('unknown')}>Не знаю</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MaintenanceTab() {
   const navigate = useNavigate();
-  const { issuesData } = useCar();
-  const { userCar } = useCar();
+  const { issuesData, userCar, fixedIssueIds = [], wearStatuses = {}, setWearStatus, markIssueFixed } = useCar();
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
-  const fixedIssueIds = useCar().fixedIssueIds || [];
   const [showAll, setShowAll] = useState(false);
 
   const maint = useMemo(() => {
@@ -85,7 +106,7 @@ export default function MaintenanceTab() {
       const st = wearStatus(r, mileage, fixedIssueIds);
       const meta = STATE_META[st.state];
       list.push({
-        id: r.id, title: t, sub: systemLabel(recordSystem(r)),
+        id: r.id, record: r, title: t, sub: systemLabel(recordSystem(r)),
         state: st.state, rank: meta.rank, color: meta.color, dot: meta.dot,
         rightTop: meta.word,
         rightBot: st.dueKm ? (st.state === 'now' || st.state === 'overdue' ? `ресурс ~${Math.round(st.dueKm / 1000)} тыс.` : `~${Math.round(st.dueKm / 1000)} тыс.`) : null,
@@ -119,7 +140,16 @@ export default function MaintenanceTab() {
         </div>
       </div>
       {wVis.length === 0 ? <div style={s.empty}>На вашем пробеге расходники по износу пока не требуют внимания.</div>
-        : wVis.map(it => <Row key={it.id} it={it} onOpen={() => navigate(`/issues/${it.id}`)} />)}
+        : wVis.map(it => (
+          <WearItem
+            key={it.id} it={it}
+            fixed={fixedIssueIds.includes(it.id)}
+            status={wearStatuses[it.id]?.s}
+            onOpen={() => navigate(`/issues/${it.id}`)}
+            onFixed={() => markIssueFixed(it.record)}
+            onStatus={(st) => setWearStatus(it.id, wearStatuses[it.id]?.s === st ? null : st)}
+          />
+        ))}
 
       {hiddenCount > 0 && (
         <button style={s.showAll} onClick={() => setShowAll(v => !v)}>
@@ -152,6 +182,17 @@ const s = {
   rightTop: { fontSize: '13px', fontWeight: '600' },
   rightBot: { fontSize: '11px', color: c.t3, marginTop: '2px' },
   empty: { fontSize: '13px', color: c.t2, padding: '8px 4px 4px', fontStyle: 'italic' },
+
+  // Контроль статуса износа (4 варианта)
+  wearWrap: { marginBottom: '10px' },
+  wearRec: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: c.amber, padding: '0 4px 8px' },
+  wearDone: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: c.success, padding: '0 4px 2px' },
+  wearCtl: { display: 'flex', flexWrap: 'wrap', gap: '6px', padding: '0 2px' },
+  wearBtn: { padding: '7px 10px', borderRadius: '8px', border: `1px solid ${c.border}`, background: c.card, fontSize: '12px', color: c.t1, cursor: 'pointer', fontFamily: 'inherit' },
+  wearBtnFix: { padding: '7px 12px', borderRadius: '8px', border: `1px solid ${c.success}`, background: c.success, color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' },
+  wearBtnOk: { borderColor: c.success, color: c.success, fontWeight: '600', background: 'rgba(29,158,117,0.08)' },
+  wearBtnBad: { borderColor: '#E24B4A', color: '#E24B4A', fontWeight: '600', background: 'rgba(226,75,74,0.07)' },
+  wearBtnActive: { borderColor: c.primary, color: c.primary, fontWeight: '600', background: 'rgba(31,79,216,0.06)' },
   showAll: { width: '100%', marginTop: '8px', padding: '11px', borderRadius: '10px', background: 'none', border: `1px solid ${c.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px', color: c.t2, fontFamily: 'inherit' },
   note: { fontSize: '12px', color: c.t3, lineHeight: 1.5, padding: '14px 4px 0', fontStyle: 'italic' },
 };

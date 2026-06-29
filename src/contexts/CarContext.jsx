@@ -3,6 +3,7 @@ import * as dataService from '../services/dataService';
 import * as userCarService from '../services/userCarService';
 import * as journalService from '../services/journalService';
 import * as issueStatusService from '../services/issueStatusService';
+import * as wearStatusService from '../services/wearStatusService';
 import { pictureCompleteness, maturityLevel } from '../utils/issueHelpers';
 
 const CarContext = createContext(null);
@@ -18,6 +19,7 @@ export function CarProvider({ children }) {
   const [issuesData, setIssuesData] = useState(null); // болячки + recalls и т.д.
   const [journalRecords, setJournalRecords] = useState(() => journalService.loadRecords());
   const [issueStatuses, setIssueStatuses] = useState(() => issueStatusService.loadStatuses());
+  const [wearStatuses, setWearStatuses] = useState(() => wearStatusService.loadWearStatuses());
   const [pictureFloor, setPictureFloor] = useState(readFloor); // монотонный «пол» зрелости — картина не «раскрывается» обратно
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +45,16 @@ export function CarProvider({ children }) {
 
   const setIssueStatus = useCallback((id, status) => {
     issueStatusService.setStatus(id, status);
+  }, []);
+
+  useEffect(() => {
+    return wearStatusService.subscribe(() => {
+      setWearStatuses(wearStatusService.loadWearStatuses());
+    });
+  }, []);
+
+  const setWearStatus = useCallback((id, status, untilKm) => {
+    wearStatusService.setWearStatus(id, status, untilKm);
   }, []);
 
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
@@ -165,6 +177,8 @@ export function CarProvider({ children }) {
     saveAnswers,
     issueStatuses,
     setIssueStatus,
+    wearStatuses,
+    setWearStatus,
     picturePct,
     maturity,
   };

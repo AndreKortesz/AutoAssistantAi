@@ -116,7 +116,23 @@ export function weightFor(issue, cat) {
   return w;
 }
 
-export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds = [], answers = null) {
+// Вклад конечного износа — ТОЛЬКО по подтверждённому факту «требуется замена».
+// Пробег/просрочка сами по себе НЕ штрафуют (это рекомендация «проверить»).
+// «Сделал»/«проверено ок»/«не знаю» — 0. Вес по severity (ремень ГРМ обычно high/critical → больше).
+// Потолок суммарного минуса −8, чтобы старая машина не обнулялась.
+const WEAR_WEIGHTS = { critical: 2, high: 1.5, medium: 1, low: 0.7 };
+export function wearIndexDelta(wear = [], fixedIssueIds = [], wearStatuses = {}) {
+  const fixed = new Set(fixedIssueIds);
+  let total = 0;
+  for (const w of wear || []) {
+    if (isBodyRecord(w) || fixed.has(w.id)) continue;
+    const st = wearStatuses[w.id]?.s || wearStatuses[w.id];
+    if (st === 'needs_replace') total += (WEAR_WEIGHTS[w.issue?.severity] ?? 1);
+  }
+  return Math.min(total, 8);
+}
+
+export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds = [], answers = null, wear = [], wearStatuses = {}) {
   const fixed = new Set(fixedIssueIds);
   let score = mileageBase(currentMileage);
   for (const issue of issues) {
@@ -125,6 +141,8 @@ export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds =
   }
   // Ответы-ощущения мягко корректируют оценку (хорошо ↑, тревожно ↓, не знаю — ноль).
   if (answers) score += answerAdjustment(answers);
+  // Конечный износ — по подтверждённому факту (см. wearIndexDelta).
+  score -= wearIndexDelta(wear, fixedIssueIds, wearStatuses);
   return Math.max(40, Math.min(95, Math.round(score)));
 }
 
