@@ -187,8 +187,7 @@ export default function OnboardingQuestions() {
               <Icon name="arrowRight" size={16} color={c.t3} />
             </button>
           </div>
-          <button style={s.primaryBtn} onClick={continueFromPending}>Хорошо, напомните позже</button>
-          <div style={s.pendingFoot}>Вернёмся к этому вопросу, когда нажмёте «Уточнить» на главной.</div>
+          <button style={s.primaryBtn} onClick={continueFromPending}>Продолжить</button>
         </div>
       ) : atGate ? (
         <div style={s.card}>

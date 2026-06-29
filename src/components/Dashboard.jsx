@@ -402,10 +402,10 @@ export default function Dashboard() {
         <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
           <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={s.surveyTitle}>Опрос не завершён</div>
+            <div style={s.surveyTitle}>{coreAnswered > 0 ? 'Продолжите опрос' : 'Опрос не завершён'}</div>
             <div style={s.surveySub}>Пара коротких вопросов — и оценка станет вашей, а не «по модели».</div>
           </div>
-          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Пройти</button>
+          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>{coreAnswered > 0 ? 'Продолжить' : 'Пройти'}</button>
         </div>
       )}
 
