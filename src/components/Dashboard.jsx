@@ -120,11 +120,14 @@ export default function Dashboard() {
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
   const answers = userCar?.onboardingAnswers || null;
-  const answeredCount = answers ? Object.keys(answers).length : 0;
-  // Опрос «пройден», если отвечены 3 ядровых вопроса (любым ответом, включая «не знаю»).
-  const coreAnswered = ['engine_cold_start', 'oil_consumption', 'engine_noise']
-    .filter(id => answers && answers[id]).length;
-  const surveyIncomplete = coreAnswered < 3;
+  // «не знаю» (unknown) — НЕ определённый ответ: это открытый аспект, который ещё «дозреет».
+  const CORE_QS = ['engine_cold_start', 'oil_consumption', 'engine_noise'];
+  const isDefinite = (id) => answers && answers[id] && answers[id] !== 'unknown';
+  const isSeen = (id) => !!(answers && answers[id]); // любой ответ, включая «не знаю»
+  const coreDefinite = CORE_QS.filter(isDefinite).length;
+  const coreSeen = CORE_QS.filter(isSeen).length;
+  const surveyNeverStarted = coreSeen === 0;          // вообще не трогал опрос
+  const surveyOpen = coreDefinite < CORE_QS.length;   // есть открытые аспекты (не отвечено или «не знаю»)
 
   const healthIndex = useMemo(() => {
     if (!issuesData) return MAX_INDEX;
@@ -331,7 +334,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Полоса «% картины» + мягкий призыв уточнить — пока оценка не точная */}
+            {/* Полоса «% картины» — пассивный статус зрелости (как кольцо Oura). Призывы — в едином слоте ниже. */}
             {maturity.level < 3 && (
               <div style={s.pictureWrap}>
                 <div style={s.pictureTop}>
@@ -341,10 +344,6 @@ export default function Dashboard() {
                 <div style={s.pictureBar}>
                   <div style={{ ...s.pictureFill, width: `${picturePct}%` }} />
                 </div>
-                <button style={s.refineBtn} onClick={() => navigate(surveyIncomplete ? '/checkup' : '/issues')}>
-                  <Icon name={surveyIncomplete ? 'sparkles' : 'check'} size={16} color={c.primary} />
-                  {surveyIncomplete ? 'Пройти опрос за 1 минуту' : 'Отметить, что уже сделано'}
-                </button>
               </div>
             )}
 
@@ -397,20 +396,9 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Опрос не завершён — видно всегда, пока 3 ядровых вопроса не пройдены */}
-      {hasData && surveyIncomplete && (
-        <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
-          <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={s.surveyTitle}>{coreAnswered > 0 ? 'Продолжите опрос' : 'Опрос не завершён'}</div>
-            <div style={s.surveySub}>Пара коротких вопросов — и оценка станет вашей, а не «по модели».</div>
-          </div>
-          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>{coreAnswered > 0 ? 'Продолжить' : 'Пройти'}</button>
-        </div>
-      )}
-
-      {/* Отложенный вопрос: пользователь в опросе захотел спросить ассистента */}
-      {deferredItem && (
+      {/* Единый слот-нудж: максимум один активный призыв (анти-мельтешение).
+          Приоритет: отложенный вопрос ассистенту → опрос/дозревание картины → отметить болячки. */}
+      {hasData && (deferredItem ? (
         <div style={s.deferCard}>
           <div style={s.deferIcon}><Icon name="bulb" size={18} color={c.primary} /></div>
           <div style={{ flex: 1, minWidth: 0 }} onClick={() => askDeferred(deferredItem)}>
@@ -420,7 +408,34 @@ export default function Dashboard() {
           <button style={s.deferAsk} onClick={() => askDeferred(deferredItem)}>Спросить</button>
           <button style={s.deferClose} onClick={() => dismissDeferred(deferredItem)} aria-label="Скрыть"><Icon name="x" size={15} color={c.textTertiary} /></button>
         </div>
-      )}
+      ) : surveyNeverStarted ? (
+        <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
+          <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={s.surveyTitle}>Опрос не завершён</div>
+            <div style={s.surveySub}>Пара коротких вопросов — и оценка станет вашей, а не «по модели».</div>
+          </div>
+          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Пройти</button>
+        </div>
+      ) : surveyOpen ? (
+        <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
+          <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={s.surveyTitle}>Картина ещё дозревает</div>
+            <div style={s.surveySub}>Кое-что вы пока отметили как «не знаю». Узнаете — оценка станет точнее. «Не знаю» — это нормально.</div>
+          </div>
+          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Уточнить</button>
+        </div>
+      ) : maturity.level < 3 ? (
+        <div style={s.surveyCard} onClick={() => navigate('/issues')}>
+          <div style={s.surveyIcon}><Icon name="check" size={18} color={c.primary} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={s.surveyTitle}>Отметьте, что уже сделано</div>
+            <div style={s.surveySub}>Отметки в «Слабых местах» делают оценку точнее всего.</div>
+          </div>
+          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/issues'); }}>Открыть</button>
+        </div>
+      ) : null)}
 
       {/* Спросить про мою машину (обводка) */}
       <div style={s.askBtn}>

@@ -137,12 +137,14 @@ export function calculateHealthIndex(issues, currentMileage = 0, fixedIssueIds =
 
 // Насколько сильно ответ по системе двигает индекс. Двигатель/коробка — тяжелее.
 // Ключи совпадают с questionId из формы вопросов (этап C).
+// Веса по ценности сигнала (вердикт механика): расход масла и звуки/холодный
+// пуск — главные; коробка — средний; разгон — почти шум (минимальный вес).
 export const SENSATION_WEIGHTS = {
   engine_cold_start: 4,
   oil_consumption: 4,
   engine_noise: 4,
-  engine_pull: 3,
-  transmission: 4,
+  engine_pull: 1,       // субъективно, человек адаптируется → почти шум
+  transmission: 3,
   suspension_knock: 2,
   steering: 2,
   brakes: 3,
