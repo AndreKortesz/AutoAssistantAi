@@ -1,74 +1,73 @@
 # Архитектура AutoAssistantAi
 
 > Главная техническая карта. Описывает код, как он есть сейчас. Если расходится с
-> кодом — верен код, документ надо поправить.
+> кодом — верен код, документ надо поправить. Новичку/ИИ: начни с этого файла, затем
+> [HEALTH_INDEX.md](HEALTH_INDEX.md) (самая нетривиальная механика) и [FEATURES.md](FEATURES.md).
 
 ---
 
 ## 1. Стек и деплой
 
-- **Frontend:** React 18 + Vite + react-router-dom v6. **Инлайн-стили** (объекты `styles`/`s`/`c`), без Tailwind, без CSS-файлов, без TypeScript.
-- **Backend (тонкий):** `server.js` — Express. Отдаёт собранный `dist/` и проксирует чат к Gemini. Никакой БД пока нет.
-- **Деплой:** Railway. `git push` в `main` → авто-сборка (`npm install && npm run build`) → `node server.js`.
-- **Данные модели:** статические JSON в `public/data/` (копируются в `dist/` при сборке).
-- **Состояние пользователя:** localStorage (с whitelist-валидацией). PII не храним.
+- **Frontend:** React 18 + Vite + react-router-dom v6. **Инлайн-стили** (объекты `styles`/`s`/`c`), без Tailwind/CSS-файлов, без TypeScript.
+- **Backend (тонкий):** `server.js` — Express. Отдаёт `dist/`, проксирует чат к Gemini, принимает события интереса к сервисам и пишет их в PostgreSQL.
+- **БД:** PostgreSQL (Railway), опционально — только для аналитики интереса к сервисам. Всё остальное работает без БД.
+- **Деплой:** Railway, `git push` в `main` → авто-сборка (`npm install && npm run build`) → `node server.js`.
+- **Данные модели:** статические JSON в `public/data/` (копируются в `dist/`).
+- **Состояние пользователя:** localStorage с whitelist-валидацией. PII не храним.
 
-Сборка: `npm run build`. Локальный фронт: `npm run dev`. Локально с сервером/чатом: `npm run dev:server` (нужен `GEMINI_API_KEY`).
+Скрипты: `npm run build` (vite), `npm run dev` (фронт), `npm run dev:server` / `npm start` (Express, нужен `GEMINI_API_KEY` для чата).
 
 ---
 
 ## 2. Карта файлов
 
 ```
-server.js                      ← Express: gzip, кэш-заголовки, статика dist/, /api/chat → Gemini
-index.html                     ← favicon (light/dark), apple-touch-icon, manifest, theme-color
+server.js                      ← Express: gzip, кэш-заголовки, /api/chat (Gemini), /api/interest (+Postgres), /api/interest/report
+index.html                     ← favicon (light/dark) + apple-touch + manifest + theme-color + CSS-keyframes (aaaCarIn/Shine/PopUp/RingPulse)
 public/
-├── manifest.webmanifest       ← PWA: «добавить на рабочий стол», standalone
-├── apple-touch-icon.png, icon-192/512, icon-maskable-512, favicon-light/dark.png
+├── manifest.webmanifest       ← PWA «на рабочий стол», standalone
+├── apple-touch-icon / icon-192/512 / icon-maskable-512 / favicon-light/dark.png
 ├── branding/                  ← logo-mark-light.png (знак в UI), logo-wide-light/dark.png
 └── data/
-    ├── catalog.json           ← бренды/модели/поколения/двигатели/коробки (+ transmission.type, body_types)
-    └── issues/hyundai/
-        ├── solaris_rb/solaris_rb_final.json
-        └── solaris_hc/solaris_ii_final.json
+    ├── catalog.json           ← бренды/модели/поколения/двигатели/коробки (transmission.type, body_types, engine_transmission_compat)
+    └── issues/hyundai/{solaris_rb,solaris_hc}/*_final.json
 
 src/
-├── main.jsx                   ← точка входа
-├── App.jsx                    ← роутинг, ErrorBoundary, BottomNav, RootRoute (редирект), shouldShowNav
-├── contexts/
-│   └── CarContext.jsx         ← единый провайдер состояния (см. §4)
+├── main.jsx
+├── App.jsx                    ← роутинг, ErrorBoundary, BottomNav (5 пунктов), RootRoute, ScrollToTop, ResetScreen, shouldShowNav
+├── contexts/CarContext.jsx    ← единый провайдер состояния (см. §4)
 ├── services/
-│   ├── dataService.js         ← загрузка catalog/модели; кэш; защита (path traversal, лимит 5 МБ, валидация)
-│   ├── userCarService.js      ← машина пользователя + ответы онбординга в localStorage (whitelist)
-│   ├── journalService.js      ← журнал ТО/ремонтов; из него выводятся fixedIssueIds (с TTL)
-│   ├── issueStatusService.js  ← статус болячки по мнению юзера: 'actual' | 'unknown' (localStorage)
-│   └── serviceAnalytics.js    ← trackServiceInterest(serviceId): событие интереса + локальный счётчик (заглушка под бэк)
-├── utils/
-│   └── issueHelpers.js        ← ВСЯ доменная логика: классификация по пробегу, индекс, зрелость,
-│                                системы, стоимость владения, форматтеры, линковка recalls/исков
+│   ├── dataService.js         ← загрузка catalog/модели, кэш, защита (path traversal, лимит 5 МБ, валидация)
+│   ├── userCarService.js      ← машина + onboardingAnswers в localStorage (whitelist); флаг онбординга
+│   ├── journalService.js      ← журнал ТО/ремонтов; из него выводятся fixedIssueIds (TTL по пробегу)
+│   ├── issueStatusService.js  ← статус болячки по мнению юзера: 'actual' | 'unknown'
+│   ├── wearStatusService.js   ← статус износа по факту: 'checked_ok' | 'needs_replace' | 'unknown' (+untilKm)
+│   ├── maturingAspects.js     ← Стадия 2: пробег на момент «не знаю», «созревшие» аспекты, затухание
+│   ├── deferredQuestions.js   ← отложенные вопросы к ассистенту (нудж на главной)
+│   └── serviceAnalytics.js    ← trackServiceInterest → POST /api/interest + локальный счётчик
+├── utils/issueHelpers.js      ← ВСЯ доменная логика: классификация по пробегу, индекс+зрелость, износ,
+│                                системы, sentiment ответов, стоимость владения, форматтеры, линковка recalls
 └── components/
-    ├── Onboarding.jsx         ← 4 слайда-интро (новый пользователь)
-    ├── AddCarForm.jsx         ← каскадные селекты: марка→модель→поколение→двигатель→коробка→год→пробег
-    ├── OnboardingQuestions.jsx← /checkup: вопросы-ощущения (Duolingo-стиль) + «Не знаю» → 3 пути
-    ├── Dashboard.jsx          ← «Мой гараж»: кольцо зрелости, «% картины», системы, стоимость, ассистент-чип
-    ├── IssuesScreen.jsx       ← «Обслуживание»: 3 вкладки (Слабые места / ТО / Карта) + дожим + тур
-    ├── MaintenanceTab.jsx     ← вкладка ТО: Регламент + Износ (строки → детальная карточка)
-    ├── MileageMapTab.jsx      ← вкладка Карта: вертикальный таймлайн по пробегу
-    ├── IssueDetailScreen.jsx  ← детальная страница болячки/ТО/износа по id
-    ├── JournalScreen.jsx      ← журнал обслуживания
-    ├── AssistantScreen.jsx    ← AI-чат (Gemini), рендер markdown
-    ├── ServicesScreen.jsx     ← «Сервисы»: витрина услуг (заглушки «скоро» + «Уведомить» → аналитика интереса)
-    ├── BuyerChecklistScreen.jsx← «Чек-лист покупки»: что проверить при покупке (динамически из болячек)
-    ├── ServiceDetailScreen.jsx ← страница сервиса: описание + «В разработке» + «Уведомить»
-    ├── servicesCatalog.js      ← каталог сервисов (id → title/icon/group/desc), общий для витрины и детали
-    ├── CoachmarksTour.jsx     ← оверлей-подсветка для тура по вкладкам
-    ├── MileageUpdateModal.jsx ← модалка обновления пробега
-    ├── CarSilhouette.jsx      ← SVG-силуэт авто по типу кузова/цвету
-    └── Icon.jsx               ← инлайн-SVG иконки (Lucide-стиль). ТОЛЬКО контурные, без эмодзи.
+    ├── Onboarding.jsx         ← 4 слайда-интро
+    ├── AddCarForm.jsx         ← каскадные селекты конфигурации → /checkup
+    ├── OnboardingQuestions.jsx← /checkup: 5 вопросов + гейт + доп. блок (3); «не знаю»→3 пути; MiniAssistant
+    ├── MiniAssistant.jsx      ← мини-чат ассистента ОВЕРЛЕЕМ поверх онбординга (не роут)
+    ├── Dashboard.jsx          ← «Мой гараж»: кольцо зрелости (анимация, тап→модалка), чек-лист источников,
+    │                            системы, стоимость, ассистент-чип, нудж-слот, микро-награды
+    ├── IssuesScreen.jsx       ← «Обслуживание»: 3 вкладки (Слабые места / ТО / Карта), дожим, тур, sentiment-подсветка
+    ├── MaintenanceTab.jsx     ← вкладка ТО: Регламент + Износ (4-статусный контроль по факту)
+    ├── MileageMapTab.jsx      ← вкладка Карта: таймлайн по пробегу
+    ├── IssueDetailScreen.jsx  ← детальная запись по id (болячка/ТО/износ)
+    ├── BuyerChecklistScreen.jsx← /checklist: чек-лист покупки (динамически из болячек)
+    ├── ServicesScreen.jsx     ← /services: витрина услуг (заглушки «В разработке»)
+    ├── ServiceDetailScreen.jsx← /services/:id: описание сервиса + «Уведомить»
+    ├── servicesCatalog.js     ← каталог сервисов (id → title/icon/group/desc)
+    ├── CoachmarksTour.jsx     ← оверлей-тур по вкладкам
+    ├── JournalScreen.jsx · CostScreen.jsx · MileageUpdateModal.jsx · MaintenanceScreen.jsx (осиротевший)
+    ├── MarkdownText.jsx       ← общий рендер markdown (ассистент + мини-чат)
+    ├── CarSilhouette.jsx · Icon.jsx (инлайн-SVG, ТОЛЬКО контурные, без эмодзи)
 
-docs/                          ← эта документация
-data/                          ← каноническая схема болячки + пример (ISSUE_SCHEMA.md, *.json)
-prototypes/                    ← HTML-референсы дизайна (Audi A1)
+docs/  · data/ (схема болячки)  · prototypes/ (HTML-референсы)
 ```
 
 ---
@@ -77,99 +76,111 @@ prototypes/                    ← HTML-референсы дизайна (Audi 
 
 | Путь | Экран | Нав. снизу |
 |------|-------|:----------:|
-| `/` | `RootRoute` — редирект | — |
+| `/` | `RootRoute` — мгновенный редирект | — |
+| `/reset` | `ResetScreen` — чистит все `aaa_*` и на старт (для тестов) | — |
 | `/add-car` | `AddCarForm` | — |
-| `/checkup` | `OnboardingQuestions` (опрос) | — |
+| `/checkup` | `OnboardingQuestions` (опрос-ощущения) | — |
 | `/dashboard` | `Dashboard` | ✓ |
-| `/issues` | `IssuesScreen` (вкладку можно задать через `location.state.tab`) | ✓ |
-| `/issues/:issueId` | `IssueDetailScreen` | ✓ |
+| `/issues` · `/issues/:issueId` | `IssuesScreen` · `IssueDetailScreen` | ✓ / — |
 | `/journal` | `JournalScreen` | ✓ |
-| `/maintenance` | `MaintenanceScreen` *(осиротевший — функционал переехал во вкладку `/issues` service; кандидат на удаление)* | ✓ |
-| `/cost` | `CostScreen` (полная стоимость владения) | ✓ |
+| `/cost` | `CostScreen` | ✓ |
 | `/assistant` | `AssistantScreen` | ✓ |
-| `/services` | `ServicesScreen` (витрина услуг) | ✓ |
-| `/services/:serviceId` | `ServiceDetailScreen` (детали + «Уведомить») | — |
-| `/checklist` | `BuyerChecklistScreen` (чек-лист покупки) | — |
+| `/services` · `/services/:serviceId` | `ServicesScreen` · `ServiceDetailScreen` | ✓ / — |
+| `/checklist` | `BuyerChecklistScreen` | — |
+| `/maintenance` | `MaintenanceScreen` *(осиротевший — функционал во вкладке `/issues`; кандидат на удаление)* | ✓ |
 
-- **`RootRoute`** решает СРАЗУ (без мигания): `userCar` и флаг онбординга читаются из localStorage синхронно. Нет авто → `/add-car`; есть → `/dashboard`; не прошёл интро → `Onboarding`. Тяжёлый JSON болячек грузится в фоне, экраны показывают своё «Загрузка». **Не возвращать splash-гейт на `loading`** — это была регрессия медленного старта.
-- **`shouldShowNav`** скрывает нижнюю навигацию на `/`, `/add-car`, `/checkup`.
-- **`ErrorBoundary`** ловит падение дерева и показывает текст ошибки + «Сбросить и перезагрузить» (вместо белого экрана).
+- **`RootRoute`** решает СРАЗУ: `userCar` и флаг онбординга читаются из localStorage синхронно. Тяжёлый JSON грузится в фоне. **Не возвращать splash-гейт на `loading`** (была регрессия медленного старта).
+- **`ScrollToTop`** сбрасывает прокрутку наверх при смене маршрута.
+- **5 пунктов нав.:** Главная · Обслуживание · Журнал · Ассистент · Сервисы.
+- **`shouldShowNav`** прячет нав. на `/`, `/add-car`, `/checkup`, `/checklist`, `/reset`, `/issues/*`, `/services/*`.
 
 ---
 
 ## 4. Состояние: `CarContext.jsx`
 
-Единый провайдер. Значения:
-
 | Поле | Что |
 |------|-----|
-| `userCar` | машина из localStorage (читается **синхронно** в инициализаторе useState) |
-| `carDetails` | данные модели из catalog (двигатели, коробки, поколение) |
-| `issuesData` | `{ systemic, wear, maintenance, minor, recalls, classActions, tsb, annual_budget, hasData }` — отфильтровано под конфигурацию |
-| `journalRecords` | записи журнала (подписка на `journalService`) |
-| `fixedIssueIds` | **производное** от журнала: id болячек, отмеченных «устранено» (с учётом TTL по пробегу) |
-| `issueStatuses` | `{ id: 'actual' \| 'unknown' }` (подписка на `issueStatusService`) |
-| **методы** | `saveCar`, `updateMileage`, `removeCar`, `refresh`, `markIssueFixed(issue)`, `unmarkIssueFixed(id)`, `saveAnswers(answers)`, `setIssueStatus(id, status)` |
-
-`loading` остаётся `true`, пока грузятся `carDetails` + большой JSON болячек; на него завязаны лоадеры экранов (НЕ корневой редирект — см. §3).
-
----
-
-## 5. Потоки данных
-
-**Старт:** `CarProvider` синхронно читает `userCar` → `RootRoute` мгновенно решает маршрут → `loadUserCar()` асинхронно тянет `getModelById` (catalog) и `getIssuesForCar` (JSON модели, кэшируется) → `issuesData` готов → экраны рендерят контент.
-
-**Фильтрация под конфигурацию:** `dataService.getIssuesForCar(modelId, {engineCode, transmissionCode})` берёт `records` из JSON и делит по `type`: `systemic_defect`→systemic, `common_wear`→wear, `maintenance`→maintenance; `minor_annoyance`→minor. Глобальные `global_recalls/_class_actions/_tsb` кладутся в recalls/classActions/tsb. Применяется match по двигателю/коробке (с нюансом: записи систем трансмиссии могут иметь `engine:null`, чтобы не привязываться к мотору).
-
-**Отметка «устранено»:** кнопка в `IssueCard`/`IssueDetailScreen` → `markIssueFixed(issue)` → запись в журнал → `journalService` уведомляет → `fixedIssueIds` пересчитывается → индекс/группы/«% картины» обновляются.
+| `userCar` | машина из localStorage (синхронно) + `onboardingAnswers` |
+| `carDetails` | данные модели из catalog |
+| `issuesData` | `{ systemic, wear, maintenance, minor, recalls, classActions, tsb, annual_budget, hasData }` под конфигурацию |
+| `journalRecords` | журнал (подписка) |
+| `fixedIssueIds` | производное от журнала «устранено» (TTL по пробегу) |
+| `issueStatuses` | `{id:'actual'|'unknown'}` (дожим болячек) |
+| `wearStatuses` | `{id:{s:'checked_ok'|'needs_replace'|'unknown', untilKm}}` |
+| `picturePct`, `maturity` | «% картины» (монотонный пол) + уровень зрелости (1/2/3) |
+| **методы** | `saveCar`, `updateMileage`, `removeCar`, `refresh`, `markIssueFixed`, `unmarkIssueFixed`, `saveAnswers`, `setIssueStatus`, `setWearStatus` |
 
 ---
 
-## 6. Хранилище (localStorage)
+## 5. Хранилище (localStorage, ключи `aaa_*`)
 
-| Ключ | Сервис | Что | Валидация |
-|------|--------|-----|-----------|
-| `aaa_user_car` | userCarService | конфигурация авто + `onboardingAnswers` | whitelist полей; ответы — только `good/mid/bad/unknown`, ≤20 шт |
-| `aaa_onboarding_completed` | userCarService | прошёл ли интро | 'true' |
-| `aaa_journal` | journalService | записи ТО/ремонтов | — |
-| `aaa_issue_status` | issueStatusService | вердикт по болячке | ключ snake_case, значение `actual/unknown` |
-| `aaa_service_tour_seen` | IssuesScreen | показан ли тур-коачмарк | 'true' |
+| Ключ | Сервис | Что |
+|------|--------|-----|
+| `aaa_user_car` | userCarService | конфигурация авто + `onboardingAnswers` |
+| `aaa_onboarding_completed` | userCarService | прошёл интро |
+| `aaa_journal` | journalService | записи ТО/ремонтов |
+| `aaa_issue_status` | issueStatusService | вердикт по болячке |
+| `aaa_wear_status` | wearStatusService | статус износа по факту (+untilKm) |
+| `aaa_maturing` | maturingAspects | пробег на момент «не знаю» + счётчик показов |
+| `aaa_deferred_questions` | deferredQuestions | отложенные вопросы ассистенту |
+| `aaa_picture_floor` | CarContext | монотонный пол «% картины» |
+| `aaa_maturity_done` | Dashboard | показан ли разовый момент «оценка готова» |
+| `aaa_service_tour_seen` | IssuesScreen | показан ли тур-коачмарк |
+| `aaa_service_interest` / `aaa_service_notified` | serviceAnalytics | локальный счётчик / на что нажали «Уведомить» |
+| `aaa_uid` | serviceAnalytics | анонимный id (не PII) |
 
-**Правила безопасности:** никаких PII (ФИО/телефон/email); никаких секретов; всё валидируется при чтении и записи; `GEMINI_API_KEY` — только в env сервера, на фронт не уходит.
+`/reset` чистит все `aaa_*` и перезагружает на старт.
 
----
-
-## 7. Сервер (`server.js`)
-
-- `compression()` — gzip всех ответов (JSON модели ~828 КБ → ~114 КБ; главный ускоритель загрузки).
-- Кэш-заголовки: хешированные ассеты Vite (`-<hash>.js|css`) → `max-age=31536000, immutable`; `index.html` → `no-cache`.
-- `POST /api/interest` — интерес к сервису: запись в PostgreSQL (если задан `DATABASE_URL`) +
-  лог в Railway + (если заданы env) уведомление владельцу: `TELEGRAM_BOT_TOKEN`+`TELEGRAM_CHAT_ID`
-  (Telegram), `INTEREST_WEBHOOK_URL` (вебхук, получает структуру события). Без БД/env — работает на логах.
-- `GET /api/interest/report?key=<ADMIN_KEY>` — HTML-таблица спроса по сервисам (нажатий, уникальных,
-  за 30 дней, последнее). Защищена `ADMIN_KEY`. Источник — таблица `service_interest` в Postgres
-  (создаётся автоматически при старте, если есть `DATABASE_URL`). Драйвер — `pg` (Pool, SSL для внешнего хоста).
-- `POST /api/chat` → Gemini 2.5 Flash (`generativelanguage.googleapis.com`):
-  - системный промпт строится из контекста машины + болячек, с жёстким запретом выдумывать артикулы/recall/цены;
-  - `thinkingConfig.thinkingBudget: 0` — иначе «мышление» съедает `maxOutputTokens` и ответ обрывается;
-  - `maxOutputTokens: 1024`, простой rate-limit 20 запросов/мин на IP, лимит тела 256 КБ.
-- SPA-fallback: всё остальное → `dist/index.html`.
+**Безопасность:** никаких PII/секретов; валидация при чтении и записи; `GEMINI_API_KEY`/`ADMIN_KEY` и т.п. — только в env сервера, на фронт не уходят.
 
 ---
 
-## 8. Дизайн-система (кратко; подробно — UI_GUIDELINES.md)
+## 6. Сервер (`server.js`) и переменные окружения
 
-- Primary Blue `#1F4FD8`, Background `#F7F8FA`, Text `#1E293B`.
-- Success `#2E9E6F`/`#1D9E75`, Warning/янтарь `#BA7517`/`#D97706`, Critical `#DC2626`/`#E24B4A`.
-- Шрифт Inter / системный. Mobile-first, max-width ~420px. Белые карточки, мягкие тени, радиусы.
-- Иконки — **только контурные** инлайн-SVG (`Icon.jsx`). **Никаких эмодзи.** Цвет несёт точка/иконка, не заливка блока.
+Эндпоинты:
+- `POST /api/chat` → Gemini 2.5 Flash. Системный промпт заземлён на болячки конфигурации, запрет выдумывать артикулы/recall/цены. `thinkingConfig.thinkingBudget: 0` (иначе ответ обрывается), `maxOutputTokens: 1024`, rate-limit 20/мин/IP, лимит тела 256 КБ.
+- `POST /api/interest` → запись в PostgreSQL (если есть `DATABASE_URL`) + лог + уведомление владельцу (Telegram/вебхук, если заданы env).
+- `GET /api/interest/report?key=<ADMIN_KEY>` → HTML-таблица спроса по сервисам (защищена ключом).
+- gzip всех ответов; кэш `max-age=31536000 immutable` для хешированных ассетов Vite, `no-cache` для `index.html`; SPA-fallback.
+
+| Env | Назначение |
+|-----|-----------|
+| `GEMINI_API_KEY` | ключ чата (без него `/api/chat` → 503) |
+| `GEMINI_MODEL` | модель (по умолч. `gemini-2.5-flash`) |
+| `DATABASE_URL` | PostgreSQL (Railway); без неё аналитика работает на логах |
+| `ADMIN_KEY` | пароль к `/api/interest/report` |
+| `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | уведомления владельцу об интересе |
+| `INTEREST_WEBHOOK_URL` | произвольный вебхук (получает структуру события — напр. для Google Таблицы) |
+| `PORT` | порт (Railway задаёт сам) |
 
 ---
 
-## 9. Известные хвосты / технический долг
+## 7. Дизайн-система (кратко; подробно — UI_GUIDELINES.md)
 
-- `/maintenance` + `MaintenanceScreen.jsx` — осиротевший роут (функционал во вкладке `/issues`). Кандидат на удаление.
-- `rowSub` в `IssuesScreen` — мёртвый код после возврата `IssueCard`.
-- `groupByImportance` принимает `fixedIssueIds`, но фильтрация «сделано» сейчас в `IssuesScreen` (не внутри хелпера).
-- Жёсткого клампа «плавного шага» индекса нет — плавность даёт мягкие веса + анимация кольца.
-- Автотестов нет. Первый кандидат — юнит-тесты на `classifyIssueByMileage`/`issueAnchorKm`/`pictureCompleteness`.
+- Primary `#1F4FD8`, Background `#F7F8FA`, Text `#1E293B`. Success `#2E9E6F`/`#1D9E75`, янтарь `#BA7517`, critical `#DC2626`/`#E24B4A`. Кольцо зрелости: приглушённый `#7FC9AD` → насыщенный `#1D9E75`.
+- Mobile-first, max-width ~420px, белые карточки, мягкие тени. Иконки — **только контурные** инлайн-SVG (`Icon.jsx`), **без эмодзи**. Цвет несёт точка/иконка, не заливка блока.
+- Анимации — CSS-keyframes в `index.html`, уважают `prefers-reduced-motion`.
+
+---
+
+## 8. Нюансы и подводные камни (читать перед правками)
+
+- **Две схемы данных RB/HC.** RB: заголовок в `issue.title`; HC: в `position.name`/`part_info.name`. Не обращаться к `issue.title` напрямую — только `recordTitle()`/`recordSystem()`/`wearRange()` из issueHelpers.
+- **Поля бывают строкой вместо массива** (`where_to_buy`, `alternatives`, `do_not_buy`, `cause.secondary`, `prevention.actions`) → оборачивать `asArray()`, иначе `.map`/`.join` уронят экран.
+- **Баг `{число && <JSX>}`**: при значении `0` (бесплатный ремонт по отзыву) React печатает «0». Для чисел использовать `value > 0 &&`.
+- **Кузов исключён везде** (`isBodyRecord`) — в «Обслуживании» и системах не показываем; в общий индекс кузовные болячки входят.
+- **Индекс — не диагноз, а созревающая оценка** (40–95, не 0/100). Системные болячки = статистика модели (вычитаются по классификации); износ = только по подтверждённому факту; ответы-ощущения = мягкая поправка ±1-2. См. [HEALTH_INDEX.md](HEALTH_INDEX.md).
+- **Монотонный «пол» зрелости** (`aaa_picture_floor`) — картина не «раскрывается обратно», кольцо не мелькает на границе уровня.
+- **Сборка не ловит undefined-компоненты/импорты** (это runtime-ошибка) — проверять импорты икон/компонентов вручную (был краш Карты из-за забытого `import Icon`).
+- **AssistantScreen — `height: calc(100dvh - 72px)`** (не 100vh): 100vh на мобиле больше вьюпорта, инпут уходил под нав; автоскролл — по контейнеру, не `scrollIntoView` (дёргало окно).
+- **Сбор данных — НЕ задача Claude Code** (отдельный pipeline). Артикулы/recall_id — только проверенные или `null + needs_review`.
+
+---
+
+## 9. Технический долг
+
+- `/maintenance` + `MaintenanceScreen.jsx` — осиротевший роут.
+- Неиспользуемые стили после редизайнов (picture*, refine*, mdP/mdList/mdLi в AssistantScreen) — безвредны, можно подчистить.
+- Жёсткого клампа «плавного шага» индекса нет (плавность даёт count-up + анимация дуги).
+- Автотестов нет. Первый кандидат — юнит-тесты `classifyIssueByMileage`/`issueAnchorKm`/`pictureCompleteness`/`wearIndexDelta`/`systemSentiment`.
+- Вопрос онбординга про документы решено не делать (см. memory).
