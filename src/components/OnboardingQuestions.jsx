@@ -71,13 +71,16 @@ export default function OnboardingQuestions() {
   // «Напомнить позже» работает так: вопрос остаётся неотвеченным (или «не знаю»),
   // и при повторном входе («Уточнить» на главной) мы стартуем с первого незакрытого —
   // то есть пропущенные/«не знаю» вопросы возвращаются.
+  // Опрос — все 5 вопросов подряд (без необязательной развилки). Старт — с первого
+  // незакрытого: определённый ответ закрывает, «не знаю»/без ответа — нет, поэтому
+  // повторный вход возвращает к открытым/«не знаю».
+  const ALL_IDS = ['engine_cold_start', 'oil_consumption', 'engine_noise', 'engine_pull', 'transmission'];
   const answered = userCar?.onboardingAnswers || {};
   const isDone = (id) => answered[id] && answered[id] !== 'unknown';
   const [step, setStep] = useState(() => {
-    const i = CORE.findIndex(q => !isDone(q.id));
-    return i === -1 ? CORE.length : i; // всё ядро отвечено → к развилке
+    const i = ALL_IDS.findIndex(id => !isDone(id));
+    return i === -1 ? 0 : i;
   });
-  const [extraOpen, setExtraOpen] = useState(false); // решил ли «ответить ещё»
   const [pending, setPending] = useState(null);      // вопрос, по которому открыты «3 пути» (после «Не знаю»)
   const [openPath, setOpenPath] = useState(null);     // 'self' | 'service' — какая подсказка раскрыта
   const [confirmSkip, setConfirmSkip] = useState(false); // подтверждение выхода из опроса
@@ -90,16 +93,12 @@ export default function OnboardingQuestions() {
     return { id: 'transmission', ...variant };
   }, [carDetails, userCar]);
 
-  // Полный список: 3 ядра + (по желанию) 2 доп. Всего 5 — как в брифе.
-  const questions = useMemo(
-    () => extraOpen ? [...CORE, EXTRA_PULL, transmissionQ] : CORE,
-    [extraOpen, transmissionQ]
-  );
-  const total = 5; // знаменатель прогресса/«% картины» фиксирован
+  // Все 5 вопросов подряд: 3 ядра + разгон + коробка.
+  const questions = useMemo(() => [...CORE, EXTRA_PULL, transmissionQ], [transmissionQ]);
+  const total = questions.length; // 5
 
   if (!userCar) return <Navigate to="/add-car" replace />;
 
-  const atGate = !extraOpen && step >= CORE.length; // после ядра — развилка «ещё / позже»
   const q = questions[step];
 
   const answer = (val) => {
@@ -117,12 +116,9 @@ export default function OnboardingQuestions() {
   };
   const next = () => {
     if (step + 1 < questions.length) setStep(step + 1);
-    else if (!extraOpen && step + 1 >= CORE.length) setStep(CORE.length); // к развилке
     else finish();
   };
   const finish = () => navigate('/dashboard', { replace: true });
-
-  const openExtra = () => { setExtraOpen(true); setStep(CORE.length); };
 
   return (
     <div style={s.container}>
@@ -188,16 +184,6 @@ export default function OnboardingQuestions() {
             </button>
           </div>
           <button style={s.primaryBtn} onClick={continueFromPending}>Продолжить</button>
-        </div>
-      ) : atGate ? (
-        <div style={s.card}>
-          <div style={s.gateIcon}><Icon name="check" size={28} color={c.success} /></div>
-          <div style={s.q}>Спасибо! Уже понятнее.</div>
-          <div style={s.hint}>Ещё 2 коротких вопроса — про разгон и коробку — и оценка станет точнее.</div>
-          <button style={s.primaryBtn} onClick={openExtra}>
-            <Icon name="sparkles" size={16} color="#fff" /> Ответить ещё (2)
-          </button>
-          <button style={s.ghostBtn} onClick={finish}>Позже</button>
         </div>
       ) : q ? (
         <div style={s.card}>

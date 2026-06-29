@@ -120,14 +120,14 @@ export default function Dashboard() {
   const mileage = userCar?.mileage ? parseInt(userCar.mileage) : 0;
 
   const answers = userCar?.onboardingAnswers || null;
-  // «не знаю» (unknown) — НЕ определённый ответ: это открытый аспект, который ещё «дозреет».
-  const CORE_QS = ['engine_cold_start', 'oil_consumption', 'engine_noise'];
+  // Опрос — все 5 вопросов. «не знаю» (unknown) — НЕ определённый ответ: открытый аспект, который «дозреет».
+  const SURVEY_QS = ['engine_cold_start', 'oil_consumption', 'engine_noise', 'engine_pull', 'transmission'];
   const isDefinite = (id) => answers && answers[id] && answers[id] !== 'unknown';
   const isSeen = (id) => !!(answers && answers[id]); // любой ответ, включая «не знаю»
-  const coreDefinite = CORE_QS.filter(isDefinite).length;
-  const coreSeen = CORE_QS.filter(isSeen).length;
-  const surveyNeverStarted = coreSeen === 0;          // вообще не трогал опрос
-  const surveyOpen = coreDefinite < CORE_QS.length;   // есть открытые аспекты (не отвечено или «не знаю»)
+  const definiteCount = SURVEY_QS.filter(isDefinite).length;
+  const seenCount = SURVEY_QS.filter(isSeen).length;
+  const surveyNotAllSeen = seenCount < SURVEY_QS.length;          // не все 5 вопросов пройдены
+  const surveyMaturing = !surveyNotAllSeen && definiteCount < SURVEY_QS.length; // все пройдены, но есть «не знаю»
 
   const healthIndex = useMemo(() => {
     if (!issuesData) return MAX_INDEX;
@@ -408,16 +408,16 @@ export default function Dashboard() {
           <button style={s.deferAsk} onClick={() => askDeferred(deferredItem)}>Спросить</button>
           <button style={s.deferClose} onClick={() => dismissDeferred(deferredItem)} aria-label="Скрыть"><Icon name="x" size={15} color={c.textTertiary} /></button>
         </div>
-      ) : surveyNeverStarted ? (
+      ) : surveyNotAllSeen ? (
         <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
           <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={s.surveyTitle}>Опрос не завершён</div>
-            <div style={s.surveySub}>Пара коротких вопросов — и оценка станет вашей, а не «по модели».</div>
+            <div style={s.surveyTitle}>{seenCount > 0 ? 'Продолжите опрос' : 'Опрос не завершён'}</div>
+            <div style={s.surveySub}>{seenCount > 0 ? `Осталось ${SURVEY_QS.length - seenCount} из ${SURVEY_QS.length} — и оценка станет вашей, а не «по модели».` : '5 коротких вопросов — и оценка станет вашей, а не «по модели».'}</div>
           </div>
-          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>Пройти</button>
+          <button style={s.surveyBtn} onClick={(e) => { e.stopPropagation(); navigate('/checkup'); }}>{seenCount > 0 ? 'Продолжить' : 'Пройти'}</button>
         </div>
-      ) : surveyOpen ? (
+      ) : surveyMaturing ? (
         <div style={s.surveyCard} onClick={() => navigate('/checkup')}>
           <div style={s.surveyIcon}><Icon name="sparkles" size={18} color={c.primary} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
